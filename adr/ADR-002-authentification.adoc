@@ -270,7 +270,9 @@ et non plus la recommandation de 2017 que portait `kemal-auth`. Ce dernier, reno
 `authn`, dépend désormais de `password-policy` : les règles n'existent plus qu'à
 un seul endroit. Trois
 préréglages déclarés équivalents par la CNIL ; motifs de refus en clés i18n ;
-limite de 72 *octets* imposée par BCrypt. Partiduo vise le palier à 50 bits,
+limite de 71 *octets* : le BCrypt de Crystal ajoute un octet nul et *refuse* (il ne
+tronque pas) au-delà de 72, d'où une phrase de passe accentuée de 40 caractères
+déjà hors limite. Partiduo vise le palier à 50 bits,
 qui *exige* de limiter les attaques en ligne (temporisation, ou blocage après
 10 échecs avec déblocage) : exigence du lot 0.
 |Rien.
