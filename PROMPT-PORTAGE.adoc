@@ -145,7 +145,7 @@ Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour co
 
 ## Stack imposée
 
-Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma, Opal uniquement pour la saisie d'écritures. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `saml`, `i18n`, `pdf-a`, `pdf-signature`) avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
+Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma, Opal uniquement pour la saisie d'écritures. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `totp`, `saml`, `pdf-a`, `pdf-signature`). Pour les traductions, utilisez l'i18n intégré de Marten (règles de pluriel des 24 langues de l'UE, ADR-005 D7), pas le shard maison `i18n` ; livrez fr, en et nl avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
 
 ## Lot P — prérequis à terminer en premier
 

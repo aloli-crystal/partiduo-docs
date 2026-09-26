@@ -472,7 +472,7 @@ Les 97 fonctions ne sont pas transposées mécaniquement. Chacune est classée :
 |Lot |Contenu |Poids
 
 |*P* |*Prérequis* : squelette du projet, CI, dépendance Marten `~> 0.7`. Les prérequis d'authentification sont dans `ADR-002` |~1 %
-|0 |Socle : configuration société, authentification et TOTP, layout Bulma, i18n fr/en/nl, `partiduo-provision`, outillage de déploiement de parc |~8 %
+|0 |Socle : configuration société, authentification et TOTP, layout Bulma, i18n fr/en/nl (prêt pour les 24 langues de l'UE, ADR-005 D7), `partiduo-provision`, outillage de déploiement de parc |~8 %
 |1 |Référentiel : plan comptable, fiches, exercices et périodes, journaux |~15 %
 |2 |Écritures : saisie achat / vente / financier / OD, consultation, lettrage |~25 %
 |3 |Éditions : balances, grand livre, bilan, FEC |~15 %

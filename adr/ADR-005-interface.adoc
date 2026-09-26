@@ -149,8 +149,36 @@ Qualité :
   visible, libellés, navigation au clavier ;
 * *écrans* : consultation utilisable sur mobile ; saisie optimisée pour
   ordinateur à partir de 1280 px ;
-* *langues* : français, anglais, néerlandais ; les libellés d'écran sont dans
-  l'interface, les libellés métier et messages d'erreur dans le cœur.
+* *langues* : français, anglais et néerlandais au départ ; *à terme, les
+  24 langues officielles de l'Union européenne*. Voir D7.
+
+=== D7 — Prêt pour toutes les langues de l'Union européenne
+
+Seules trois langues sont livrées au départ, mais rien ne doit empêcher d'ajouter
+les 21 autres (bg, cs, da, de, el, es, et, fi, ga, hr, hu, it, lt, lv, mt, pl, pt,
+ro, sk, sl, sv) par un simple fichier de traduction :
+
+* *moteur* : l'i18n intégré de Marten (`crystal-i18n`), qui fournit les règles de
+  pluriel des 24 langues — et non le shard maison `aloli-crystal/i18n`, qui n'en a
+  pas. Aucune chaîne affichée n'est écrite en dur, ni dans le cœur ni dans
+  l'interface ;
+* *pluriels* : toujours par la règle de la langue (`count:`), jamais par
+  `if n > 1` — le polonais, le tchèque ou l'irlandais en ont trois à cinq formes ;
+* *nombres, dates, monnaie* : formatés selon la langue *et* le pays (`fr-FR`,
+  `fr-BE`, `de-AT`…), jamais concaténés à la main ; la langue de l'utilisateur et
+  le pays du dossier sont deux réglages distincts ;
+* *écritures* : latine étendue, grecque et cyrillique (bulgare). La police doit
+  couvrir les trois — IBM Plex Sans et Plex Mono, retenues par la maquette, le
+  font ; toute autre police proposée par un thème doit le vérifier ;
+* *mise en page* : prévoir des libellés 30 à 40 % plus longs qu'en français
+  (allemand, finnois) — boutons et menus sans largeur fixe, textes qui passent à
+  la ligne ;
+* *sens d'écriture* : les 24 langues s'écrivent de gauche à droite ; les feuilles
+  de style utilisent néanmoins les propriétés logiques (`margin-inline-start`…)
+  pour ne rien fermer ;
+* *contenu métier* : les libellés du plan comptable, des taux de TVA et des
+  journaux sont des données du dossier, dans la langue du dossier, pas des
+  traductions de l'interface.
 
 === D6 — La maquette fait référence
 
