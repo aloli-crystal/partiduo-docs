@@ -27,6 +27,7 @@ chaque projet PHP porté a son équivalent Crystal.
 |`noalyss-export` |intégré au lot 3 du cœur |Export CSV / FEC
 |`profile-management` |absorbé par ADR-002 |Profils et droits
 |`copy_parameter` |absorbé par `partiduo-provision` |Sans objet avec une instance par dossier
+|— |`partiduo-migrate` |Outil séparé : reprise d'un dossier depuis un FEC ou une base NOALYSS
 |`noalyss-documentation` |— |Référence, non portée
 |`dolibarr-noalyss` |— |Écarté, non cloné
 |===

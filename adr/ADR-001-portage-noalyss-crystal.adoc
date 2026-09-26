@@ -388,7 +388,12 @@ jamais repris : chacun s'enrôle sur son instance (ADR-002).
 L'instance par dossier rend en revanche toute reprise future *progressive par
 dossier* : chaque société arrive quand elle est prête, sans affecter les autres.
 
-Un outil `partiduo-migrate` reste un livrable de premier rang, car reprendre un
+Un outil `partiduo-migrate` reste un livrable de premier rang, *dans son propre
+dépôt*, `aloli-crystal/partiduo-migrate` : il ne sert qu'une fois par dossier et
+n'a pas à alourdir l'application. Il dépend de `partiduo-app` comme shard et
+écrit exclusivement par ses services publics (ADR-003 D6) — notamment le service
+de création d'écriture —, jamais en SQL direct : les contraintes d'intégrité
+s'appliquent aux données reprises comme aux autres. Il est nécessaire, car reprendre un
 dossier comptable est un besoin courant (changement de logiciel, nouveau
 client d'un cabinet). Il accepte deux sources :
 
@@ -427,8 +432,10 @@ src/
 └── web/             # layouts, composants HTMX, assets Bulma
 
 bin/
-├── partiduo-provision   # création d'une instance
-└── partiduo-migrate     # reprise d'un dossier (FEC ou base NOALYSS) + réconciliation
+└── partiduo-provision   # création d'une instance
+
+# Dépôt séparé : partiduo-migrate — reprise d'un dossier (FEC ou base NOALYSS)
+# + rapport de réconciliation
 ----
 
 Les spécificités fiscales belges (12 tables `tva_belge`) restent isolées dans
@@ -467,7 +474,7 @@ Les 97 fonctions ne sont pas transposées mécaniquement. Chacune est classée :
 |4 |TVA et déclarations (BE + FR) |~10 %
 |5 |Comptabilité analytique |~10 %
 |6 |Stocks, prévisions, GED et suivi |~15 %
-|M |`partiduo-migrate` (FEC puis base NOALYSS) + rapport de réconciliation |après le lot 2, rapport complété au lot 3
+|M |`partiduo-migrate`, dépôt séparé (FEC puis base NOALYSS) + rapport de réconciliation |après le lot 2, rapport complété au lot 3
 |===
 
 L'ancien lot 7 — administration multi-dossiers, ~5 % — disparaît. Son reliquat

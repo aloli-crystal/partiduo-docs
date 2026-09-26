@@ -127,7 +127,7 @@ Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour co
 
 - Ne me posez aucune question. Pour toute ambiguïté, choisissez l'option la plus simple et réversible, consignez-la dans `partiduo-app/DECISIONS.adoc` (contexte, choix, alternative écartée), et continuez.
 - Ne vous arrêtez pas sur un blocage : contournez-le, notez-le dans `partiduo-app/BLOCAGES.adoc`, passez au lot suivant.
-- Autorisé : créer `partiduo-app/` et `partiduo-skel/` dans `prod-crystal/partiduo/`, `git init` avec une branche `development` (si le bac à sable refuse l'écriture de `.git/config`, faites le `git init` dans `$TMPDIR` puis déplacez le dépôt), commiter (commits conventionnels, par lot, sans ligne Co-Authored-By), installer des shards, créer des bases PostgreSQL locales préfixées `partiduo_` (dev/test uniquement), corriger un bug avéré dans les shards `prod-crystal/webauthn` et `prod-crystal/totp` (commit dans leur dépôt, noté dans DECISIONS).
+- Autorisé : créer `partiduo-app/`, `partiduo-skel/` et `partiduo-migrate/` dans `prod-crystal/partiduo/`, `git init` avec une branche `development` (si le bac à sable refuse l'écriture de `.git/config`, faites le `git init` dans `$TMPDIR` puis déplacez le dépôt), commiter (commits conventionnels, par lot, sans ligne Co-Authored-By), installer des shards, créer des bases PostgreSQL locales préfixées `partiduo_` (dev/test uniquement), corriger un bug avéré dans les shards `prod-crystal/webauthn` et `prod-crystal/totp` (commit dans leur dépôt, noté dans DECISIONS).
 - Interdit : pousser vers un dépôt distant, modifier quoi que ce soit dans `prod-github/noalyss/`, modifier les ADR (proposez plutôt un amendement dans DECISIONS), toucher à d'autres bases que `partiduo_*`, modifier d'autres shards de `prod-crystal/` que ceux cités.
 - PostgreSQL est joignable uniquement par socket Unix (`/tmp/.s.PGSQL.5432`), pas en TCP : utilisez `psql` sans `-h`, et des URL de connexion de la forme `postgres:///partiduo_dev?host=/tmp`.
 - Si PostgreSQL est injoignable, écrivez quand même le code et les specs, notez-le dans BLOCAGES, et continuez.
@@ -154,7 +154,7 @@ Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/mart
 
 ## Ordre et parallélisation
 
-Plan de lots de l'ADR-001 : P → 0 → 1 → 2 → M → 3 → 4 → 5 → 6. Partiduo démarre de zéro (aucune donnée à reprendre), mais l'outil de reprise `partiduo-migrate` est obligatoire (ADR-001 D5) : source FEC d'abord, base NOALYSS ensuite.
+Plan de lots de l'ADR-001 : P → 0 → 1 → 2 → M → 3 → 4 → 5 → 6. Partiduo démarre de zéro (aucune donnée à reprendre), mais l'outil de reprise `partiduo-migrate` est obligatoire (ADR-001 D5) : c'est un *dépôt séparé*, `prod-crystal/partiduo/partiduo-migrate`, qui dépend de `partiduo-app` comme shard et n'écrit que par ses services publics ; source FEC d'abord, base NOALYSS ensuite.
 - Un agent « architecte » pose le squelette et les conventions partagées ; l'extraction des règles de mot de passe peut avancer en parallèle de lui. Rien d'autre ne démarre avant que le squelette compile.
 - Ensuite, parallélisez par application Marten (`core`, `accounting`, `cards`, `vat`, `analytic`, `reporting`…) en respectant les dépendances de modèles.
 - Pour chaque lot : un agent implémente, un agent `ruby-crystal-tester` écrit les specs, un agent `ruby-crystal-reviewer` relit ; corrigez ses remarques avant le commit.
@@ -169,7 +169,7 @@ Plan de lots de l'ADR-001 : P → 0 → 1 → 2 → M → 3 → 4 → 5 → 6. P
 
 ## Jalon minimal exigé à la fin
 
-P + 0 + 1 fonctionnels : `bin/partiduo-provision` crée une instance vierge avec le plan comptable de son régime (FR ou BE), on s'y enrôle, on crée et consulte plan comptable, fiches, exercices et journaux. `partiduo-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible, en visant le second jalon 2 + M : saisie des écritures, puis `bin/partiduo-migrate` importe un FEC (générez-en un de démonstration, par exemple depuis une base NOALYSS créée avec les scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste au centime.
+P + 0 + 1 fonctionnels : `bin/partiduo-provision` crée une instance vierge avec le plan comptable de son régime (FR ou BE), on s'y enrôle, on crée et consulte plan comptable, fiches, exercices et journaux. `partiduo-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible, en visant le second jalon 2 + M : saisie des écritures, puis `partiduo-migrate` importe un FEC (générez-en un de démonstration, par exemple depuis une base NOALYSS créée avec les scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste au centime.
 
 ## Reprise
 
