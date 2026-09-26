@@ -583,9 +583,10 @@ déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
 . *Suivre l'amont ou figer une version de référence ?* Le dépôt NOALYSS est
   actif. À décider avant le lot 1.
 . *Nom et licence* du projet — voir « Neutres ».
-. *ZUGFeRD / Factur-X* : `horstoeko/zugferd` n'a pas d'équivalent Crystal.
-  Facturation électronique obligatoire en France — à traiter comme un projet à
-  part, en s'appuyant sur `prod-crystal/pdf-a` et `pdf-signature`.
+. [line-through]#*ZUGFeRD / Factur-X*# — *tranché* : une extension
+  `noalyss-cr-einvoicing`, dont la génération Factur-X s'appuie sur
+  `prod-crystal/pdf-a` sans dépendre d'un équivalent de `horstoeko/zugferd`.
+  Voir `ADR-004-facturation-electronique.adoc` (D1, D3).
 . *CAPTCHA* (`html/securimage`, 1 606 lignes) : à reconduire ou à abandonner ?
 . *Périmètre du lot 6* (stocks, prévisions, GED) : réellement nécessaire, ou
   reportable après une première mise en production du noyau comptable ?
@@ -594,6 +595,7 @@ déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
 
 * `../CARTOGRAPHIE-NOALYSS.adoc` — analyse détaillée de l'existant
 * `ADR-002-authentification.adoc` — authentification et rôle comptable
+* `ADR-004-facturation-electronique.adoc` — facturation électronique française
 * Dépôt analysé : `prod-github/noalyss/noalyss-app/` (clone de https://gitlab.com/noalyss/noalyss) — `rel10200-7-g4bd46a13f`
 * Projet amont : https://noalyss.eu — manuel développeur : https://manuel-fr.noalyss.eu/
 * Marten : `prod-crystal/marten` (branche `main`), https://martenframework.com
