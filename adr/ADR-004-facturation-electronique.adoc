@@ -3,7 +3,7 @@
 :toc-title: Table des matières
 :icons: font
 
-*Statut.* Proposé — en attente de validation Philippe. +
+*Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Contexte.* Prochaine extension à porter après le cœur. Remplace le portage à

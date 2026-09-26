@@ -3,7 +3,7 @@
 :toc-title: Table des matières
 :icons: font
 
-*Statut.* Proposé — en attente de validation Philippe. +
+*Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Source.* Analyse de `prod-github/noalyss/noalyss-app` et des neuf projets
@@ -67,7 +67,7 @@ implicites (`peppol-connect` installe le schéma de `noalyss_document`).
 
 === D1 — Une extension est un shard qui fournit une application Marten
 
-Chaque extension vit dans son dépôt, `prod-crystal/partiduo/noalyss-cr-<nom>`, et
+Chaque extension vit dans son dépôt, `prod-crystal/partiduo/partiduo-<nom>`, et
 dépend du cœur `partiduo-app` comme shard.
 
 *Composition à la compilation, activation à l'exécution.* Le binaire distribué
