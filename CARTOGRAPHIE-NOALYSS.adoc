@@ -139,7 +139,7 @@ risque d'injection et **facilite la transposition littérale** vers Crystal.
 |===
 
 Plusieurs de ces briques existent déjà dans `prod-crystal/` (pdf, pdf-a,
-pdf-signature, combine-pdf, i18n, kemal-auth, crystal-sepa).
+pdf-signature, combine-pdf, i18n, kemal-auth — renommé depuis `authn` —, crystal-sepa).
 
 == Difficultés identifiées
 
@@ -225,7 +225,7 @@ de production PostgreSQL actuelle, sans migration**.
 == Décisions à trancher avant d'écrire du code
 
 . *Framework* — Marten 0.6.3 (présent dans `prod-crystal/`, ORM + migrations +
-  i18n + admin) ou Kemal (plus léger, `kemal-auth` déjà disponible) ?
+  i18n + admin) ou Kemal (plus léger, `kemal-auth` — aujourd'hui `authn` — déjà disponible) ?
 . *Schéma* — conserver le schéma PostgreSQL existant à l'identique (portage
   progressif, cohabitation possible avec le PHP) ou repartir d'un modèle propre
   (rupture, migration de données à écrire) ?

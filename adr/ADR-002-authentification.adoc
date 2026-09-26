@@ -266,7 +266,9 @@ inscription, connexion, réinitialisation, jetons.
 |*Livré* : `prod-crystal/password-policy` v0.1.0, indépendant de Kemal. Il
 applique la délibération CNIL 2022-100 (paliers d'entropie : 80 bits pour un
 mot de passe seul, 50 avec restriction des tentatives, 13 avec matériel détenu)
-et non plus la recommandation de 2017 que portait `kemal-auth`. Trois
+et non plus la recommandation de 2017 que portait `kemal-auth`. Ce dernier, renommé
+`authn`, dépend désormais de `password-policy` : les règles n'existent plus qu'à
+un seul endroit. Trois
 préréglages déclarés équivalents par la CNIL ; motifs de refus en clés i18n ;
 limite de 72 *octets* imposée par BCrypt. Partiduo vise le palier à 50 bits,
 qui *exige* de limiter les attaques en ligne (temporisation, ou blocage après
@@ -446,7 +448,8 @@ des drapeaux `UP` et `UV`, gestion du compteur.
 * `prod-crystal/jose` — JWS / JWE / JWK, courbes elliptiques ; bindings OpenSSL
   réutilisables dans `src/jose/openssl_ext.cr`
 * `prod-crystal/saml` — SAML v2, portage de `ruby-saml` v1.18.1
-* `prod-crystal/kemal-auth` — règles de mot de passe conformes CNIL
+* `prod-crystal/password-policy` — règles de mot de passe (CNIL 2022-100)
+* `prod-crystal/authn` (ex-`kemal-auth`) — briques d'authentification, qui s'appuient sur `password-policy`
 * NOALYSS : `include/class/noalyss_user.class.php`, `html/do.php`
   (`is_double_identified`), tables `ac_users`, `jnt_use_dos`,
   `user_active_security`
