@@ -3,7 +3,7 @@
 :toc-title: Table des matières
 :icons: font
 
-*Statut.* Proposé — en attente de validation Philippe. +
+*Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-001 D4 (HTMX + Bulma, Opal en dernier recours) et ADR-003 D6
@@ -153,6 +153,8 @@ Qualité :
   24 langues officielles de l'Union européenne*. Voir D7.
 
 === D6 — La maquette fait référence
+
+Maquette validée par Philippe le 26 septembre 2026.
 
 La maquette validée (tableau de bord, saisie d'une écriture, plan comptable)
 fixe l'apparence et l'ergonomie de `partiduo-ui-bulma`. Elle vit dans

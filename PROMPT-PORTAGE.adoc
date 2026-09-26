@@ -80,7 +80,7 @@ d'extensions, les événements et les champs de facturation française.
 
 |Statut des ADR
 |icon:check[] Acceptés
-|ADR-001 à ADR-004, le 26 septembre 2026.
+|ADR-001 à ADR-005, le 26 septembre 2026. Maquette de l'interface validée.
 |===
 
 === Avant le lancement
