@@ -141,7 +141,9 @@ Ergonomie comptable :
   anglais) ;
 * dates au format de la langue, saisie abrégée acceptée (`12` → le 12 du mois de
   la période courante) ;
-* tableaux triables, filtres persistants, export CSV et PDF depuis chaque liste.
+* tableaux triables, filtres persistants, export CSV et PDF depuis chaque liste ;
+* *navigation transverse* : tout numéro de compte, nom de tiers ou montant
+  agrégé affiché est un lien vers sa consultation (voir D9).
 
 Qualité :
 
@@ -164,7 +166,8 @@ Qualité :
 
 Maquette validée par Philippe le 26 septembre 2026.
 
-La maquette validée (tableau de bord, saisie d'une écriture, plan comptable)
+La maquette validée (tableau de bord, justificatifs, saisie d'une écriture,
+consultation d'un compte ou d'un tiers, plan comptable)
 fixe l'apparence et l'ergonomie de `partiduo-ui-bulma`. Elle vit dans
 `maquette/` (Bulma 1.0.4, `theme.css`) et est publiée sur
 https://claude.ai/artifact/PWX5XRVHre9TWqEFv1k1WS. Son `theme.css` est le point de
@@ -200,6 +203,58 @@ ro, sk, sl, sv) par un simple fichier de traduction :
 * *qui traduit quoi* : les libellés d'écran sont dans l'interface ; les libellés
   métier et les messages d'erreur sont dans le cœur, pour qu'une nouvelle
   interface en hérite.
+
+=== D8 — Justificatifs photographiés
+
+Sur téléphone, l'usage le plus fréquent est de *photographier un justificatif*
+(ticket, facture papier, note de frais) au moment où on le reçoit.
+
+* *Une seule boîte « Justificatifs à traiter »* reçoit les photos, les fichiers
+  déposés (PDF, images) et les factures électroniques arrivées par la plateforme
+  agréée (ADR-004). Le compteur du menu et du tableau de bord en découle.
+* *Prise de vue* : bouton « Photographier un justificatif » qui ouvre
+  directement l'appareil photo du téléphone
+  (`<input type="file" accept="image/*,application/pdf" capture="environment">`,
+  sans application native) ; sur ordinateur, dépôt par glisser-déposer.
+* *Compléments facultatifs* à la prise de vue : fournisseur, montant TTC, date,
+  nature, note. Rien n'est obligatoire : le justificatif doit pouvoir être
+  capturé en deux secondes.
+* *Traitement* : « Saisir l'écriture » ouvre la saisie avec l'image à côté et
+  une écriture préremplie ; « Rattacher » l'associe à une écriture existante.
+  Une fois l'écriture enregistrée, le justificatif passe en « Rattaché ».
+* *Stockage* : fichier original conservé tel quel, vignette et version réduite
+  produites par le serveur. Formats acceptés : JPEG, PNG, HEIC (converti), PDF.
+* *Valeur probante* : par défaut, une photo est une *copie de travail* et
+  l'original papier est conservé. Une numérisation permettant de détruire
+  l'original (copie fiable au sens de l'article L102 B du LPF et de l'arrêté du
+  22 mars 2017 — conditions à vérifier) est une option ultérieure, qui
+  s'appuierait sur `pdf-a` et `pdf-signature`.
+* *Emplacement* : cette boîte appartient à l'extension `partiduo-document`
+  (ADR-003), dont `partiduo-einvoicing` dépend déjà.
+* *Hors périmètre initial* : lecture automatique du contenu (OCR).
+
+=== D9 — Consultation d'un compte ou d'un tiers
+
+Un écran unique « Comptes et tiers » répond à « où en est ce fournisseur, ce
+client, ce compte ? » :
+
+* *sélection* par nom, code de fiche ou numéro de compte, avec complétion ;
+  période ; filtre « non lettrées seulement » ;
+* *synthèse* : solde, reste à encaisser ou à payer, montant échu et *balance
+  âgée* (non échu, 1 à 30 jours, 31 à 60, plus de 60) ;
+* *mouvements* : date, journal, pièce, libellé, échéance (en rouge si
+  dépassée), débit, crédit, solde progressif, lettre de lettrage ;
+* *fiche du tiers* : code, compte collectif, SIREN, courriel, conditions de
+  règlement ;
+* *actions* : lettrer, relancer (clients), exporter ;
+* *accès* : depuis le menu, depuis les tuiles du tableau de bord, depuis le plan
+  comptable et depuis tout nom de tiers affiché ;
+* *téléphone* : synthèse en premier ; le tableau ne garde que date, libellé,
+  montant et lettrage.
+
+Cet écran relève du lot 2 (« consultation, lettrage ») de l'ADR-001 ; la
+requête correspondante (`Partiduo::Api::Accounting.account_statement`) fait
+partie du contrat.
 
 == Conséquences
 

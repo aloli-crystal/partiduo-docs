@@ -23,7 +23,7 @@ chaque projet PHP porté a son équivalent Crystal.
 |`noalyss-plugins` |découpé — voir ADR-003 |15 extensions
 |`noalyss_xmlpayment` |`partiduo-sepa` |Virements SEPA
 |`advancedimport` |`partiduo-import` |Import avancé
-|`noalyss_document` |`partiduo-document` |Documents ; dépendance d'`einvoicing`
+|`noalyss_document` |`partiduo-document` |Justificatifs (photos, fichiers, factures reçues) ; dépendance d'`einvoicing`
 |`noalyss-form` |`partiduo-form` |Saisie de fiches depuis d'autres sites
 |`noalyss-export` |intégré au lot 3 du cœur |Export CSV / FEC
 |`profile-management` |absorbé par ADR-002 |Profils et droits

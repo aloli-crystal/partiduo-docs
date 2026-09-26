@@ -33,7 +33,7 @@
   /* Menu latéral */
   .pd-side { background: var(--pd-sidebar); color: var(--pd-sidebar-text); padding: 1rem .75rem; }
   .pd-side .menu-label { color: var(--pd-sidebar-text); opacity: .7; font-size: .68rem; letter-spacing: .08em; margin-top: 1.1rem; }
-  .pd-side .menu-list a { color: var(--pd-sidebar-text); border-radius: var(--bulma-radius); display: flex; justify-content: space-between; align-items: center; padding: .45rem .65rem; }
+  .pd-side .menu-list a { background: transparent; color: var(--pd-sidebar-text); border-radius: var(--bulma-radius); display: flex; justify-content: space-between; align-items: center; padding: .45rem .65rem; }
   .pd-side .menu-list a:hover { background: var(--pd-sidebar-active-bg); color: var(--pd-sidebar-active); }
   .pd-side .menu-list a.is-active { background: var(--pd-sidebar-active-bg); color: var(--pd-sidebar-active); font-weight: 600; box-shadow: inset 3px 0 0 #7fd0e2; }
   .pd-side .menu-list a[aria-disabled="true"] { opacity: .55; cursor: default; }
@@ -112,6 +112,41 @@
   .pd-tabs button { border: 1px solid var(--pd-rule); background: var(--pd-surface); color: var(--pd-ink); border-radius: 1rem; padding: .2rem .7rem; font: inherit; font-size: .82rem; cursor: pointer; }
   .pd-tabs button[aria-pressed="true"] { background: var(--bulma-primary); border-color: var(--bulma-primary); color: #fff; }
 
+  /* Justificatifs */
+  .pd-capture { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; align-items: center; padding: 1rem; }
+  .pd-drop { border: 2px dashed var(--pd-rule); border-radius: var(--bulma-radius); padding: 1rem; color: var(--pd-muted); font-size: .9rem; text-align: center; }
+  .pd-drop.is-over { border-color: var(--pd-focus); background: var(--pd-row-alt); color: var(--pd-ink); }
+  .pd-cam { display: inline-flex; gap: .5rem; align-items: center; }
+  .pd-cam svg { width: 1.25rem; height: 1.25rem; flex: none; }
+  .pd-quick { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; padding: 1rem; border-top: 1px solid var(--pd-rule); }
+  .pd-quick img, .pd-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--bulma-radius-small); border: 1px solid var(--pd-rule); background: #fff; max-width: 100%; }
+  .pd-quick .fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; align-content: start; }
+  .pd-quick .fields .full { grid-column: 1 / -1; }
+  .pd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; padding: 1rem; }
+  .pd-card { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: .8rem; padding: .8rem; border: 1px solid var(--pd-rule); border-radius: var(--bulma-radius); background: var(--pd-surface); }
+  .pd-card h3 { font-weight: 600; font-size: .92rem; color: var(--pd-ink); line-height: 1.3; }
+  .pd-card .meta { font-size: .78rem; color: var(--pd-muted); }
+  .pd-card .amt { font-family: var(--bulma-family-code); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pd-card .acts { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
+  .pd-card .info { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+  .pd-doc-img { width: 100%; max-width: 100%; border: 1px solid var(--pd-rule); border-radius: var(--bulma-radius-small); background: #fff; margin-bottom: .75rem; }
+
+  /* Consultation de compte */
+  .pd-acc-head { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+  .pd-acc-head .field { margin: 0; }
+  .pd-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 2fr); gap: 1rem; margin-bottom: 1rem; }
+  .pd-sum .pd-tile .val { font-size: 1.15rem; }
+  .pd-aging { display: flex; height: .7rem; border-radius: 1rem; overflow: hidden; background: var(--pd-row-alt); margin: .35rem 0 .5rem; }
+  .pd-aging span { display: block; height: 100%; }
+  .pd-legend { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .76rem; color: var(--pd-muted); }
+  .pd-legend i { display: inline-block; width: .6rem; height: .6rem; border-radius: 2px; margin-right: .3rem; vertical-align: baseline; }
+  .pd-let { font-family: var(--bulma-family-code); font-size: .75rem; font-weight: 600; color: var(--pd-muted); }
+  .pd-due-late { color: var(--pd-gap); font-weight: 600; }
+  .pd-show-s { display: none; }
+  .pd-link { color: var(--bulma-link); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 2px; cursor: pointer; }
+  a.pd-tile { color: inherit; }
+  a.pd-tile:hover { border-color: var(--pd-focus); }
+
   /* Toast */
   .pd-toast { position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 50; max-width: calc(100% - 2rem); }
 
@@ -121,6 +156,8 @@
   @media (max-width: 1100px) {
     .pd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pd-grid2 { grid-template-columns: minmax(0, 1fr); }
+    .pd-sum { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pd-sum .pd-aging-tile { grid-column: 1 / -1; }
   }
   @media (max-width: 820px) {
     .pd-app { grid-template-columns: minmax(0, 1fr); }
@@ -140,6 +177,14 @@
   }
   @media (max-width: 480px) {
     .pd-hide-s { display: none; }
+    .pd-show-s { display: table-cell; }
+    .pd-sum { grid-template-columns: minmax(0, 1fr); }
+    .pd-capture { grid-template-columns: minmax(0, 1fr); }
+    .pd-drop { display: none; }
+    .pd-cam { width: 100%; justify-content: center; }
+    .pd-quick { grid-template-columns: minmax(0, 1fr); }
+    .pd-quick img { max-width: 10rem; }
+    .pd-quick .fields { grid-template-columns: minmax(0, 1fr); }
     .pd-tiles { grid-template-columns: minmax(0, 1fr); }
     .pd-tile .val { font-size: 1.2rem; }
     .pd-period { flex-wrap: wrap; }
@@ -183,10 +228,15 @@
     </ul>
     <p class="menu-label" data-i18n="nav_entry">Saisie</p>
     <ul class="menu-list">
-      <li><a href="#saisie" data-view="saisie"><span data-i18n="nav_purch">Achats</span><span class="pd-count" title="Factures électroniques reçues à comptabiliser">3</span></a></li>
+      <li><a href="#pieces" data-view="pieces"><span data-i18n="nav_docs">Justificatifs</span><span class="pd-count" id="nav-count" title="Justificatifs à traiter">5</span></a></li>
+      <li><a href="#saisie" data-view="saisie"><span data-i18n="nav_purch">Achats</span></a></li>
       <li><a aria-disabled="true"><span data-i18n="nav_sales">Ventes</span></a></li>
       <li><a aria-disabled="true"><span data-i18n="nav_bank">Financier</span></a></li>
       <li><a aria-disabled="true"><span data-i18n="nav_misc">Opérations diverses</span></a></li>
+    </ul>
+    <p class="menu-label" data-i18n="nav_consult">Consultation</p>
+    <ul class="menu-list">
+      <li><a href="#compte" data-view="compte" data-i18n="nav_accounts">Comptes et tiers</a></li>
     </ul>
     <p class="menu-label" data-i18n="nav_ref">Référentiel</p>
     <ul class="menu-list">
@@ -229,16 +279,16 @@
             <circle cx="198" cy="6" r="3" fill="var(--bulma-primary)"/>
           </svg>
         </div>
-        <div class="pd-panel pd-tile">
+        <a class="pd-panel pd-tile" href="#compte" data-view="compte" data-acc="CLI-MOREL">
           <span class="lbl" data-i18n="t_recv">Clients à encaisser · 411</span>
           <span class="val" data-amount="23480.00"></span>
           <span class="sub"><span class="tag is-danger is-light"><span data-amount="6120.00"></span>&nbsp;<span data-i18n="late">en retard</span></span></span>
-        </div>
-        <div class="pd-panel pd-tile">
+        </a>
+        <a class="pd-panel pd-tile" href="#compte" data-view="compte" data-acc="FOUR-ORANGE">
           <span class="lbl" data-i18n="t_pay">Fournisseurs à payer · 401</span>
           <span class="val" data-amount="9872.64"></span>
           <span class="sub" data-i18n="t_pay_sub">dont 1 facture échue</span>
-        </div>
+        </a>
         <div class="pd-panel pd-tile">
           <span class="lbl" data-i18n="t_vat">TVA due · septembre</span>
           <span class="val" data-amount="3214.00"></span>
@@ -259,7 +309,7 @@
         <div class="pd-panel">
           <header><h2 data-i18n="todo">À traiter</h2></header>
           <div class="pd-todo">
-            <a href="#saisie" data-view="saisie"><span class="pd-dot" style="background:var(--bulma-primary)"></span><span><span data-i18n="todo1">3 factures électroniques reçues à comptabiliser</span><small data-i18n="todo1s">Reçues via votre plateforme agréée · statut « Déposée »</small></span></a>
+            <a href="#pieces" data-view="pieces"><span class="pd-dot" style="background:var(--bulma-primary)"></span><span><span><span id="todo-count">5</span> <span data-i18n="todo1">justificatifs à traiter</span></span><small data-i18n="todo1s">Factures électroniques reçues via votre plateforme agréée et photos prises sur le terrain</small></span></a>
             <a aria-disabled="true"><span class="pd-dot" style="background:var(--pd-warn)"></span><span><span data-i18n="todo2">12 opérations bancaires non rapprochées</span><small data-i18n="todo2s">Relevé importé le 24 septembre</small></span></a>
             <a aria-disabled="true"><span class="pd-dot" style="background:var(--pd-gap)"></span><span><span data-i18n="todo3">Période d'août non clôturée</span><small data-i18n="todo3s">La déclaration de TVA d'août est déposée</small></span></a>
           </div>
@@ -282,7 +332,7 @@
 
       <div class="pd-grid2">
         <form class="pd-panel" id="entry" autocomplete="off">
-          <div class="pd-origin">
+          <div class="pd-origin" id="origin">
             <span class="tag is-link is-light">Factur-X</span>
             <span data-i18n="origin">Reçue via la plateforme agréée le</span> <span data-date="2026-09-24"></span>
             <span class="tag is-light" data-i18n="status_dep">Déposée</span>
@@ -322,7 +372,7 @@
           </div>
         </form>
 
-        <aside class="pd-panel pd-side-panel">
+        <aside class="pd-panel pd-side-panel" id="doc-panel">
           <header><h2 data-i18n="invoice">Facture reçue</h2></header>
           <div class="pd-body">
             <dl>
@@ -337,6 +387,91 @@
             <p class="is-size-7 pd-muted mt-4" data-i18n="inv_note">Le PDF et le XML de la facture restent attachés à l'écriture. Enregistrer fait passer la facture au statut « Prise en charge » auprès de la plateforme.</p>
           </div>
         </aside>
+      </div>
+    </section>
+
+    <!-- Justificatifs -->
+    <section data-screen="pieces" hidden>
+      <div class="pd-head">
+        <div>
+          <div class="pd-crumb"><span data-i18n="nav_entry">Saisie</span></div>
+          <h1 data-i18n="docs_title">Justificatifs à traiter</h1>
+        </div>
+        <div class="pd-tabs" id="piece-tabs" role="group" aria-label="Filtre des justificatifs">
+          <button type="button" data-f="todo" aria-pressed="true"><span data-i18n="f_todo">À traiter</span> (<span id="n-todo">5</span>)</button>
+          <button type="button" data-f="done" aria-pressed="false"><span data-i18n="f_done">Rattachés</span> (<span id="n-done">1</span>)</button>
+        </div>
+      </div>
+
+      <div class="pd-panel" style="margin-bottom:1rem">
+        <div class="pd-capture">
+          <label class="button is-primary is-medium pd-cam" for="cap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span data-i18n="capture">Photographier un justificatif</span>
+          </label>
+          <input type="file" id="cap" accept="image/*,application/pdf" capture="environment" hidden>
+          <div class="pd-drop" id="drop" data-i18n="drop">ou déposez ici une photo ou un PDF — ticket, facture papier, note de frais</div>
+        </div>
+        <form class="pd-quick" id="quick" hidden>
+          <img id="q-img" alt="Aperçu du justificatif">
+          <div class="fields">
+            <div class="field full"><label class="label" for="q-tiers" data-i18n="q_tiers">Fournisseur (facultatif)</label><input class="input" id="q-tiers" list="dl-tiers"></div>
+            <div class="field"><label class="label" for="q-amount" data-i18n="q_amount">Montant TTC</label><input class="input pd-mono" id="q-amount" inputmode="decimal"></div>
+            <div class="field"><label class="label" for="q-date">Date</label><input class="input pd-mono" id="q-date" value="26/09/2026" inputmode="numeric"></div>
+            <div class="field"><label class="label" for="q-kind" data-i18n="q_kind">Nature</label>
+              <div class="select is-fullwidth"><select id="q-kind"><option>Facture</option><option>Ticket de caisse</option><option>Note de frais</option></select></div></div>
+            <div class="field full"><label class="label" for="q-note" data-i18n="q_note">Note</label><input class="input" id="q-note" placeholder="Ex. : déjeuner client, chantier Morel"></div>
+            <div class="buttons full">
+              <button class="button is-primary" type="submit" data-i18n="q_keep">Mettre en attente</button>
+              <button class="button" type="button" id="q-cancel" data-i18n="cancel">Annuler</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="pd-panel"><div class="pd-cards" id="cards"></div></div>
+      <p class="is-size-7 pd-muted mt-3" data-i18n="docs_note">Une photo est un justificatif de travail : conservez l'original papier tant que la numérisation probante n'est pas activée.</p>
+    </section>
+
+    <!-- Consultation d'un compte ou d'un tiers -->
+    <section data-screen="compte" hidden>
+      <div class="pd-head">
+        <div>
+          <div class="pd-crumb"><span data-i18n="nav_consult">Consultation</span> › <span id="acc-crumb"></span></div>
+          <h1 id="acc-title"></h1>
+        </div>
+        <div class="buttons">
+          <button class="button" type="button" aria-disabled="true" data-i18n="letter">Lettrer</button>
+          <button class="button" type="button" aria-disabled="true" id="acc-remind" data-i18n="remind">Relancer</button>
+          <button class="button" type="button" aria-disabled="true">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="pd-panel" style="margin-bottom:1rem">
+        <div class="pd-body pd-acc-head">
+          <div class="field" style="flex:1 1 18rem"><label class="label" for="acc-pick" data-i18n="acc_pick">Compte ou tiers</label>
+            <input class="input" id="acc-pick" list="dl-comptes" placeholder="Nom, code de fiche ou numéro de compte"></div>
+          <div class="field"><label class="label" for="acc-from" data-i18n="from">Du</label><input class="input pd-mono" id="acc-from" value="01/01/2026" style="width:8.5rem"></div>
+          <div class="field"><label class="label" for="acc-to" data-i18n="to">Au</label><input class="input pd-mono" id="acc-to" value="30/09/2026" style="width:8.5rem"></div>
+          <label class="checkbox" style="padding-bottom:.5rem"><input type="checkbox" id="acc-open"> <span data-i18n="open_only">Non lettrées seulement</span></label>
+        </div>
+      </div>
+
+      <div class="pd-sum" id="acc-sum"></div>
+
+      <div class="pd-grid2">
+        <div class="pd-panel">
+          <header><h2 data-i18n="moves">Mouvements</h2><span class="is-size-7 pd-muted" id="acc-count"></span></header>
+          <div class="pd-scroll">
+            <table class="table is-fullwidth is-hoverable is-narrow">
+              <thead><tr><th>Date</th><th class="pd-hide-s" data-i18n="c_ledger">Journal</th><th class="pd-hide-s" data-i18n="c_doc">Pièce</th><th data-i18n="c_label">Libellé</th>
+                <th class="pd-hide-s" data-i18n="c_due">Échéance</th><th class="amount pd-hide-s" data-i18n="c_debit">Débit</th><th class="amount pd-hide-s" data-i18n="c_credit">Crédit</th>
+                <th class="amount pd-show-s" data-i18n="c_amount">Montant</th><th class="amount pd-hide-s" data-i18n="c_balance">Solde</th><th title="Lettrage">L.</th></tr></thead>
+              <tbody id="acc-moves"></tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="pd-panel pd-side-panel" id="acc-card"></aside>
       </div>
     </section>
 
@@ -372,6 +507,12 @@
   <option value="FOUR-TILLEULS · SCI Les Tilleuls"></option>
   <option value="FOUR-BUREAU · Bureau Vallée Tours"></option>
 </datalist>
+<datalist id="dl-comptes">
+  <option value="FOUR-ORANGE · Orange Business"></option>
+  <option value="CLI-MOREL · Atelier Morel"></option>
+  <option value="CLI-MAIRIE · Mairie de Joué-lès-Tours"></option>
+  <option value="512000 · Banque"></option>
+</datalist>
 <div class="pd-toast" id="toast" hidden><div class="notification is-success" role="status"></div></div>
 
 <script>
@@ -387,13 +528,22 @@
       t_cash: "Thesaurie · 512", t_recv: "Te innen klanten · 411", t_pay: "Te betalen leveranciers · 401", t_vat: "Verschuldigde btw · september",
       late: "achterstallig", t_pay_sub: "waarvan 1 vervallen factuur", due: "Vervaldag", recent: "Laatste boekingen", see_all: "Alles tonen",
       c_ledger: "Dagboek", c_doc: "Stuk", c_label: "Omschrijving", c_amount: "Bedrag", c_account: "Rekening", c_debit: "Debet", c_credit: "Credit", c_balance: "Saldo",
-      todo: "Te verwerken", todo1: "3 ontvangen e-facturen te boeken", todo1s: "Ontvangen via uw erkend platform · status « Ingediend »",
+      todo: "Te verwerken", todo1: "te verwerken bewijsstukken", todo1s: "E-facturen via uw erkend platform en foto's van onderweg",
       todo2: "12 niet-afgepunte bankverrichtingen", todo2s: "Uittreksel ingelezen op 24 september", todo3: "Periode augustus niet afgesloten", todo3s: "De btw-aangifte van augustus is ingediend",
       entry_title: "Aankoopboeking", split: "Factuur uitsplitsen", save: "Opslaan", origin: "Ontvangen via het erkend platform op", status_dep: "Ingediend",
       supplier: "Leverancier (fiche)", add_line: "Regel toevoegen", k_next: "volgend veld", k_add: "nieuwe regel", k_save: "opslaan",
       tot_d: "Totaal debet", tot_c: "Totaal credit", invoice: "Ontvangen factuur", inv_no: "Factuurnr.", inv_date: "Factuurdatum", inv_ht: "Totaal excl. btw",
       inv_vat: "Btw 20 %", inv_ttc: "Totaal incl. btw", inv_cat: "Categorie", services: "Dienstverlening", inv_debits: "Btw op debet", no: "Nee",
       inv_note: "De pdf en xml van de factuur blijven aan de boeking gekoppeld.", new_acc: "Nieuwe rekening", filter: "Filteren: nummer of omschrijving",
+      nav_docs: "Bewijsstukken", nav_consult: "Raadpleging", nav_accounts: "Rekeningen en derden", docs_title: "Te verwerken bewijsstukken", f_todo: "Te verwerken", f_done: "Gekoppeld",
+      capture: "Bewijsstuk fotograferen", drop: "of sleep hier een foto of pdf — kassabon, papieren factuur, onkostennota", q_tiers: "Leverancier (optioneel)", q_amount: "Bedrag incl. btw",
+      q_kind: "Soort", q_note: "Notitie", q_keep: "In wachtrij zetten", cancel: "Annuleren", docs_note: "Een foto is een werkdocument: bewaar het papieren origineel.",
+      src_einv: "E-factuur", src_photo: "Foto", src_file: "Bestand", no_amount: "Bedrag in te vullen", proof: "Bewijsstuk", enter: "Boeking invoeren", link_entry: "Koppelen",
+      linked: "Gekoppeld aan", empty: "Niets te tonen.", added: "Bewijsstuk in wachtrij gezet", taken: "Foto genomen op", photo_note: "De afbeelding blijft aan de boeking gekoppeld.",
+      letter: "Afpunten", remind: "Herinneren", acc_pick: "Rekening of derde", from: "Van", to: "Tot", open_only: "Alleen niet-afgepunt", moves: "Bewegingen", c_due: "Vervaldag",
+      general: "Algemene rekening", account: "Rekening", class: "Klasse", fin_acc: "Financiële rekeningen", n_moves: "bewegingen", to_collect: "Nog te innen", to_pay: "Nog te betalen",
+      overdue: "Vervallen", aging: "Ouderdomsbalans", b0: "Niet vervallen", b1: "1 tot 30 d", b2: "31 tot 60 d", b3: "Meer dan 60 d", client: "Klantenfiche", supplier_card: "Leveranciersfiche",
+      code: "Code", mail: "E-mail", terms: "Voorwaarden", unknown_acc: "Rekening of derde niet gevonden in deze maquette",
       balanced: "In evenwicht", gap: "Verschil", saved: "Boeking {p} opgeslagen", cannot: "Onevenwichtige boeking: verschil {g}" },
     en: { proto: "Reference mock-up of partiduo-ui-bulma — sample data", fy: "Fiscal year", period: "Period", search: "Search an account, card, document… (/)",
       nav_dash: "Dashboard", nav_entry: "Entry", nav_purch: "Purchases", nav_sales: "Sales", nav_bank: "Bank", nav_misc: "Journal entries",
@@ -401,15 +551,33 @@
       nav_gl: "General ledger", nav_ext: "Extensions", nav_einv: "E-invoices", nav_sepa: "SEPA transfers", new_entry: "New purchase entry",
       t_cash: "Cash · 512", t_recv: "Receivables · 411", t_pay: "Payables · 401", t_vat: "VAT due · September", late: "overdue", t_pay_sub: "including 1 overdue invoice",
       due: "Due", recent: "Latest entries", see_all: "See all", c_ledger: "Ledger", c_doc: "Document", c_label: "Description", c_amount: "Amount", c_account: "Account",
-      c_debit: "Debit", c_credit: "Credit", c_balance: "Balance", todo: "To do", todo1: "3 received e-invoices to post", todo1s: "Received via your approved platform · status “Submitted”",
+      c_debit: "Debit", c_credit: "Credit", c_balance: "Balance", todo: "To do", todo1: "receipts to process", todo1s: "E-invoices from your approved platform and photos taken on the go",
       todo2: "12 unreconciled bank transactions", todo2s: "Statement imported on 24 September", todo3: "August period not closed", todo3s: "The August VAT return is filed",
       entry_title: "Purchase entry", split: "Split invoice", save: "Save", origin: "Received via the approved platform on", status_dep: "Submitted",
       supplier: "Supplier (card)", add_line: "Add a line", k_next: "next field", k_add: "new line", k_save: "save", tot_d: "Total debit", tot_c: "Total credit",
       invoice: "Received invoice", inv_no: "Invoice no.", inv_date: "Invoice date", inv_ht: "Net total", inv_vat: "VAT 20%", inv_ttc: "Gross total",
       inv_cat: "Category", services: "Services", inv_debits: "VAT on debits", no: "No", inv_note: "The invoice PDF and XML stay attached to the entry.",
-      new_acc: "New account", filter: "Filter: number or name", balanced: "Balanced", gap: "Difference", saved: "Entry {p} saved", cannot: "Unbalanced entry: difference {g}" }
+      new_acc: "New account", filter: "Filter: number or name",
+      nav_docs: "Receipts", nav_consult: "Enquiry", nav_accounts: "Accounts and parties", docs_title: "Receipts to process", f_todo: "To process", f_done: "Linked",
+      capture: "Take a photo of a receipt", drop: "or drop a photo or PDF here — till receipt, paper invoice, expense note", q_tiers: "Supplier (optional)", q_amount: "Gross amount",
+      q_kind: "Type", q_note: "Note", q_keep: "Keep for later", cancel: "Cancel", docs_note: "A photo is a working copy: keep the paper original.",
+      src_einv: "E-invoice", src_photo: "Photo", src_file: "File", no_amount: "Amount to enter", proof: "Receipt", enter: "Post entry", link_entry: "Link",
+      linked: "Linked to", empty: "Nothing to show.", added: "Receipt kept for later", taken: "Photo taken on", photo_note: "The image stays attached to the entry.",
+      letter: "Match", remind: "Send reminder", acc_pick: "Account or party", from: "From", to: "To", open_only: "Unmatched only", moves: "Transactions", c_due: "Due date",
+      general: "General account", account: "Account", class: "Class", fin_acc: "Financial accounts", n_moves: "transactions", to_collect: "Outstanding", to_pay: "Outstanding",
+      overdue: "Overdue", aging: "Aged balance", b0: "Not due", b1: "1–30 d", b2: "31–60 d", b3: "Over 60 d", client: "Customer card", supplier_card: "Supplier card",
+      code: "Code", mail: "Email", terms: "Terms", unknown_acc: "Account or party not found in this mock-up",
+      balanced: "Balanced", gap: "Difference", saved: "Entry {p} saved", cannot: "Unbalanced entry: difference {g}" }
   };
-  var FR = { balanced: "Équilibrée", gap: "Écart", saved: "Écriture {p} enregistrée", cannot: "Écriture déséquilibrée : écart de {g}" };
+  var FR = { src_einv: "Facture électronique", src_photo: "Photo", src_file: "Fichier", no_amount: "Montant à saisir", proof: "Justificatif",
+    enter: "Saisir l'écriture", link_entry: "Rattacher", linked: "Rattaché à", empty: "Rien à afficher.", added: "Justificatif mis en attente",
+    taken: "Photo prise le", photo_note: "L'image reste attachée à l'écriture. L'original papier est à conserver.",
+    q_tiers: "Fournisseur (facultatif)", q_amount: "Montant TTC", q_note: "Note",
+    general: "Compte général", account: "Compte", class: "Classe", fin_acc: "Comptes financiers", n_moves: "mouvements",
+    to_collect: "Reste à encaisser", to_pay: "Reste à payer", overdue: "Échu", aging: "Balance âgée",
+    b0: "Non échu", b1: "1 à 30 j", b2: "31 à 60 j", b3: "Plus de 60 j", client: "Fiche client", supplier_card: "Fiche fournisseur",
+    code: "Code", mail: "Courriel", terms: "Conditions", unknown_acc: "Compte ou tiers introuvable dans cette maquette", c_account: "Compte", c_balance: "Solde",
+    origin: "Reçue via la plateforme agréée le", balanced: "Équilibrée", gap: "Écart", saved: "Écriture {p} enregistrée", cannot: "Écriture déséquilibrée : écart de {g}" };
 
   var ACCOUNTS = [
     ["1", "Comptes de capitaux"], ["101300", "Capital souscrit appelé versé", 0, 20000], ["106800", "Autres réserves", 0, 14250], ["164000", "Emprunts auprès des établissements de crédit", 3600, 31800],
@@ -541,6 +709,7 @@
     var p = document.getElementById("f-piece").value;
     RECENT.unshift(["2026-09-24", "ACH", p, document.getElementById("f-libelle").value, tt.d]);
     renderRecent(); toast(t("saved").replace("{p}", p), true);
+    if (currentPiece) { currentPiece.status = "done"; currentPiece.linked = p; currentPiece = null; renderPieces(); }
     pieceNo += 1; document.getElementById("f-piece").value = "ACH-0" + pieceNo;
   }
   document.getElementById("save").addEventListener("click", save);
@@ -584,7 +753,8 @@
       } else {
         var bal = Math.round((a[2] - a[3]) * 100) / 100;
         tr.className = "pd-lvl1";
-        tr.innerHTML = '<td class="pd-mono">' + n + '</td><td></td><td class="amount pd-hide-s">' + (a[2] ? money(a[2]) : "") + '</td><td class="amount pd-hide-s">' + (a[3] ? money(a[3]) : "") +
+        var target = { "401000": "FOUR-ORANGE", "411000": "CLI-MOREL", "512000": "512000" }[n];
+        tr.innerHTML = '<td class="pd-mono">' + (target ? '<a class="pd-link" href="#compte" data-view="compte" data-acc="' + target + '">' + n + '</a>' : n) + '</td><td></td><td class="amount pd-hide-s">' + (a[2] ? money(a[2]) : "") + '</td><td class="amount pd-hide-s">' + (a[3] ? money(a[3]) : "") +
           '</td><td class="amount">' + money(Math.abs(bal)) + ' <span class="pd-muted is-size-7">' + (bal >= 0 ? "D" : "C") + '</span></td>';
         tr.children[1].textContent = a[1];
       }
@@ -599,6 +769,224 @@
   });
   document.getElementById("coa-filter").addEventListener("input", renderCoa);
 
+
+  // ---------- Justificatifs ----------
+  var TODAY = "2026-09-26";
+  function esc(x) { return String(x == null ? "" : x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function receiptSvg(title, amount, kind) {
+    var lines = "";
+    for (var i = 0; i < 7; i++) lines += '<rect x="14" y="' + (58 + i * 13) + '" width="' + (60 + (i * 37) % 50) + '" height="5" rx="2" fill="#c9d3d6"/>';
+    var head = kind === "einv"
+      ? '<rect width="150" height="34" fill="#0f5c6e"/><text x="12" y="22" font-family="Arial" font-size="12" fill="#fff" font-weight="700">Factur-X</text>'
+      : '<rect width="150" height="34" fill="#eef2f3"/>';
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 200">' +
+      '<rect width="150" height="200" fill="#ffffff"/>' + head +
+      '<text x="12" y="50" font-family="Arial" font-size="10" fill="#1b2a30" font-weight="700">' + esc(title).slice(0, 22) + '</text>' + lines +
+      '<rect x="14" y="160" width="122" height="1" fill="#1b2a30"/>' +
+      '<text x="136" y="180" font-family="Courier New" font-size="12" fill="#1b2a30" text-anchor="end" font-weight="700">' + esc(amount) + '</text></svg>';
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+  var PIECES = [
+    { id: 1, src: "einv", tiers: "Orange Business", label: "Facture FB-2026-0918-4471", date: "2026-09-24", amount: 86.40, status: "todo", tiersKey: "FOUR-ORANGE" },
+    { id: 2, src: "einv", tiers: "Bureau Vallée Tours", label: "Facture 2026-09-7731", date: "2026-09-25", amount: 214.80, status: "todo", tiersKey: "FOUR-BUREAU",
+      lines: [["606400", "Fournitures de bureau", 179, 0], ["445660", "TVA déductible 20 %", 35.80, 0], ["401000", "Bureau Vallée Tours · 2026-09-7731", 0, 214.80]] },
+    { id: 3, src: "einv", tiers: "SCI Les Tilleuls", label: "Avis d'échéance · loyer octobre", date: "2026-09-25", amount: 1800, status: "todo", tiersKey: "FOUR-TILLEULS",
+      lines: [["613200", "Loyer atelier · octobre 2026", 1500, 0], ["445660", "TVA déductible 20 %", 300, 0], ["401000", "SCI Les Tilleuls · loyer octobre", 0, 1800]] },
+    { id: 4, src: "photo", tiers: "Station Total Tours Nord", label: "Ticket carburant", date: "2026-09-25", amount: 68.52, status: "todo", by: "P. Nénert", kind: "Ticket de caisse" },
+    { id: 5, src: "photo", tiers: "", label: "Note de restaurant", date: "2026-09-26", amount: null, status: "todo", by: "P. Nénert", kind: "Note de frais", note: "Déjeuner Mairie de Joué-lès-Tours, devis 26-114" },
+    { id: 6, src: "photo", tiers: "Leroy Merlin Tours", label: "Facture quincaillerie", date: "2026-09-19", amount: 37.90, status: "done", by: "P. Nénert", linked: "ACH-0139" }
+  ];
+  PIECES.forEach(function (x) { x.img = receiptSvg(x.tiers || x.label, x.amount == null ? "" : money(x.amount), x.src); });
+  var pieceFilter = "todo", currentPiece = null, nextPieceId = 7;
+
+  function counts() {
+    var todo = PIECES.filter(function (x) { return x.status === "todo"; }).length;
+    ["nav-count", "todo-count", "n-todo"].forEach(function (id) { document.getElementById(id).textContent = todo; });
+    document.getElementById("n-done").textContent = PIECES.length - todo;
+  }
+  function renderPieces() {
+    var box = document.getElementById("cards"); box.innerHTML = "";
+    PIECES.filter(function (x) { return x.status === pieceFilter; }).forEach(function (x) {
+      var el = document.createElement("article"); el.className = "pd-card";
+      var srcTag = x.src === "einv" ? '<span class="tag is-link is-light">' + t("src_einv") + '</span>' :
+        x.src === "file" ? '<span class="tag is-light">' + t("src_file") + '</span>' : '<span class="tag is-warning is-light">' + t("src_photo") + '</span>';
+      el.innerHTML = '<img alt="">' +
+        '<div class="info">' + '<div>' + srcTag + '</div>' +
+        '<h3></h3><div class="meta"></div>' +
+        '<div class="amt">' + (x.amount == null ? '<span class="pd-muted">' + t("no_amount") + '</span>' : money(x.amount)) + '</div>' +
+        '<div class="acts"></div></div>';
+      el.querySelector("img").src = x.img; el.querySelector("img").alt = t("proof") + " : " + (x.tiers || x.label);
+      el.querySelector("h3").textContent = x.tiers || x.label;
+      el.querySelector(".meta").textContent = (x.tiers ? x.label + " · " : "") + dateFmt(x.date) + (x.by ? " · " + x.by : "") + (x.note ? " · " + x.note : "");
+      var acts = el.querySelector(".acts");
+      if (x.status === "todo") {
+        var b = document.createElement("button"); b.type = "button"; b.className = "button is-small is-primary"; b.textContent = t("enter");
+        b.addEventListener("click", function () { openPiece(x); });
+        var l = document.createElement("button"); l.type = "button"; l.className = "button is-small"; l.textContent = t("link_entry"); l.setAttribute("aria-disabled", "true");
+        acts.appendChild(b); acts.appendChild(l);
+      } else {
+        acts.innerHTML = '<span class="tag is-success is-light">' + t("linked") + ' ' + esc(x.linked) + '</span>';
+      }
+      box.appendChild(el);
+    });
+    if (!box.children.length) box.innerHTML = '<p class="pd-muted">' + t("empty") + '</p>';
+    counts();
+  }
+  document.getElementById("piece-tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    pieceFilter = b.getAttribute("data-f");
+    this.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+    renderPieces();
+  });
+
+  var pending = null;
+  function takeFile(file) {
+    if (!file) return;
+    var isPdf = /pdf$/i.test(file.type) || /\.pdf$/i.test(file.name);
+    function ready(url) {
+      pending = { url: url, src: isPdf ? "file" : "photo" };
+      document.getElementById("q-img").src = url;
+      document.getElementById("quick").hidden = false;
+      document.getElementById("q-tiers").focus();
+    }
+    if (isPdf) { ready(receiptSvg(file.name, "PDF", "file")); return; }
+    var r = new FileReader(); r.onload = function () { ready(r.result); }; r.readAsDataURL(file);
+  }
+  document.getElementById("cap").addEventListener("change", function () { takeFile(this.files[0]); this.value = ""; });
+  var drop = document.getElementById("drop");
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("is-over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("is-over"); }); });
+  drop.addEventListener("drop", function (e) { takeFile(e.dataTransfer.files[0]); });
+  document.getElementById("q-cancel").addEventListener("click", function () { pending = null; document.getElementById("quick").hidden = true; });
+  document.getElementById("quick").addEventListener("submit", function (e) {
+    e.preventDefault(); if (!pending) return;
+    var amt = parseAmount(document.getElementById("q-amount").value);
+    var tiersTxt = document.getElementById("q-tiers").value;
+    var tiersName = tiersTxt.indexOf(" · ") > 0 ? tiersTxt.split(" · ")[1] : tiersTxt;
+    var d = document.getElementById("q-date").value.split("/");
+    PIECES.unshift({ id: nextPieceId++, src: pending.src, tiers: tiersName, label: document.getElementById("q-kind").value,
+      date: d.length === 3 ? d[2] + "-" + d[1] + "-" + d[0] : TODAY, amount: amt || null, status: "todo", by: "P. Nénert",
+      note: document.getElementById("q-note").value, img: pending.url });
+    pending = null; this.reset(); document.getElementById("q-date").value = "26/09/2026"; this.hidden = true;
+    pieceFilter = "todo"; document.querySelectorAll("#piece-tabs button").forEach(function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-f") === "todo")); });
+    renderPieces(); toast(t("added"), true);
+  });
+
+  var ORANGE_ORIGIN = document.getElementById("origin").innerHTML;
+  var ORANGE_PANEL = document.getElementById("doc-panel").innerHTML;
+  function openPiece(x) {
+    currentPiece = x;
+    var origin = document.getElementById("origin"), panel = document.getElementById("doc-panel");
+    document.getElementById("f-tiers").value = x.tiersKey ? x.tiersKey + " · " + x.tiers : x.tiers;
+    document.getElementById("f-libelle").value = (x.tiers ? x.tiers + " · " : "") + x.label;
+    document.getElementById("f-date").value = dateFmt(x.date);
+    if (x.id === 1) {
+      origin.innerHTML = ORANGE_ORIGIN; panel.innerHTML = ORANGE_PANEL; applyStatic(origin); applyStatic(panel);
+      lines = [{ acc: "626000", lib: "Orange · fibre et mobile 09/2026", d: 72, c: 0 }, { acc: "445660", lib: "TVA déductible 20 %", d: 14.40, c: 0 }, { acc: "401000", lib: "Orange Business · FB-2026-0918-4471", d: 0, c: 86.40 }];
+    } else {
+      var isE = x.src === "einv";
+      origin.innerHTML = (isE ? '<span class="tag is-link is-light">Factur-X</span> ' + esc(t("origin")) : '<span class="tag is-warning is-light">' + esc(t("src_photo")) + '</span> ' + esc(t("taken"))) +
+        ' ' + dateFmt(x.date) + (x.by ? " · " + esc(x.by) : "");
+      panel.innerHTML = '<header><h2>' + esc(t("proof")) + '</h2></header><div class="pd-body"><img class="pd-doc-img" alt=""><dl>' +
+        '<dt>' + esc(t("q_tiers").replace(/ \(.*\)/, "")) + '</dt><dd></dd>' +
+        '<dt>' + esc(t("q_amount")) + '</dt><dd class="amount">' + (x.amount == null ? "—" : money(x.amount)) + '</dd>' +
+        (x.note ? '<dt>' + esc(t("q_note")) + '</dt><dd></dd>' : "") + '</dl>' +
+        '<p class="is-size-7 pd-muted mt-4">' + esc(t("photo_note")) + '</p></div>';
+      panel.querySelector("img").src = x.img; panel.querySelector("img").alt = t("proof");
+      var dds = panel.querySelectorAll("dd"); dds[0].textContent = x.tiers || "—"; if (x.note) dds[2].textContent = x.note;
+      if (x.lines) lines = x.lines.map(function (l) { return { acc: l[0], lib: l[1], d: l[2], c: l[3] }; });
+      else lines = [{ acc: "", lib: document.getElementById("f-libelle").value, d: x.amount || 0, c: 0 }, { acc: "401000", lib: document.getElementById("f-libelle").value, d: 0, c: x.amount || 0 }];
+    }
+    render(); show("saisie"); history.replaceState(null, "", "#saisie"); window.scrollTo(0, 0);
+  }
+
+  // ---------- Consultation d'un compte ou d'un tiers ----------
+  var ACCS = {
+    "FOUR-ORANGE": { kind: "four", name: "Orange Business", acct: "401000", siren: "380 129 866", mail: "facturation-pro@orange-business.example", terms: "Prélèvement à 30 jours fin de mois",
+      moves: [["2026-06-18", "ACH", "ACH-0098", "Facture fibre et mobile · juin", "2026-07-31", 0, 86.40, "A"], ["2026-07-31", "BQ", "BQ-0142", "Prélèvement Orange Business", "", 86.40, 0, "A"],
+        ["2026-07-18", "ACH", "ACH-0114", "Facture fibre et mobile · juillet", "2026-08-31", 0, 86.40, "B"], ["2026-08-31", "BQ", "BQ-0171", "Prélèvement Orange Business", "", 86.40, 0, "B"],
+        ["2026-08-18", "ACH", "ACH-0127", "Facture fibre et mobile · août", "2026-09-30", 0, 86.40, ""], ["2026-09-24", "ACH", "ACH-0142", "Facture fibre et mobile · septembre", "2026-10-31", 0, 86.40, ""]] },
+    "CLI-MOREL": { kind: "cli", name: "Atelier Morel", acct: "411000", siren: "529 604 118", mail: "compta@atelier-morel.example", terms: "Virement à 30 jours",
+      moves: [["2026-06-12", "VEN", "VEN-0268", "Restauration comptoir en chêne", "2026-07-12", 4320, 0, "C"], ["2026-07-10", "BQ", "BQ-0150", "Virement Atelier Morel", "", 0, 4320, "C"],
+        ["2026-07-22", "VEN", "VEN-0287", "Restauration vitrine", "2026-08-21", 3480, 0, ""], ["2026-08-05", "BQ", "BQ-0163", "Acompte Atelier Morel · buffet", "", 0, 1000, ""],
+        ["2026-09-24", "VEN", "VEN-0311", "Restauration buffet", "2026-10-24", 2640, 0, ""]] },
+    "CLI-MAIRIE": { kind: "cli", name: "Mairie de Joué-lès-Tours", acct: "411000", siren: "213 701 222", mail: "comptabilite@ville-joue.example", terms: "Mandat administratif à 30 jours (Chorus Pro)",
+      moves: [["2026-05-20", "VEN", "VEN-0244", "Réfection bancs salle des fêtes", "2026-06-19", 2640, 0, ""], ["2026-09-18", "VEN", "VEN-0310", "Devis 26-114 · mobilier accueil", "2026-10-18", 5760, 0, ""]] },
+    "512000": { kind: "gen", name: "Banque", acct: "512000",
+      moves: [["2026-09-01", "BQ", "BQ-0178", "Solde reporté au 1er septembre", "", 44102.10, 0, ""],
+        ["2026-09-10", "BQ", "BQ-0186", "Virement client · VEN-0299", "", 7920, 0, ""], ["2026-09-15", "BQ", "BQ-0190", "Salaires septembre", "", 0, 4265, ""],
+        ["2026-09-20", "BQ", "BQ-0194", "Prélèvement URSSAF", "", 0, 1941.80, ""], ["2026-09-23", "BQ", "BQ-0198", "Loyer SCI Les Tilleuls", "", 0, 1800, ""],
+        ["2026-09-24", "BQ", "BQ-0199", "Carte · carburant", "", 0, 68.52, ""], ["2026-09-25", "BQ", "BQ-0200", "Remise de chèques", "", 4269.04, 0, ""]] }
+  };
+  var accKey = "FOUR-ORANGE";
+  function daysBetween(a, b) { return Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 864e5); }
+  function openAccount(key) { if (ACCS[key]) { accKey = key; renderAccount(); } }
+  function renderAccount() {
+    var a = ACCS[accKey], onlyOpen = document.getElementById("acc-open").checked;
+    document.getElementById("acc-title").textContent = a.kind === "gen" ? a.acct + " · " + a.name : a.name;
+    document.getElementById("acc-crumb").textContent = a.kind === "gen" ? t("general") : a.acct + " · " + accKey;
+    document.getElementById("acc-pick").value = (a.kind === "gen" ? a.acct : accKey) + " · " + a.name;
+    document.getElementById("acc-remind").hidden = a.kind !== "cli";
+    var sign = a.kind === "four" ? -1 : 1;
+    var bal = 0, open = 0, late = 0, buckets = [0, 0, 0, 0], tb = document.getElementById("acc-moves"); tb.innerHTML = "";
+    var shown = 0;
+    a.moves.forEach(function (m) {
+      var net = m[5] - m[6]; bal += net;
+      var isOpen = !m[7];
+      if (isOpen) {
+        open += net * sign;
+        var amt = net * sign;
+        if (m[4] && amt > 0) {
+          var dd = daysBetween(m[4], TODAY);
+          if (dd <= 0) buckets[0] += amt; else if (dd <= 30) buckets[1] += amt; else if (dd <= 60) buckets[2] += amt; else buckets[3] += amt;
+          if (dd > 0) late += amt;
+        }
+      }
+      if (onlyOpen && !isOpen) return;
+      shown++;
+      var isLate = isOpen && m[4] && net * sign > 0 && daysBetween(m[4], TODAY) > 0;
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td class="pd-mono">' + dateFmt(m[0]) + '</td><td class="pd-hide-s"><span class="tag is-light">' + m[1] + '</span></td><td class="pd-mono pd-hide-s">' + m[2] + '</td><td></td>' +
+        '<td class="pd-mono pd-hide-s' + (isLate ? ' pd-due-late' : '') + '">' + (m[4] ? dateFmt(m[4]) : "") + '</td>' +
+        '<td class="amount pd-hide-s">' + (m[5] ? money(m[5]) : "") + '</td><td class="amount pd-hide-s">' + (m[6] ? money(m[6]) : "") + '</td>' +
+        '<td class="amount pd-show-s">' + money(Math.abs(net)) + ' <span class="pd-muted is-size-7">' + (net >= 0 ? "D" : "C") + '</span></td>' +
+        '<td class="amount pd-hide-s">' + money(Math.abs(bal)) + ' <span class="pd-muted is-size-7">' + (bal >= 0 ? "D" : "C") + '</span></td>' +
+        '<td><span class="pd-let">' + (m[7] || "") + '</span></td>';
+      tr.children[3].textContent = m[3];
+      tb.appendChild(tr);
+    });
+    document.getElementById("acc-count").textContent = shown + " " + t("n_moves");
+    var sum = document.getElementById("acc-sum");
+    var balTxt = money(Math.abs(bal)) + " " + (bal >= 0 ? "D" : "C");
+    if (a.kind === "gen") {
+      sum.innerHTML = '<div class="pd-panel pd-tile"><span class="lbl">' + t("c_balance") + '</span><span class="val">' + balTxt + '</span></div>';
+      document.getElementById("acc-card").innerHTML = '<header><h2>' + t("account") + '</h2></header><div class="pd-body"><dl><dt>' + t("c_account") + '</dt><dd class="pd-mono">' + a.acct +
+        '</dd><dt>' + t("class") + '</dt><dd>5 · ' + t("fin_acc") + '</dd></dl></div>';
+      return;
+    }
+    var totalB = buckets.reduce(function (x, y) { return x + y; }, 0) || 1;
+    var colors = ["var(--pd-ok)", "var(--pd-warn)", "#d9822b", "var(--pd-gap)"], names = [t("b0"), t("b1"), t("b2"), t("b3")];
+    var bar = buckets.map(function (v, i) { return v > 0 ? '<span style="width:' + (v / totalB * 100).toFixed(1) + '%;background:' + colors[i] + '" title="' + names[i] + '"></span>' : ""; }).join("");
+    var legend = buckets.map(function (v, i) { return '<span><i style="background:' + colors[i] + '"></i>' + names[i] + ' <b class="pd-mono">' + money(v) + '</b></span>'; }).join("");
+    sum.innerHTML =
+      '<div class="pd-panel pd-tile"><span class="lbl">' + t("c_balance") + '</span><span class="val">' + balTxt + '</span></div>' +
+      '<div class="pd-panel pd-tile"><span class="lbl">' + (a.kind === "cli" ? t("to_collect") : t("to_pay")) + '</span><span class="val">' + money(open) + '</span></div>' +
+      '<div class="pd-panel pd-tile"><span class="lbl">' + t("overdue") + '</span><span class="val"' + (late > 0 ? ' style="color:var(--pd-gap)"' : "") + '>' + money(late) + '</span></div>' +
+      '<div class="pd-panel pd-tile pd-aging-tile"><span class="lbl">' + t("aging") + '</span><div class="pd-aging">' + bar + '</div><div class="pd-legend">' + legend + '</div></div>';
+    document.getElementById("acc-card").innerHTML = '<header><h2>' + (a.kind === "cli" ? t("client") : t("supplier_card")) + '</h2></header><div class="pd-body"><dl>' +
+      '<dt>' + t("code") + '</dt><dd class="pd-mono">' + accKey + '</dd><dt>' + t("c_account") + '</dt><dd class="pd-mono">' + a.acct + '</dd>' +
+      '<dt>SIREN</dt><dd class="pd-mono">' + a.siren + '</dd><dt>' + t("mail") + '</dt><dd style="word-break:break-all">' + esc(a.mail) + '</dd>' +
+      '<dt>' + t("terms") + '</dt><dd>' + esc(a.terms) + '</dd></dl></div>';
+  }
+  document.getElementById("acc-pick").addEventListener("change", function () {
+    var v = this.value.split(" · ")[0].trim().toUpperCase();
+    if (ACCS[v]) openAccount(v); else toast(t("unknown_acc"), false);
+  });
+  document.getElementById("acc-open").addEventListener("change", renderAccount);
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-acc]"); if (el) openAccount(el.getAttribute("data-acc"));
+  }, true);
+
   // Langue
   var frText = {};
   document.querySelectorAll("[data-i18n]").forEach(function (el) { var k = el.getAttribute("data-i18n"); if (!(k in frText)) frText[k] = el.textContent; });
@@ -610,14 +998,20 @@
     document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { var k = el.getAttribute("data-i18n-ph"); el.placeholder = (T[lang] && T[lang][k]) || frPh[k]; });
     document.querySelectorAll("[data-amount]").forEach(function (el) { el.textContent = money(parseFloat(el.getAttribute("data-amount"))); });
     document.querySelectorAll("[data-date]").forEach(function (el) { el.textContent = dateFmt(el.getAttribute("data-date")); });
-    render(); renderRecent(); renderCoa();
+    render(); renderRecent(); renderCoa(); renderPieces(); renderAccount();
+  }
+  function applyStatic(root) {
+    root.querySelectorAll("[data-i18n]").forEach(function (el) { var k = el.getAttribute("data-i18n"); el.textContent = (T[lang] && T[lang][k]) || frText[k] || el.textContent; });
+    root.querySelectorAll("[data-amount]").forEach(function (el) { el.textContent = money(parseFloat(el.getAttribute("data-amount"))); });
+    root.querySelectorAll("[data-date]").forEach(function (el) { el.textContent = dateFmt(el.getAttribute("data-date")); });
   }
   var ls = document.getElementById("lang"); ls.value = lang;
   ls.addEventListener("change", function () { lang = ls.value; try { localStorage.setItem("pd-lang", lang); } catch (e) {} applyLang(); });
 
   applyLang();
-  window.addEventListener("hashchange", function () { var v = location.hash.slice(1); if (["tableau", "saisie", "plan"].indexOf(v) >= 0) show(v); });
+  var VIEWS = ["tableau", "pieces", "saisie", "compte", "plan"];
+  window.addEventListener("hashchange", function () { var v = location.hash.slice(1); if (VIEWS.indexOf(v) >= 0) show(v); });
   var start = (location.hash || "#tableau").slice(1);
-  show(["tableau", "saisie", "plan"].indexOf(start) >= 0 ? start : "tableau");
+  show(VIEWS.indexOf(start) >= 0 ? start : "tableau");
 })();
 </script>

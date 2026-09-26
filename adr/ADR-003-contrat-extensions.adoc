@@ -179,7 +179,7 @@ une page, un modèle, une migration, un abonnement, des specs), successeur de
 |Amont |Lignes PHP |Devenir
 
 |`peppol-connect` |2 100 |`partiduo-einvoicing` — voir ADR-004. *Prochain portage.*
-|`noalyss_document` (NDER, NDC) |5 100 |`partiduo-document` — dépendance de `einvoicing`
+|`noalyss_document` (NDER, NDC) |5 100 |`partiduo-document` — pièces jointes et boîte « Justificatifs à traiter » (photos, fichiers, factures reçues ; ADR-005 D8) ; dépendance de `einvoicing`
 |`noalyss_xmlpayment` (XMLPY) |3 500 |`partiduo-sepa`
 |`advancedimport` (IMPOP2) |7 600 |`partiduo-import`
 |`noalyss-form` (FVAL, FDEF) |2 500 |`partiduo-form`, point d'entrée public par jeton
