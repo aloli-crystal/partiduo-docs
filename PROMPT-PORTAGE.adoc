@@ -98,7 +98,7 @@ d'extensions, les événements et les champs de facturation française.
   }
 }
 ----
-. _Fait_ — ADR-001 à ADR-004 au statut « Accepté ».
+. _Fait_ — ADR-001 à ADR-005 au statut « Accepté », maquette validée.
 . Relire la section « Arbitrages » du prompt : ce sont vos décisions.
 . Facultatif : lever la limite de taille des workflows (« Dynamic workflow size »
   dans `/config`, depuis un terminal `claude` interactif).
