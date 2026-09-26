@@ -82,7 +82,7 @@ d'extensions, les événements et les champs de facturation française.
 
 |Statut des ADR
 |icon:check[] Acceptés
-|ADR-001 à ADR-005, le 26 septembre 2026. Maquette de l'interface validée.
+|ADR-001 à ADR-006, le 26 septembre 2026. Maquette de l'interface validée.
 |===
 
 === Avant le lancement
@@ -100,7 +100,7 @@ d'extensions, les événements et les champs de facturation française.
   }
 }
 ----
-. _Fait_ — ADR-001 à ADR-005 au statut « Accepté », maquette validée.
+. _Fait_ — ADR-001 à ADR-006 au statut « Accepté », maquette validée.
 . Relire la section « Arbitrages » du prompt : ce sont vos décisions.
 . Facultatif : lever la limite de taille des workflows (« Dynamic workflow size »
   dans `/config`, depuis un terminal `claude` interactif).
