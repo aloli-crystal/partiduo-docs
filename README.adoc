@@ -1,7 +1,7 @@
-= noalyss-docs — Décisions et pilotage du portage de NOALYSS en Crystal
+= partiduo-docs — Décisions et pilotage du portage de NOALYSS en Crystal
 :icons: font
 
-Dépôt transverse du groupe `prod-crystal/noalyss/` : il porte les décisions
+Dépôt transverse du groupe `prod-crystal/partiduo/` : il porte les décisions
 d'architecture (ADR), l'analyse de l'existant et les prompts de lancement qui
 valent pour *tous* les projets du groupe.
 
@@ -12,18 +12,18 @@ chaque projet PHP porté a son équivalent Crystal.
 
 [cols="2,2,3",options="header"]
 |===
-|Amont — `prod-github/noalyss/` (lecture seule) |Crystal — `prod-crystal/noalyss/` |Remarque
+|Amont — `prod-github/noalyss/` (lecture seule) |Crystal — `prod-crystal/partiduo/` |Remarque
 
-|`noalyss-app` (gitlab `noalyss/noalyss`) |`noalyss-cr` |Le cœur, application Marten
-|`peppol-connect` |`noalyss-cr-einvoicing` |Prochaine extension portée — voir ADR-004
+|`noalyss-app` (gitlab `noalyss/noalyss`) |`partiduo-app` |Le cœur, application Marten
+|`peppol-connect` |`partiduo-einvoicing` |Prochaine extension portée — voir ADR-004
 |`noalyss-plugins` |découpé — voir ADR-003 |15 extensions
-|`noalyss_xmlpayment` |`noalyss-cr-sepa` |Virements SEPA
-|`advancedimport` |`noalyss-cr-import` |Import avancé
-|`noalyss_document` |`noalyss-cr-document` |Documents ; dépendance d'`einvoicing`
-|`noalyss-form` |`noalyss-cr-form` |Saisie de fiches depuis d'autres sites
+|`noalyss_xmlpayment` |`partiduo-sepa` |Virements SEPA
+|`advancedimport` |`partiduo-import` |Import avancé
+|`noalyss_document` |`partiduo-document` |Documents ; dépendance d'`einvoicing`
+|`noalyss-form` |`partiduo-form` |Saisie de fiches depuis d'autres sites
 |`noalyss-export` |intégré au lot 3 du cœur |Export CSV / FEC
 |`profile-management` |absorbé par ADR-002 |Profils et droits
-|`copy_parameter` |absorbé par `noalyss-provision` |Sans objet avec une instance par dossier
+|`copy_parameter` |absorbé par `partiduo-provision` |Sans objet avec une instance par dossier
 |`noalyss-documentation` |— |Référence, non portée
 |`dolibarr-noalyss` |— |Écarté, non cloné
 |===

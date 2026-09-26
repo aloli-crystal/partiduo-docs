@@ -271,18 +271,16 @@ inscription, connexion, réinitialisation, jetons.
 |À écrire : RFC 6238, HMAC-SHA1 et base32. Petit.
 
 |*WebAuthn / passkey*
-|Rien — ni WebAuthn, ni CBOR, ni COSE. *Mais `jose` couvre déjà une bonne part
-du travail cryptographique* : vérification ES256, et surtout construction d'une
-clé EC depuis ses coordonnées affines
-(`EC_POINT_set_affine_coordinates`, `BN_bin2bn`) — ce qui est *exactement* ce que
-fournit une clé COSE EC2.
-|Shard à écrire — périmètre en <<perimetre-webauthn>>.
+|`aloli-crystal/webauthn` v0.1.0, écrit pour ce projet : CBOR, COSE,
+`authenticatorData`, `clientData` et les deux cérémonies. 97 specs, contrôles
+critiques éprouvés par mutation.
+|Rien — périmètre livré en <<perimetre-webauthn>>.
 
 |*RSA*
-|`prod-crystal/jose` v0.1.3 est *uniquement elliptique* : ES256, ES384, ES512.
-Aucun RSA dans `src/`.
-|*RS256 à ajouter à `jose`.* Nécessaire deux fois : Windows Hello enrôle
-couramment en RS256, et les fournisseurs OIDC signent en RS256.
+|`aloli-crystal/jose` v0.2.0 fournit `JWK::RSAKey` et RS256/RS384/RS512.
+Nécessaire deux fois : Windows Hello enrôle couramment en RS256, et les
+fournisseurs OIDC signent en RS256.
+|Rien.
 
 |*SAML 2.0*
 |`prod-crystal/saml` v1.18.1.3, portage de `ruby-saml`, annoncé compatible
@@ -290,14 +288,14 @@ Marten.
 |Intégration, pas d'écriture.
 
 |*OIDC*
-|Dépend du RSA ci-dessus.
-|Après RS256.
+|Débloqué : `jose` v0.2.0 vérifie les jetons signés en RS256.
+|Intégration, pas d'écriture.
 |===
 
 [[perimetre-webauthn]]
 === Périmètre du shard WebAuthn
 
-Ce qu'il faut écrire, et ce qui est déjà couvert :
+Livré dans `aloli-crystal/webauthn` v0.1.0 :
 
 [cols="2,3,1",options="header"]
 |===
@@ -306,27 +304,27 @@ Ce qu'il faut écrire, et ce qui est déjà couvert :
 |Décodeur CBOR
 |Sous-ensemble suffisant : entiers, entiers négatifs, chaînes d'octets, chaînes
 de texte, tableaux, tables. Le CBOR complet n'est pas nécessaire.
-|À écrire
+|`WebAuthn::CBOR`
 
 |Clé COSE
 |Table CBOR vers clé publique. EC2 (`alg -7`, ES256) : `crv`, `x`, `y` — mapping
 direct vers `JWK::ECKey`. RSA (`alg -257`, RS256) : `n`, `e`.
-|À écrire (EC trivial via `jose`)
+|`WebAuthn::COSE`
 
 |`authenticatorData`
 |Analyse binaire : empreinte du `rp.id` (32 o), drapeaux (1 o), compteur (4 o),
 puis données de credential — AAGUID, identifiant, clé publique COSE.
-|À écrire
+|`WebAuthn::AuthenticatorData`
 
 |Enregistrement
 |Vérification du `clientDataJSON` — type, défi, origine — puis extraction de la
 clé. Attestation `none` : pas de vérification de provenance matérielle.
-|À écrire
+|`#verify_registration`
 
 |Authentification
 |Vérification de la signature sur `authData ‖ SHA-256(clientDataJSON)`, contrôle
 des drapeaux `UP` et `UV`, gestion du compteur.
-|Signature : `jose`
+|`#verify_authentication`
 
 |Vérification ES256
 |ECDSA P-256 / SHA-256.
@@ -334,7 +332,7 @@ des drapeaux `UP` et `UV`, gestion du compteur.
 
 |Vérification RS256
 |RSASSA-PKCS1-v1_5 / SHA-256.
-|Avec l'ajout RSA à `jose`
+|*Fourni par `jose` v0.2.0*
 |===
 
 === Pièges d'implémentation à consigner
@@ -374,8 +372,11 @@ des drapeaux `UP` et `UV`, gestion du compteur.
 
 === Négatives et coûts
 
-* *Le shard WebAuthn est sur le chemin critique.* Il n'est plus reportable :
-  c'est la cible, pas une option. Le sous-estimer décale le lot 2.
+* *Le shard WebAuthn était sur le chemin critique* — coût payé : il est livré
+  (`aloli-crystal/webauthn` v0.1.0). Restent deux réserves : l'attestation
+  au-delà de `none` est hors périmètre, et rien n'a encore été testé contre un
+  authentificateur réel — les specs prouvent la conformité à la spécification,
+  pas l'interopérabilité.
 * *Trois chemins d'authentification à maintenir et à tester*, contre un
   aujourd'hui, plus leurs combinaisons et le parcours d'élévation.
 * *La récupération est un sujet à part entière* (D7), avec sa propre interface

@@ -14,7 +14,7 @@ l'identique de `prod-github/noalyss/peppol-connect`.
 L'extension amont `peppol-connect` ne rend pas un dossier français conforme à
 la réforme de la facturation électronique, et son portage à l'identique ne le
 ferait pas davantage. Cet ADR décide de porter à sa place une extension
-`noalyss-cr-einvoicing`, construite autour d'un *connecteur vers une Plateforme
+`partiduo-einvoicing`, construite autour d'un *connecteur vers une Plateforme
 Agréée* (PA), et qui garde le point d'accès PEPPOL de NOALYSS comme option pour
 les dossiers belges.
 
@@ -66,7 +66,7 @@ par `peppol-connect`, qui déclare le SIREN du vendeur avec le schéma `0009`
 
 == Décision
 
-=== D1 — Une extension `noalyss-cr-einvoicing`, pas `noalyss-cr-peppol`
+=== D1 — Une extension `partiduo-einvoicing`, pas `partiduo-peppol`
 
 L'extension couvre émission, réception, statuts et e-reporting. Elle suit le
 contrat d'extension de l'ADR-003.

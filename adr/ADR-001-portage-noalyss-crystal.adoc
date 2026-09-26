@@ -312,7 +312,7 @@ d'`index.php` ne sont pas portés.
 
 ==== Provisionnement
 
-Un script `noalyss-provision` crée une instance :
+Un script `partiduo-provision` crée une instance :
 
 . `createdb --owner=<user> --encoding=UTF8 <dossier>` ;
 . `marten migrate` sur cette base ;
@@ -329,9 +329,11 @@ connexion, régime fiscal, langue par défaut.
 *Un comptable qui suit plusieurs sociétés a désormais une URL et un compte par
 société.* C'est la perte fonctionnelle réelle de ce choix, et elle est visible
 par l'utilisateur : NOALYSS permet aujourd'hui un login unique donnant accès à
-plusieurs dossiers (`jnt_use_dos`). Trois réponses possibles, à trancher :
-authentification centralisée (OIDC) partagée entre instances, portail de
-redirection listant les instances d'un utilisateur, ou statu quo assumé.
+plusieurs dossiers (`jnt_use_dos`). *Tranché* par
+`ADR-002-authentification.adoc` : SSO pour le comptable, plus un rôle
+`comptable` dont les méthodes d'authentification s'activent par utilisateur —
+ce qui évite d'imposer un fournisseur d'identité aux sociétés de trois
+personnes.
 
 *La mise à jour devient une opération de parc.* Passer 300 dossiers en version
 N+1 suppose un outillage de déploiement et une stratégie de migration
@@ -382,7 +384,7 @@ En revanche, l'instance par dossier rend la bascule *progressive par dossier* :
 chaque société migre quand elle est prête, sans affecter les autres. Il n'y a
 pas de jour J global.
 
-Un outil `noalyss-migrate` est un livrable de premier rang :
+Un outil `partiduo-migrate` est un livrable de premier rang :
 
 * lecture d'une base dossier NOALYSS en DBVERSION 208 ;
 * écriture dans le schéma cible d'une instance neuve ;
@@ -412,8 +414,8 @@ src/
 └── web/             # layouts, composants HTMX, assets Bulma
 
 bin/
-├── noalyss-provision   # création d'une instance
-└── noalyss-migrate     # reprise d'un dossier NOALYSS + réconciliation
+├── partiduo-provision   # création d'une instance
+└── partiduo-migrate     # reprise d'un dossier NOALYSS + réconciliation
 ----
 
 Les spécificités fiscales belges (12 tables `tva_belge`) restent isolées dans
@@ -445,14 +447,14 @@ Les 97 fonctions ne sont pas transposées mécaniquement. Chacune est classée :
 |Lot |Contenu |Poids
 
 |*P* |*Prérequis* : squelette du projet, CI, dépendance Marten `~> 0.7`. Les prérequis d'authentification sont dans `ADR-002` |~1 %
-|0 |Socle : configuration société, authentification et TOTP, layout Bulma, i18n fr/en/nl, `noalyss-provision`, outillage de déploiement de parc |~8 %
+|0 |Socle : configuration société, authentification et TOTP, layout Bulma, i18n fr/en/nl, `partiduo-provision`, outillage de déploiement de parc |~8 %
 |1 |Référentiel : plan comptable, fiches, exercices et périodes, journaux |~15 %
 |2 |Écritures : saisie achat / vente / financier / OD, consultation, lettrage |~25 %
 |3 |Éditions : balances, grand livre, bilan, FEC |~15 %
 |4 |TVA et déclarations (BE + FR) |~10 %
 |5 |Comptabilité analytique |~10 %
 |6 |Stocks, prévisions, GED et suivi |~15 %
-|M |`noalyss-migrate` + rapport de réconciliation |transverse, démarre au lot 1
+|M |`partiduo-migrate` + rapport de réconciliation |transverse, démarre au lot 1
 |===
 
 L'ancien lot 7 — administration multi-dossiers, ~5 % — disparaît. Son reliquat
@@ -509,7 +511,7 @@ présenter un rapport de réconciliation qui tombe juste.
   reste sous *GPL v2*, avec attribution explicite au projet amont dans le
   `README` et le `LICENSE`. Point à confirmer, mais il n'y a pas réellement de
   marge.
-* *Nom du projet.* `noalyss-cr` est employé comme nom de travail. À trancher,
+* *Nom du projet.* `partiduo-app` est employé comme nom de travail. À trancher,
   sachant que « NOALYSS » est le nom d'un projet existant et actif : mieux vaut
   un nom distinct, avec mention « compatible NOALYSS ».
 * Les 200 routes de `menu_ref` deviennent des routes Marten déclarées en code ;
@@ -584,7 +586,7 @@ déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
   actif. À décider avant le lot 1.
 . *Nom et licence* du projet — voir « Neutres ».
 . [line-through]#*ZUGFeRD / Factur-X*# — *tranché* : une extension
-  `noalyss-cr-einvoicing`, dont la génération Factur-X s'appuie sur
+  `partiduo-einvoicing`, dont la génération Factur-X s'appuie sur
   `prod-crystal/pdf-a` sans dépendre d'un équivalent de `horstoeko/zugferd`.
   Voir `ADR-004-facturation-electronique.adoc` (D1, D3).
 . *CAPTCHA* (`html/securimage`, 1 606 lignes) : à reconduire ou à abandonner ?

@@ -67,12 +67,12 @@ implicites (`peppol-connect` installe le schéma de `noalyss_document`).
 
 === D1 — Une extension est un shard qui fournit une application Marten
 
-Chaque extension vit dans son dépôt, `prod-crystal/noalyss/noalyss-cr-<nom>`, et
-dépend du cœur `noalyss-cr` comme shard.
+Chaque extension vit dans son dépôt, `prod-crystal/partiduo/noalyss-cr-<nom>`, et
+dépend du cœur `partiduo-app` comme shard.
 
 *Composition à la compilation, activation à l'exécution.* Le binaire distribué
 inclut toutes les extensions officielles du groupe. Une instance active celles
-dont elle a besoin dans sa configuration (`noalyss-provision --with einvoicing,sepa`).
+dont elle a besoin dans sa configuration (`partiduo-provision --with einvoicing,sepa`).
 Un seul binaire à construire et déployer pour tout le parc, ce qui répond au coût
 signalé par ADR-001 (« parc hétérogène »).
 
@@ -80,7 +80,7 @@ signalé par ADR-001 (« parc hétérogène »).
 
 [source,crystal]
 ----
-Noalyss::Extensions.register do
+Partiduo::Extensions.register do
   code "EINV"
   name "extensions.einvoicing.name"      # clé i18n
   version "1.0.0"
@@ -167,7 +167,7 @@ ajouté que lorsqu'une extension portée en a besoin.
 
 === D8 — Squelette de référence
 
-Le dépôt `noalyss-cr-skel` fournit une extension minimale conforme (manifeste,
+Le dépôt `partiduo-skel` fournit une extension minimale conforme (manifeste,
 une page, un modèle, une migration, un abonnement, des specs), successeur de
 `SKEL`. Chaque portage d'extension part de lui.
 
@@ -177,24 +177,24 @@ une page, un modèle, une migration, un abonnement, des specs), successeur de
 |===
 |Amont |Lignes PHP |Devenir
 
-|`peppol-connect` |2 100 |`noalyss-cr-einvoicing` — voir ADR-004. *Prochain portage.*
-|`noalyss_document` (NDER, NDC) |5 100 |`noalyss-cr-document` — dépendance de `einvoicing`
-|`noalyss_xmlpayment` (XMLPY) |3 500 |`noalyss-cr-sepa`
-|`advancedimport` (IMPOP2) |7 600 |`noalyss-cr-import`
-|`noalyss-form` (FVAL, FDEF) |2 500 |`noalyss-cr-form`, point d'entrée public par jeton
+|`peppol-connect` |2 100 |`partiduo-einvoicing` — voir ADR-004. *Prochain portage.*
+|`noalyss_document` (NDER, NDC) |5 100 |`partiduo-document` — dépendance de `einvoicing`
+|`noalyss_xmlpayment` (XMLPY) |3 500 |`partiduo-sepa`
+|`advancedimport` (IMPOP2) |7 600 |`partiduo-import`
+|`noalyss-form` (FVAL, FDEF) |2 500 |`partiduo-form`, point d'entrée public par jeton
 |`noalyss-export` |1 100 |Absorbé par le lot 3 du cœur (FEC)
 |`profile-management` |500 |Absorbé par ADR-002
-|`copy_parameter` |1 300 |Absorbé par `noalyss-provision` (modèle de dossier)
+|`copy_parameter` |1 300 |Absorbé par `partiduo-provision` (modèle de dossier)
 |`noalyss-plugins` / TVA |7 600 |Cœur, `vat/be/` (lot 4)
-|`noalyss-plugins` / AMORTIS |4 700 |`noalyss-cr-amortis`
-|`noalyss-plugins` / IMPORTBANK |5 800 |`noalyss-cr-bankimport`
-|`noalyss-plugins` / RAPAV + LISTING |14 700 |`noalyss-cr-reports`
-|`noalyss-plugins` / INVOICING |2 100 |Fusionné dans `noalyss-cr-einvoicing`
+|`noalyss-plugins` / AMORTIS |4 700 |`partiduo-amortis`
+|`noalyss-plugins` / IMPORTBANK |5 800 |`partiduo-bankimport`
+|`noalyss-plugins` / RAPAV + LISTING |14 700 |`partiduo-reports`
+|`noalyss-plugins` / INVOICING |2 100 |Fusionné dans `partiduo-einvoicing`
 |`noalyss-plugins` / IMPCARD, TOOLPCMN, TOOLS, MODOP |4 500 |Cœur (import/export de fiches et de plan comptable, outils)
 |`noalyss-plugins` / COPRO, SAV |5 400 |À décider — métiers spécialisés
 |`noalyss-plugins` / TRANSFORM |3 000 |À décider — spécifique à Intervat (Belgique)
 |`noalyss-plugins` / BACKNOADM |90 |Sans objet (sauvegarde gérée par le déploiement)
-|`noalyss-plugins` / SKEL |500 |Remplacé par `noalyss-cr-skel` (D8)
+|`noalyss-plugins` / SKEL |500 |Remplacé par `partiduo-skel` (D8)
 |`dolibarr-noalyss` |— |Écarté
 |===
 
