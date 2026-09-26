@@ -151,8 +151,8 @@ Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/mart
 
 ## Lot P — prérequis à terminer en premier
 
-- `prod-crystal/webauthn` et `prod-crystal/totp` sont livrés : utilisez-les en dépendance `path:` tant qu'ils ne sont pas publiés, sans les réécrire.
-- Règles de mot de passe : utilisez `prod-crystal/password-policy` (préréglage « 14 caractères sans caractère spécial obligatoire » par défaut, `satisfies_use_case?` affirmé dans les specs ; motifs de refus en clés i18n). Limite de 71 octets (BCrypt de Crystal). Si vous utilisez `prod-crystal/authn` v0.2 (ex-`kemal-auth`) : `Authn::Password.hash(policy:)` lève `PolicyError` ; n'appelez pas `UserManager.validate_user`, qui renvoie des phrases françaises en dur, non traduisibles.
+- `prod-crystal/webauthn`, `totp`, `password-policy` et `authn` sont livrés : utilisez-les en dépendance `path:` tant qu'ils ne sont pas publiés sur GitHub, sans les réécrire.
+- Règles de mot de passe : utilisez `prod-crystal/password-policy` (préréglage « 14 caractères sans caractère spécial obligatoire » par défaut, `satisfies_use_case?` affirmé dans les specs ; motifs de refus en clés i18n). Limite de 71 octets (BCrypt de Crystal). `prod-crystal/authn` v0.3 (ex-`kemal-auth`) fournit hachage BCrypt, jetons JWT, sessions par cookie, invitations et réinitialisation de mot de passe ; `Authn::Password.hash(policy:)` lève `PolicyError`. La validation des champs propres d'un utilisateur (adresse, nom, rôle — dont `comptable`, ADR-002 D4) est de la responsabilité du cœur, avec des messages en clés i18n.
 - Squelette `partiduo-app` : projet Marten, applications de l'ADR-001 § Organisation du code, plus `extensions/` (registre, manifeste, permissions, événements — ADR-003), CI (GitHub Actions : format, ameba, specs avec service PostgreSQL), README.adoc.
 
 ## Ordre et parallélisation

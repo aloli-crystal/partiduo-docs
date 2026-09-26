@@ -9,6 +9,8 @@
 *Date.* 14 septembre 2026. +
 *Révision.* v2 — l'architecture multi-société est abandonnée au profit d'une
 *instance par dossier*. Voir <<d2>> et <<alternatives>>. +
+*Révision.* v3, 26 septembre 2026 — Marten `~> 0.7` en D1, Opal pleinement
+dans la stack en D4, questions ouvertes tranchées. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Source.* Analyse de `noalyss-app` `rel10200-7-g4bd46a13f` — voir
 `CARTOGRAPHIE-NOALYSS.adoc`.
@@ -29,7 +31,7 @@ Quatre décisions sont prises ici :
   une URL. La base d'administration `account_repository` et tout le
   multi-dossier disparaissent. Les instances sont créées par un script de
   provisionnement, sur le modèle éprouvé de QUIMEO.
-. *HTMX + Bulma + Opal* pour l'interface : HTMX par défaut, Opal réservé aux
+. *HTMX + Bulma + Opal* pour l'interface : HTMX par défaut, Opal pour les
   écrans de saisie réellement interactifs.
 . *Rupture assumée* : le schéma change. Partiduo démarre sans aucune donnée
   reprise, mais un outil de reprise audité permet d'y importer un dossier
@@ -251,7 +253,7 @@ n'est nécessaire. C'est le principal bénéfice technique de cette décision.
 
 === D1 — Marten, avec un schéma repensé
 
-Marten 0.6.x est retenu : ORM, migrations, i18n, routing, formulaires et
+Marten `~> 0.7` est retenu : ORM, migrations, i18n, routing, formulaires et
 interface d'administration intégrés. Pour un ERP, ce socle vaut le coût du
 cadre imposé. Il est déjà présent dans `prod-crystal/`, accompagné de
 `marten-tools` et `marten-docs-fr`.
@@ -358,7 +360,7 @@ Le schéma cible :
 On conserve donc l'extensibilité — c'est une fonctionnalité réelle de NOALYSS —
 sans en payer le prix sur les attributs que *toute* fiche possède.
 
-=== D4 — HTMX + Bulma, Opal en dernier recours
+=== D4 — HTMX + Bulma, et Opal pour les écrans interactifs
 
 NOTE: Complété par ADR-005 : l'interface est un dépôt séparé et interchangeable,
 `partiduo-ui-bulma`, qui ne parle au métier que par le contrat `Partiduo::Api`.
@@ -367,17 +369,20 @@ Par défaut : *rendu serveur + HTMX*. Les 98 handlers AJAX actuels renvoient dé
 des fragments : ils deviennent des vues Marten qui rendent du HTML partiel.
 Bulma pour la présentation, en cohérence avec les autres projets.
 
-*Opal est réservé* aux écrans où le seul HTMX serait une régression d'ergonomie :
+*Opal fait partie de la stack* : c'est l'outil prévu pour les écrans où le seul
+HTMX serait une régression d'ergonomie :
 
 * saisie d'écriture multi-lignes, avec calcul d'équilibre débit/crédit en
   direct et complétion des quick codes ;
 * lettrage ;
 * rapprochement bancaire.
 
-Règle : *aucun écran ne démarre en Opal.* On écrit d'abord la version HTMX, et
-on ne bascule en Opal que sur constat d'un problème d'usage réel. L'objectif est
-de remplacer 36 942 lignes de JavaScript maison, pas de les reconduire sous une
-autre syntaxe.
+Règle : *chaque écran démarre en HTMX*, et passe en Opal dès qu'un besoin
+d'ergonomie est constaté. Pour que ce passage ne soit jamais un chantier
+d'infrastructure, l'intégration d'Opal — compilation, service des fichiers
+produits, un exemple minimal fonctionnel — est en place dès le lot P. L'objectif
+est de remplacer 36 942 lignes de JavaScript maison, pas de les reconduire sous
+une autre syntaxe : Opal sert les écrans qui en ont besoin, pas l'ensemble.
 
 === D5 — Rupture, et migration auditée
 
