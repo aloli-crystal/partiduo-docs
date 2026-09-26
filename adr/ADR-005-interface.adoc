@@ -147,8 +147,16 @@ Qualité :
 
 * *accessibilité* : WCAG 2.2 niveau AA (équivalent RGAA) — contrastes, focus
   visible, libellés, navigation au clavier ;
-* *écrans* : consultation utilisable sur mobile ; saisie optimisée pour
-  ordinateur à partir de 1280 px ;
+* *écrans* — trois tailles, vérifiées sur la maquette :
+** *ordinateur* (≥ 1280 px) : tous les usages, saisie au clavier comprise ;
+** *tablette* (≥ 768 px) : tous les usages, saisie comprise ; menu latéral
+   repliable ;
+** *téléphone* (< 768 px) : consultation, tâches à traiter, validations. La
+   barre supérieure n'est pas figée et tient en trois lignes courtes ; les
+   tableaux masquent leurs colonnes secondaires (journal, pièce, débit et
+   crédit détaillés) plutôt que de défiler ; la saisie multi-lignes reste
+   possible mais n'est pas optimisée ;
+** cibles tactiles d'au moins 44 × 44 px ; aucune fonction réservée au survol ;
 * *langues* : français, anglais et néerlandais au départ ; *à terme, les
   24 langues officielles de l'Union européenne*. Voir D7.
 

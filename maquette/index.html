@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Partiduo maquette</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5,6 +7,7 @@
 <link rel="stylesheet" href="bulma.min.css">
 <link rel="stylesheet" href="theme.css">
 <style>
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body { background: var(--pd-ground); color: var(--pd-ink); font-family: var(--bulma-family-primary); }
   .pd-app { display: grid; grid-template-columns: 15rem 1fr; grid-template-rows: auto auto 1fr; min-height: 100%; }
@@ -129,9 +132,16 @@
     .pd-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .pd-form-grid .pd-wide { grid-column: 1 / -1; }
     .pd-user span { display: none; }
+    .pd-top { position: static; gap: .5rem .75rem; }
+    .pd-brand small, .pd-dossier span { display: none; }
+    .pd-period label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .pd-period { order: 5; }
+    .pd-grow { order: 6; flex-basis: 100%; }
   }
   @media (max-width: 480px) {
+    .pd-hide-s { display: none; }
     .pd-tiles { grid-template-columns: minmax(0, 1fr); }
+    .pd-tile .val { font-size: 1.2rem; }
     .pd-period { flex-wrap: wrap; }
   }
 </style>
@@ -241,7 +251,7 @@
           <header><h2 data-i18n="recent">Dernières écritures</h2><a class="is-size-7" aria-disabled="true" data-i18n="see_all">Tout voir</a></header>
           <div class="pd-scroll">
             <table class="table is-fullwidth is-hoverable is-narrow">
-              <thead><tr><th>Date</th><th data-i18n="c_ledger">Journal</th><th data-i18n="c_doc">Pièce</th><th data-i18n="c_label">Libellé</th><th class="amount" data-i18n="c_amount">Montant</th></tr></thead>
+              <thead><tr><th>Date</th><th class="pd-hide-s" data-i18n="c_ledger">Journal</th><th class="pd-hide-s" data-i18n="c_doc">Pièce</th><th data-i18n="c_label">Libellé</th><th class="amount" data-i18n="c_amount">Montant</th></tr></thead>
               <tbody id="recent"></tbody>
             </table>
           </div>
@@ -346,7 +356,7 @@
         </header>
         <div class="pd-scroll">
           <table class="table is-fullwidth is-hoverable is-narrow">
-            <thead><tr><th style="width:9rem" data-i18n="c_account">Compte</th><th data-i18n="c_label">Libellé</th><th class="amount" data-i18n="c_debit">Débit</th><th class="amount" data-i18n="c_credit">Crédit</th><th class="amount" data-i18n="c_balance">Solde</th></tr></thead>
+            <thead><tr><th style="width:9rem" data-i18n="c_account">Compte</th><th data-i18n="c_label">Libellé</th><th class="amount pd-hide-s" data-i18n="c_debit">Débit</th><th class="amount pd-hide-s" data-i18n="c_credit">Crédit</th><th class="amount" data-i18n="c_balance">Solde</th></tr></thead>
             <tbody id="coa"></tbody>
           </table>
         </div>
@@ -553,7 +563,7 @@
     var tb = document.getElementById("recent"); tb.innerHTML = "";
     RECENT.slice(0, 6).forEach(function (r) {
       var tr = document.createElement("tr");
-      tr.innerHTML = '<td class="pd-mono">' + dateFmt(r[0]) + '</td><td><span class="tag is-light">' + r[1] + '</span></td><td class="pd-mono">' + r[2] + '</td><td></td><td class="amount">' + money(r[4]) + '</td>';
+      tr.innerHTML = '<td class="pd-mono">' + dateFmt(r[0]) + '</td><td class="pd-hide-s"><span class="tag is-light">' + r[1] + '</span></td><td class="pd-mono pd-hide-s">' + r[2] + '</td><td></td><td class="amount">' + money(r[4]) + '</td>';
       tr.children[3].textContent = r[3];
       tb.appendChild(tr);
     });
@@ -574,7 +584,7 @@
       } else {
         var bal = Math.round((a[2] - a[3]) * 100) / 100;
         tr.className = "pd-lvl1";
-        tr.innerHTML = '<td class="pd-mono">' + n + '</td><td></td><td class="amount">' + (a[2] ? money(a[2]) : "") + '</td><td class="amount">' + (a[3] ? money(a[3]) : "") +
+        tr.innerHTML = '<td class="pd-mono">' + n + '</td><td></td><td class="amount pd-hide-s">' + (a[2] ? money(a[2]) : "") + '</td><td class="amount pd-hide-s">' + (a[3] ? money(a[3]) : "") +
           '</td><td class="amount">' + money(Math.abs(bal)) + ' <span class="pd-muted is-size-7">' + (bal >= 0 ? "D" : "C") + '</span></td>';
         tr.children[1].textContent = a[1];
       }
@@ -606,6 +616,7 @@
   ls.addEventListener("change", function () { lang = ls.value; try { localStorage.setItem("pd-lang", lang); } catch (e) {} applyLang(); });
 
   applyLang();
+  window.addEventListener("hashchange", function () { var v = location.hash.slice(1); if (["tableau", "saisie", "plan"].indexOf(v) >= 0) show(v); });
   var start = (location.hash || "#tableau").slice(1);
   show(["tableau", "saisie", "plan"].indexOf(start) >= 0 ? start : "tableau");
 })();
