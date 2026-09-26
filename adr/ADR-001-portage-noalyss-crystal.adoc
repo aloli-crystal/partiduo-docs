@@ -509,11 +509,12 @@ présenter un rapport de réconciliation qui tombe juste.
 * *Licence.* Le portage reprend le modèle de données, la logique métier et la
   structure de NOALYSS : c'est une œuvre dérivée au sens de la GPL. Le projet
   reste sous *GPL v2*, avec attribution explicite au projet amont dans le
-  `README` et le `LICENSE`. Point à confirmer, mais il n'y a pas réellement de
-  marge.
-* *Nom du projet.* `partiduo-app` est employé comme nom de travail. À trancher,
-  sachant que « NOALYSS » est le nom d'un projet existant et actif : mieux vaut
-  un nom distinct, avec mention « compatible NOALYSS ».
+  `README` et le `LICENSE`. *Tranché : GPL v2.*
+* *Nom du projet.* *Tranché : Partiduo* (de « partie double »), le 26 septembre
+  2026. « NOALYSS » étant le nom d'un projet existant et actif, le portage porte
+  un nom distinct et se présente comme « portage de NOALYSS en Crystal ». Les
+  dépôts vivent dans l'organisation GitHub `aloli-crystal`, tous préfixés
+  `partiduo-` : `partiduo-app` pour le cœur, `partiduo-docs`, `partiduo-<extension>`.
 * Les 200 routes de `menu_ref` deviennent des routes Marten déclarées en code ;
   les droits associés (`profile_menu`) restent en base.
 
@@ -584,7 +585,7 @@ déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
   pluggables. Voir `ADR-002-authentification.adoc`.
 . *Suivre l'amont ou figer une version de référence ?* Le dépôt NOALYSS est
   actif. À décider avant le lot 1.
-. *Nom et licence* du projet — voir « Neutres ».
+. [line-through]#*Nom et licence* du projet# — *tranché* : Partiduo, GPL v2. Voir « Neutres ».
 . [line-through]#*ZUGFeRD / Factur-X*# — *tranché* : une extension
   `partiduo-einvoicing`, dont la génération Factur-X s'appuie sur
   `prod-crystal/pdf-a` sans dépendre d'un équivalent de `horstoeko/zugferd`.

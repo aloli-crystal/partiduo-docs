@@ -1,5 +1,8 @@
-= partiduo-docs — Décisions et pilotage du portage de NOALYSS en Crystal
+= partiduo-docs — Décisions et pilotage de Partiduo
 :icons: font
+
+*Partiduo* est le portage en Crystal de NOALYSS (https://noalyss.eu), logiciel de
+comptabilité libre de Dany De Bontridder. Ce n'est pas un projet officiel NOALYSS.
 
 Dépôt transverse du groupe `prod-crystal/partiduo/` : il porte les décisions
 d'architecture (ADR), l'analyse de l'existant et les prompts de lancement qui
@@ -28,7 +31,8 @@ chaque projet PHP porté a son équivalent Crystal.
 |`dolibarr-noalyss` |— |Écarté, non cloné
 |===
 
-Chaque dépôt Crystal a deux branches longues : `development` (intégration) et
+Tous les dépôts sont hébergés dans l'organisation GitHub `aloli-crystal`, et leur
+nom commence par `partiduo-`. Chaque dépôt Crystal a deux branches longues : `development` (intégration) et
 `production` (déployée). Pour suivre l'amont : `git -C prod-github/noalyss/<projet> pull`.
 
 == Contenu
