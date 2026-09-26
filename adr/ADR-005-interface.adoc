@@ -168,8 +168,10 @@ Qualité :
 
 Maquette validée par Philippe le 26 septembre 2026.
 
-La maquette validée (tableau de bord, justificatifs, saisie d'une écriture,
-consultation d'un compte ou d'un tiers, plan comptable)
+La maquette validée (tableau de bord, justificatifs, devis et factures,
+édition et aperçu d'une facture, saisie d'une écriture, consultation d'un compte
+ou d'un tiers, plan comptable, et bascule entre les trois configurations de
+modules d'ADR-006)
 fixe l'apparence et l'ergonomie de `partiduo-ui-bulma`. Elle vit dans
 `maquette/` (Bulma 1.0.4, `theme.css`) et est publiée sur
 https://claude.ai/artifact/PWX5XRVHre9TWqEFv1k1WS. Son `theme.css` est le point de
