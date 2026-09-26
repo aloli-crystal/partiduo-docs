@@ -113,7 +113,7 @@ ultracode — Utilisez un workflow multi-agents pour porter NOALYSS en Crystal. 
 
 ## Mission
 
-Le projet s'appelle *Partiduo* (portage de NOALYSS, GPL v2, dépôts `aloli-crystal/partiduo-*`). Porter le cœur de NOALYSS, `/Users/philippe/prod-github/noalyss/noalyss-app/` (PHP), en Crystal dans `/Users/philippe/prod-crystal/partiduo/partiduo-app/`.
+Le projet s'appelle *Partiduo* (portage de NOALYSS, AGPL-3.0-or-later, dépôts `aloli-crystal/partiduo-*`). Porter le cœur de NOALYSS, `/Users/philippe/prod-github/noalyss/noalyss-app/` (PHP), en Crystal dans `/Users/philippe/prod-crystal/partiduo/partiduo-app/`.
 
 La spécification est dans `/Users/philippe/prod-crystal/partiduo/partiduo-docs/` : `CARTOGRAPHIE-NOALYSS.adoc` et `adr/ADR-001` à `adr/ADR-004`. Je les considère validés. En particulier :
 - ADR-003 (contrat d'extension) : le cœur doit accueillir les extensions dès le lot 0 — registre et manifeste, routes `/ext/<code>/`, permissions déclaratives, événements, API publique documentée. Aucune extension n'est portée dans cette exécution, mais créez `partiduo-skel` (ADR-003 D8) pour prouver que le contrat fonctionne.
@@ -133,7 +133,7 @@ Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour co
 ## Arbitrages (questions ouvertes des ADR)
 
 1. Version amont : figée sur `rel10200-7-g4bd46a13f`.
-2. Nom : `partiduo-app` ; licence GPL v2 (œuvre dérivée).
+2. Nom : `partiduo-app` ; licence AGPL-3.0-or-later (œuvre dérivée de NOALYSS, GPL-2.0-or-later). Chaque dépôt `partiduo-*` contient le texte intégral de l'AGPL v3 dans `LICENSE`, `license: AGPL-3.0-or-later` dans `shard.yml`, et un README qui cite NOALYSS et son auteur ; chaque fichier source commence par l'en-tête SPDX `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 3. Factur-X, CII et connexion à une Plateforme Agréée : traités par l'extension `partiduo-einvoicing` (ADR-004), portée dans une exécution ultérieure. Hors périmètre ici, sauf les champs et l'événement cités plus haut.
 4. CAPTCHA : abandonné.
 5. Lot 6 (stocks, prévisions, suivi) : reporté, après tout le reste. La GED devient l'extension `partiduo-document` (ADR-003).

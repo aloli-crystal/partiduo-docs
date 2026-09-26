@@ -15,7 +15,7 @@
 
 == Résumé
 
-NOALYSS est une plate-forme de comptabilité et d'ERP libre (GPL v2), née en
+NOALYSS est une plate-forme de comptabilité et d'ERP libre (GPL v2 « ou toute version ultérieure »), née en
 2002, écrite en PHP sur PostgreSQL : ~147 000 lignes de PHP applicatif,
 36 942 lignes de JavaScript maison, 122 tables et 97 fonctions PL/pgSQL.
 Le langage ne convient pas. Cet ADR fixe les choix structurants d'un portage
@@ -507,9 +507,16 @@ présenter un rapport de réconciliation qui tombe juste.
 === Neutres
 
 * *Licence.* Le portage reprend le modèle de données, la logique métier et la
-  structure de NOALYSS : c'est une œuvre dérivée au sens de la GPL. Le projet
-  reste sous *GPL v2*, avec attribution explicite au projet amont dans le
-  `README` et le `LICENSE`. *Tranché : GPL v2.*
+  structure de NOALYSS : c'est une œuvre dérivée au sens de la GPL. *Tranché :
+  AGPL-3.0-or-later*, le 26 septembre 2026, avec attribution explicite au projet
+  amont dans le `README`. NOALYSS étant sous GPL v2 « ou toute version
+  ultérieure », son code peut être repris sous GPL v3, que l'article 13 rend
+  combinable avec l'AGPL v3. Raison du choix : Partiduo est conçu pour être
+  hébergé (une instance par dossier) ; l'AGPL oblige quiconque le propose
+  modifié en service en ligne à en publier les sources, ce que la GPL
+  n'impose pas. Contrepartie : le code de Partiduo ne peut pas être intégré tel
+  quel à NOALYSS ; une correction proposée à l'amont est écrite en PHP et cédée
+  sous la licence de l'amont par son auteur.
 * *Nom du projet.* *Tranché : Partiduo* (de « partie double »), le 26 septembre
   2026. « NOALYSS » étant le nom d'un projet existant et actif, le portage porte
   un nom distinct et se présente comme « portage de NOALYSS en Crystal ». Les
@@ -585,7 +592,7 @@ déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
   pluggables. Voir `ADR-002-authentification.adoc`.
 . *Suivre l'amont ou figer une version de référence ?* Le dépôt NOALYSS est
   actif. À décider avant le lot 1.
-. [line-through]#*Nom et licence* du projet# — *tranché* : Partiduo, GPL v2. Voir « Neutres ».
+. [line-through]#*Nom et licence* du projet# — *tranché* : Partiduo, AGPL-3.0-or-later. Voir « Neutres ».
 . [line-through]#*ZUGFeRD / Factur-X*# — *tranché* : une extension
   `partiduo-einvoicing`, dont la génération Factur-X s'appuie sur
   `prod-crystal/pdf-a` sans dépendre d'un équivalent de `horstoeko/zugferd`.

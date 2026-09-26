@@ -46,4 +46,12 @@ nom commence par `partiduo-`. Chaque dépôt Crystal a deux branches longues : `
 
 == Licence
 
-GPL v2, comme NOALYSS dont le portage est une œuvre dérivée.
+*AGPL-3.0-or-later* — voir `LICENSE`.
+
+Partiduo est une œuvre dérivée de NOALYSS, publié sous GPL v2 « ou toute version
+ultérieure » : cette clause permet de reprendre son code sous GPL v3, compatible
+avec l'AGPL v3. L'AGPL oblige en outre quiconque propose Partiduo modifié en
+service en ligne à en publier les sources.
+
+Les shards génériques utilisés par Partiduo (`jose`, `webauthn`, `totp`,
+`pdf-a`…) ne dérivent pas de NOALYSS et gardent leur propre licence.

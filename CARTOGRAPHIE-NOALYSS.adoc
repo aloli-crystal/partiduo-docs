@@ -10,7 +10,7 @@ DBVERSION 208, DBVERSIONREPO 21) réalisée le 2026-09-14.
 
 == Résumé exécutif
 
-NOALYSS est une plate-forme de comptabilité / ERP multi-dossiers, sous GPL v2,
+NOALYSS est une plate-forme de comptabilité / ERP multi-dossiers, sous GPL v2 « ou toute version ultérieure »,
 écrite en PHP procédural-objet sur PostgreSQL.
 
 [cols="2,1,4"]
@@ -233,7 +233,7 @@ de production PostgreSQL actuelle, sans migration**.
   serveur classique ?
 . *Périmètre cible* — iso-fonctionnel, ou noyau comptable seulement dans un
   premier temps ?
-. *Licence* — GPL v2 conservée ? Un portage est une œuvre dérivée au sens de la
+. *Licence* — _tranché par ADR-001 : AGPL-3.0-or-later._ GPL v2 conservée ? Un portage est une œuvre dérivée au sens de la
   GPL dès lors qu'il reprend le schéma, les fonctions PL/pgSQL et la structure.
 
 == Références
