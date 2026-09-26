@@ -1,0 +1,261 @@
+= ADR-006 — Modules activables et facturation
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Proposé — en attente de validation Philippe. +
+*Date.* 26 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Modifie.* ADR-001 (organisation du code, plan de lots), ADR-003 (modules
+officiels et extensions), ADR-004 (qui produit la Factur-X), ADR-005 (menus et
+tableau de bord).
+
+== Résumé
+
+Une instance Partiduo doit pouvoir servir *la comptabilité seule*, *la
+facturation seule*, ou *les deux*, et accueillir d'autres modules plus tard.
+Cet ADR découpe `partiduo-app` en un *socle* toujours présent et des *modules
+activables* instance par instance, puis définit le module *Facturation*, que
+NOALYSS ne fournit qu'à l'état d'ébauche.
+
+== Contexte
+
+=== Ce que fait NOALYSS
+
+Analyse de `noalyss-app` et de l'extension INVOICING :
+
+* *Pas de chaîne documentaire.* Devis (« proposition »), bons de commande et
+  factures sont des types d'« action » d'un CRM générique (`action_gestion`,
+  13 types dans `document_type`). Une seule transformation existe : action →
+  opération de vente (`Acc_Ledger::convert_from_follow`). Ni bon de livraison, ni
+  avoir, ni facture d'acompte comme documents.
+* *La facture est une écriture* du journal de ventes, enrichie de lignes
+  article (`quant_sold`). Facturer sans tenir la comptabilité est impossible.
+* *Numérotation non conforme* : numéro proposé mais modifiable, séquence
+  réinitialisable, suppression possible, unicité seulement applicative — aucune
+  garantie de continuité sans trou.
+* *Avoir* = vente à quantités négatives ; titre « Facture » imprimé ; type
+  Factur-X toujours 380, jamais 381.
+* *Pas de remise*, pas de relance automatique, pas d'envoi par courriel dans le
+  cœur (extension INVOICING seulement).
+* *Mentions françaises absentes* : conditions d'escompte, pénalités de retard,
+  indemnité forfaitaire de 40 €, catégorie d'opération, TVA sur les débits,
+  adresse de livraison, SIREN du client sur le PDF, capital et RCS.
+* Côté belge, pas de communication structurée (`+++…+++`, modulo 97).
+
+=== Besoins
+
+* Un artisan qui facture mais confie sa comptabilité à un cabinet :
+  *facturation seule*, avec transmission au comptable.
+* Un cabinet qui tient les comptes d'un client facturant ailleurs :
+  *comptabilité seule* — le cas NOALYSS.
+* Une entreprise qui fait les deux : chaque facture devient une écriture sans
+  ressaisie ; chaque encaissement lettré solde la facture.
+* Depuis le 1^er^ septembre 2026, *toute* entreprise française reçoit ses
+  factures par une plateforme agréée, qu'elle tienne ou non sa comptabilité dans
+  Partiduo (ADR-004).
+
+== Décision
+
+=== D1 — Un socle et des modules
+
+[cols="1,3,2",options="header"]
+|===
+|Pièce |Contenu |Dépend de
+
+|*Socle* (toujours actif)
+|Dossier et société, utilisateurs et profils (ADR-002), *tiers* (clients,
+fournisseurs), *articles et services*, taux de TVA, devises, exercices et
+périodes, pièces jointes, paramètres, registre des modules et extensions,
+événements
+|—
+
+|*Comptabilité*
+|Plan comptable, journaux, écritures, lettrage, rapprochement, éditions,
+déclarations de TVA, FEC, clôture
+|Socle
+
+|*Facturation*
+|Devis, commandes, bons de livraison, factures, acomptes, avoirs, règlements,
+relances, modèles de documents, envoi
+|Socle
+
+|*Analytique*
+|Plans, postes, ventilations
+|Comptabilité
+
+|*Stock* (lot 6)
+|Dépôts, mouvements, inventaire
+|Facturation *ou* Comptabilité
+|===
+
+Les modules officiels vivent dans `partiduo-app`, chacun dans son application
+Marten (`accounting/`, `invoicing/`, `analytic/`, `stock/`), et se déclarent par
+*le même manifeste que les extensions* (ADR-003 D2) : code, menus, permissions,
+dépendances, événements. Seule différence : ils sont dans le dépôt du cœur et
+versionnés avec lui.
+
+=== D2 — Activation
+
+* À la création : `partiduo-provision --modules accounting,invoicing`.
+* Plus tard, par l'administrateur de l'instance. *Activer* la Comptabilité après
+  des mois de facturation seule propose de comptabiliser l'historique des
+  factures. *Désactiver* un module conserve ses données en lecture seule ; rien
+  n'est supprimé.
+* Un module inactif n'expose ni menu, ni route, ni tuile de tableau de bord ;
+  ses commandes et requêtes refusent l'appel (`ModuleDisabled`).
+* Les extensions déclarent les modules dont elles dépendent
+  (`depends_on "ACCOUNTING"`).
+
+=== D3 — Aucun module n'appelle un autre module directement
+
+Les modules communiquent *uniquement* par le socle et par les événements
+(ADR-003 D7). C'est ce qui permet de les activer séparément.
+
+[cols="2,3,3",options="header"]
+|===
+|Événement |Publié par |Effet si l'autre module est actif
+
+|`invoice.issued`
+|Facturation, à la validation
+|Comptabilité : écriture dans le journal de ventes (compte de vente de
+l'article, TVA, compte client du tiers)
+
+|`credit_note.issued`
+|Facturation
+|Comptabilité : écriture d'avoir, lettrable avec la facture
+
+|`payment.recorded`
+|Facturation (encaissement saisi à la main)
+|Comptabilité : écriture de banque ou de caisse
+
+|`payment.matched`
+|Comptabilité (lettrage)
+|Facturation : facture « payée » ou « partiellement payée » ;
+ADR-004 : statut « Encaissée »
+|===
+
+*Une seule source de vérité pour les règlements* : quand la Comptabilité est
+active, l'encaissement est saisi ou importé en banque puis lettré, et la
+Facturation en est informée ; quand elle ne l'est pas, la Facturation enregistre
+elle-même le règlement.
+
+=== D4 — Facturation seule : transmettre au comptable
+
+Sans module Comptabilité, la Facturation fournit :
+
+* l'export du *journal des ventes et des encaissements* (CSV et format FEC
+  partiel, ventes seules) ;
+* l'archive ZIP des factures et avoirs (PDF Factur-X) d'une période ;
+* un *accès invité en lecture* pour le comptable (rôle `comptable`, ADR-002 D4).
+
+=== D5 — Le module Facturation
+
+*Documents et enchaînement*
+
+[source]
+----
+Devis ──► Commande ──► Bon de livraison ──► Facture ──► Avoir
+              └─────► Facture d'acompte ──────┘ (déduite)
+----
+
+* Chaque document peut être créé directement ou *transformé* depuis le
+  précédent ; les lignes sont recopiées, le lien est conservé et affiché
+  (« issu du devis D-2026-0031 »).
+* Statuts : devis (brouillon, envoyé, accepté, refusé, expiré) ; facture
+  (brouillon, émise, envoyée, partiellement payée, payée, en retard, annulée par
+  avoir) ; plus les statuts de la plateforme agréée (ADR-004 D4).
+* Lignes : article ou texte libre, quantité, unité (codes UN/ECE), prix unitaire
+  HT, *remise par ligne* (% ou montant), taux de TVA ; *remise globale* ; lignes
+  de titre et de sous-total.
+* Articles et services (socle) : désignation, unité, prix de vente, taux de TVA
+  par défaut, compte de vente (utilisé seulement si la Comptabilité est active).
+
+*Numérotation et intangibilité — exigences fiscales*
+
+* Un brouillon n'a *pas* de numéro. Le numéro est attribué *à la validation*,
+  par une séquence chronologique et continue *par série* (factures, avoirs,
+  acomptes), gérée en base dans la transaction de validation : ni trou, ni
+  doublon, ni modification possible.
+* Une facture validée est *intangible* : ni modification, ni suppression. Une
+  erreur se corrige par un *avoir* qui référence la facture d'origine (type
+  Factur-X 381).
+* Chaque validation est tracée (qui, quand, empreinte du document).
+
+*Mentions obligatoires* — générées, jamais laissées au modèle : identité complète
+du vendeur (dont SIREN, forme juridique, capital, RCS, TVA intracommunautaire),
+identité du client *et son SIREN*, numéro, dates d'émission et de livraison ou
+de prestation, désignations, quantités, prix HT, remises, taux et montants de
+TVA, totaux, date d'échéance, conditions d'escompte, taux des pénalités de
+retard, indemnité forfaitaire de 40 € (clients professionnels), *catégorie
+d'opération* (biens, services, mixte), *option TVA sur les débits*, adresse de
+livraison si elle diffère, et les mentions spéciales selon le cas
+(autoliquidation, « TVA non applicable, art. 293 B du CGI », exonérations).
+Côté belge : communication structurée `+++…+++`.
+
+*Document produit*
+
+* Chaque facture validée produit *un PDF/A-3 Factur-X* (PDF lisible + XML CII
+  EN16931 embarqué), via `prod-crystal/pdf-a`, contrôlé par `pdf-validate`.
+  La Facturation *produit* la facture ; l'extension `partiduo-einvoicing`
+  (ADR-004) la *transmet* à la plateforme agréée et gère son cycle de vie.
+* Modèles de mise en page propres à Partiduo, paramétrables (logo, couleurs,
+  textes de pied) ; les mentions obligatoires ne sont pas modifiables par le
+  modèle.
+
+*Envoi, règlements, relances*
+
+* Envoi par courriel depuis Partiduo, tracé sur la facture ; en 2027, envoi par
+  la plateforme agréée pour les clients professionnels français.
+* Règlements : total, partiel, acompte déduit ; lien de paiement en option
+  ultérieure.
+* Relances : jusqu'à trois niveaux paramétrables (délai, modèle de courriel,
+  pénalités calculées), proposées dans « À traiter » et jamais envoyées sans
+  validation.
+
+=== D6 — Ce que ce module n'est pas
+
+* *Pas un logiciel de caisse.* Enregistrer des encaissements de clients
+  particuliers peut relever de l'obligation de logiciel sécurisé (art. 286-I-3°
+  bis du CGI : inaltérabilité, sécurisation, conservation, archivage). Tant que
+  ce point n'est pas instruit, la Facturation vise les ventes entre
+  professionnels et les factures aux particuliers sans encaissement en caisse.
+* Pas de commandes fournisseurs dans cette première version : les achats restent
+  des factures reçues (ADR-004) ou des justificatifs (ADR-005 D8).
+
+=== D7 — Tester chaque combinaison
+
+La CI de `partiduo-app` exécute les specs dans *trois configurations* :
+Comptabilité seule, Facturation seule, les deux. Une fonction qui ne marche que
+lorsque tous les modules sont actifs est un défaut.
+
+== Conséquences
+
+=== Positives
+
+* Partiduo sert trois publics avec un seul code.
+* La facturation devient conforme (numérotation, intangibilité, mentions,
+  Factur-X), ce que NOALYSS n'assure pas.
+* Les modules futurs (stock, suivi commercial…) suivent le même chemin.
+
+=== Négatives et coûts
+
+* Le socle doit être défini avec soin : ce qui y entre (tiers, articles, TVA)
+  est partagé par tous les modules et coûteux à déplacer ensuite.
+* La synchronisation par événements demande des tests de bout en bout
+  (facture → écriture → lettrage → facture payée).
+* CI trois fois plus longue.
+
+== Questions ouvertes
+
+. Encaissements de particuliers : faut-il un jour viser la conformité des
+  logiciels de caisse, ou l'exclure durablement ?
+. Commandes fournisseurs et réceptions : module Achats à part, plus tard ?
+. Lien de paiement en ligne (carte, prélèvement SEPA) : quel prestataire ?
+
+== Références
+
+* ADR-001 à ADR-005
+* `prod-github/noalyss/noalyss-app/include/class/acc_ledger_sale.class.php`,
+  `document.class.php`, `invoice_pdf.class.php`, `XMLDocument/facturx.class.php`
+* `prod-github/noalyss/noalyss-plugins/invoicing/`

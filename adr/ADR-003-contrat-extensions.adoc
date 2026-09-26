@@ -67,6 +67,11 @@ implicites (`peppol-connect` installe le schéma de `noalyss_document`).
 
 === D1 — Une extension est un shard qui fournit une application Marten
 
+NOTE: Les *modules officiels* (Comptabilité, Facturation, Analytique, Stock)
+suivent le même contrat — manifeste, permissions, événements, activation par
+instance — mais vivent dans `partiduo-app` (ADR-006). Une extension déclare les
+modules dont elle dépend.
+
 Chaque extension vit dans son dépôt, `prod-crystal/partiduo/partiduo-<nom>`, et
 dépend du cœur `partiduo-app` comme shard.
 
@@ -178,7 +183,7 @@ une page, un modèle, une migration, un abonnement, des specs), successeur de
 |===
 |Amont |Lignes PHP |Devenir
 
-|`peppol-connect` |2 100 |`partiduo-einvoicing` — voir ADR-004. *Prochain portage.*
+|`peppol-connect` |2 100 |`partiduo-einvoicing` — voir ADR-004. *Prochain portage.* Réception : socle seul ; émission : requiert le module Facturation ; pré-comptabilisation : requiert la Comptabilité
 |`noalyss_document` (NDER, NDC) |5 100 |`partiduo-document` — pièces jointes et boîte « Justificatifs à traiter » (photos, fichiers, factures reçues ; ADR-005 D8) ; dépendance de `einvoicing`
 |`noalyss_xmlpayment` (XMLPY) |3 500 |`partiduo-sepa`
 |`advancedimport` (IMPOP2) |7 600 |`partiduo-import`
@@ -190,7 +195,7 @@ une page, un modèle, une migration, un abonnement, des specs), successeur de
 |`noalyss-plugins` / AMORTIS |4 700 |`partiduo-amortis`
 |`noalyss-plugins` / IMPORTBANK |5 800 |`partiduo-bankimport`
 |`noalyss-plugins` / RAPAV + LISTING |14 700 |`partiduo-reports`
-|`noalyss-plugins` / INVOICING |2 100 |Fusionné dans `partiduo-einvoicing`
+|`noalyss-plugins` / INVOICING |2 100 |Absorbé par le module Facturation (ADR-006) : génération, envoi par courriel, archive ZIP
 |`noalyss-plugins` / IMPCARD, TOOLPCMN, TOOLS, MODOP |4 500 |Cœur (import/export de fiches et de plan comptable, outils)
 |`noalyss-plugins` / COPRO, SAV |5 400 |À décider — métiers spécialisés
 |`noalyss-plugins` / TRANSFORM |3 000 |À décider — spécifique à Intervat (Belgique)

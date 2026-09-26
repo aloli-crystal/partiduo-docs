@@ -126,8 +126,10 @@ Structure d'écran :
 
 * barre supérieure : nom du dossier, *exercice et période courants* (toujours
   visibles, modifiables en un clic), recherche globale, utilisateur ;
-* menu latéral par domaine — Tableau de bord, Saisie, Consultation, Fiches,
-  Éditions, TVA, Analytique, Paramètres — puis les extensions activées ;
+* menu latéral par domaine — Tableau de bord, Facturation, Saisie,
+  Consultation, Référentiel, Éditions, TVA, Analytique, Paramètres — puis les
+  extensions activées. *Seuls les modules actifs apparaissent* (ADR-006) ; le
+  tableau de bord assemble les tuiles fournies par chaque module actif ;
 * zone de contenu : titre, fil d'Ariane, actions à droite.
 
 Ergonomie comptable :

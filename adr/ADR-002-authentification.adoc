@@ -263,12 +263,20 @@ inscription, connexion, réinitialisation, jetons.
 |Rien.
 
 |*Règles de mot de passe*
-|`prod-crystal/kemal-auth` porte des règles conformes CNIL — mais lié à Kemal.
-|Extraire les règles.
+|*Livré* : `prod-crystal/password-policy` v0.1.0, indépendant de Kemal. Il
+applique la délibération CNIL 2022-100 (paliers d'entropie : 80 bits pour un
+mot de passe seul, 50 avec restriction des tentatives, 13 avec matériel détenu)
+et non plus la recommandation de 2017 que portait `kemal-auth`. Trois
+préréglages déclarés équivalents par la CNIL ; motifs de refus en clés i18n ;
+limite de 72 *octets* imposée par BCrypt. Partiduo vise le palier à 50 bits,
+qui *exige* de limiter les attaques en ligne (temporisation, ou blocage après
+10 échecs avec déblocage) : exigence du lot 0.
+|Rien.
 
 |*TOTP*
-|Rien dans l'écosystème local.
-|À écrire : RFC 6238, HMAC-SHA1 et base32. Petit.
+|*Livré* : `prod-crystal/totp` v0.1.0 — HOTP, TOTP (SHA-1/256/512), base32,
+URI `otpauth://`, vérifié sur les vecteurs des RFC 4226, 6238 et 4648.
+|Rien.
 
 |*WebAuthn / passkey*
 |`aloli-crystal/webauthn` v0.1.0, écrit pour ce projet : CBOR, COSE,

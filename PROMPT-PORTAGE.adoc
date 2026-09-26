@@ -55,8 +55,10 @@ authentificateur réel.
 RFC 4226, 6238 et 4648. Dépôt local, pas encore publié sur GitHub.
 
 |Règles de mot de passe CNIL
-|icon:times[] Non extraites
-|Toujours liées à `kemal-auth`.
+|icon:check[] OK
+|`prod-crystal/password-policy` v0.1.0 : paliers d'entropie de la délibération
+CNIL 2022-100, trois préréglages, motifs en clés i18n. 36 specs vertes. Dépôt
+local, pas encore publié.
 
 |PostgreSQL local
 |icon:check[] OK
@@ -103,8 +105,7 @@ d'extensions, les événements et les champs de facturation française.
 . Facultatif : lever la limite de taille des workflows (« Dynamic workflow size »
   dans `/config`, depuis un terminal `claude` interactif).
 
-Le seul prérequis logiciel manquant (règles de mot de passe) est confié à
-l'équipe dans le lot P : il ne bloque pas le lancement.
+Tous les prérequis logiciels sont livrés.
 
 [[prompt]]
 == Prompt
@@ -117,7 +118,8 @@ ultracode — Utilisez un workflow multi-agents pour porter NOALYSS en Crystal. 
 
 Le projet s'appelle *Partiduo* (portage de NOALYSS, AGPL-3.0-or-later, dépôts `aloli-crystal/partiduo-*`). Porter le cœur de NOALYSS, `/Users/philippe/prod-github/noalyss/noalyss-app/` (PHP), en Crystal dans `/Users/philippe/prod-crystal/partiduo/partiduo-app/`.
 
-La spécification est dans `/Users/philippe/prod-crystal/partiduo/partiduo-docs/` : `CARTOGRAPHIE-NOALYSS.adoc` et `adr/ADR-001` à `adr/ADR-005`. Je les considère validés. En particulier :
+La spécification est dans `/Users/philippe/prod-crystal/partiduo/partiduo-docs/` : `CARTOGRAPHIE-NOALYSS.adoc` et `adr/ADR-001` à `adr/ADR-006`. Je les considère validés. En particulier :
+- ADR-006 (modules activables) : `partiduo-app` = un *socle* toujours actif + des *modules* activables par instance — Comptabilité, Facturation, Analytique, Stock. Aucun module n'appelle un autre module : ils communiquent par le socle et les événements. La CI exécute les specs dans trois configurations (Comptabilité seule, Facturation seule, les deux). Le module Facturation suit ADR-006 D5 (numérotation attribuée à la validation, sans trou, facture intangible, avoir de type 381, mentions obligatoires générées, PDF/A-3 Factur-X).
 - ADR-003 (contrat d'extension) : le cœur doit accueillir les extensions dès le lot 0 — registre et manifeste, routes `/ext/<code>/`, permissions déclaratives, événements, API publique documentée. Aucune extension n'est portée dans cette exécution, mais créez `partiduo-skel` (ADR-003 D8) pour prouver que le contrat fonctionne.
 - ADR-005 (interface interchangeable) : `partiduo-app` ne contient *aucun* handler, gabarit ni fichier statique ; il expose le contrat `Partiduo::Api` (commandes, requêtes, objets de vue). L'interface est un dépôt séparé, `prod-crystal/partiduo/partiduo-ui-bulma`, qui ne dépend que de `Partiduo::Api`. Mettez en place dès le lot P le garde-fou CI de l'ADR-005 D3. L'apparence et l'ergonomie suivent la maquette de référence : `partiduo-docs/maquette/index.html`.
 - ADR-004 D5 : les champs de facturation française (SIREN, SIRET, identifiant de routage, catégorie d'opération, TVA sur les débits, adresse de livraison) et l'événement `payment.matched` appartiennent au cœur. Prévoyez-les dans les lots 1 et 2.
@@ -138,25 +140,25 @@ Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour co
 1. Version amont : figée sur `rel10200-7-g4bd46a13f`.
 2. Nom : `partiduo-app` ; licence AGPL-3.0-or-later (œuvre dérivée de NOALYSS, GPL-2.0-or-later). Chaque dépôt `partiduo-*` contient le texte intégral de l'AGPL v3 dans `LICENSE`, `license: AGPL-3.0-or-later` dans `shard.yml`, et un README qui cite NOALYSS et son auteur ; chaque fichier source commence par l'en-tête SPDX `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 3. Factur-X, CII et connexion à une Plateforme Agréée : traités par l'extension `partiduo-einvoicing` (ADR-004), portée dans une exécution ultérieure. Hors périmètre ici, sauf les champs et l'événement cités plus haut.
-4. CAPTCHA : abandonné.
+4. CAPTCHA : abandonné. En contrepartie, le lot 0 *doit* limiter les attaques en ligne (temporisation croissante après échecs, et blocage du compte après 10 échecs avec mécanisme de déblocage) : c'est la condition du palier CNIL à 50 bits (délibération 2022-100) appliqué par `prod-crystal/password-policy` ; sans ce mécanisme, il faudrait 80 bits.
 5. Lot 6 (stocks, prévisions, suivi) : reporté, après tout le reste. La GED devient l'extension `partiduo-document` (ADR-003).
 6. Auth : passkey + TOTP + mot de passe local ; SAML intégré via `prod-crystal/saml` ; OIDC en interface pluggable (implémentation après le noyau). Codes de récupération par défaut. Comptes comptables nominatifs. Instances en sous-domaines `<dossier>.partiduo.local`, `rp.id` = `partiduo.local`. Jetons machine : hors périmètre. TOTP : compatible avec n'importe quelle application d'authentification, sans en recommander ni en nommer aucune ; paramètres par défaut de la RFC 6238 uniquement (SHA-1, 6 chiffres, 30 s), QR code et secret base32 affichés. Aucun utilisateur n'est jamais repris : `partiduo-migrate` ne migre ni les utilisateurs ni leurs secrets TOTP. `TOTP::Authenticator#verify` renvoie un compteur : le stocker (`last_otp_counter`) et le repasser en `after:`, sinon un code reste rejouable.
 7. TVA : BE et FR, isolées dans `vat/be/` et `vat/fr/`.
 
 ## Stack imposée
 
-Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma, Opal uniquement pour la saisie d'écritures. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `totp`, `saml`, `pdf-a`, `pdf-signature`). Pour les traductions, utilisez l'i18n intégré de Marten (règles de pluriel des 24 langues de l'UE, ADR-005 D7), pas le shard maison `i18n` ; livrez fr, en et nl avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
+Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma, Opal uniquement pour la saisie d'écritures. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `totp`, `password-policy`, `saml`, `pdf-a`, `pdf-validate`, `pdf-signature`). Pour les traductions, utilisez l'i18n intégré de Marten (règles de pluriel des 24 langues de l'UE, ADR-005 D7), pas le shard maison `i18n` ; livrez fr, en et nl avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
 
 ## Lot P — prérequis à terminer en premier
 
 - `prod-crystal/webauthn` et `prod-crystal/totp` sont livrés : utilisez-les en dépendance `path:` tant qu'ils ne sont pas publiés, sans les réécrire.
-- Règles de mot de passe CNIL : extraire celles de `prod-crystal/kemal-auth` dans `partiduo-app` (module indépendant de Kemal).
+- Règles de mot de passe : utilisez `prod-crystal/password-policy` (préréglage « 14 caractères sans caractère spécial obligatoire » par défaut, `satisfies_use_case?` affirmé dans les specs ; hachage par marten-auth).
 - Squelette `partiduo-app` : projet Marten, applications de l'ADR-001 § Organisation du code, plus `extensions/` (registre, manifeste, permissions, événements — ADR-003), CI (GitHub Actions : format, ameba, specs avec service PostgreSQL), README.adoc.
 
 ## Ordre et parallélisation
 
-Plan de lots de l'ADR-001 : P → 0 → 1 → 2 → M → 3 → 4 → 5 → 6. Partiduo démarre de zéro (aucune donnée à reprendre), mais l'outil de reprise `partiduo-migrate` est obligatoire (ADR-001 D5) : c'est un *dépôt séparé*, `prod-crystal/partiduo/partiduo-migrate`, qui dépend de `partiduo-app` comme shard et n'écrit que par ses services publics ; source FEC d'abord, base NOALYSS ensuite.
-- Un agent « architecte » pose le squelette et les conventions partagées ; l'extraction des règles de mot de passe peut avancer en parallèle de lui. Rien d'autre ne démarre avant que le squelette compile.
+Plan de lots de l'ADR-001 : P → 0 → 1 → (2 et F en parallèle) → M → 3 → 4 → 5 → 6. Partiduo démarre de zéro (aucune donnée à reprendre), mais l'outil de reprise `partiduo-migrate` est obligatoire (ADR-001 D5) : c'est un *dépôt séparé*, `prod-crystal/partiduo/partiduo-migrate`, qui dépend de `partiduo-app` comme shard et n'écrit que par ses services publics ; source FEC d'abord, base NOALYSS ensuite.
+- Un agent « architecte » pose le squelette et les conventions partagées ; rien d'autre ne démarre avant que le squelette compile.
 - Ensuite, parallélisez par application Marten (`core`, `accounting`, `cards`, `vat`, `analytic`, `reporting`…) en respectant les dépendances de modèles.
 - Pour chaque lot : un agent implémente, un agent `ruby-crystal-tester` écrit les specs, un agent `ruby-crystal-reviewer` relit ; corrigez ses remarques avant le commit.
 - Chaque agent lit le code PHP et le SQL d'origine correspondant (`prod-github/noalyss/noalyss-app/`) pour reproduire les règles métier, pas seulement les écrans.
@@ -170,7 +172,7 @@ Plan de lots de l'ADR-001 : P → 0 → 1 → 2 → M → 3 → 4 → 5 → 6. P
 
 ## Jalon minimal exigé à la fin
 
-P + 0 + 1 fonctionnels : `bin/partiduo-provision` crée une instance vierge avec le plan comptable de son régime (FR ou BE), on s'y enrôle, on crée et consulte plan comptable, fiches, exercices et journaux. `partiduo-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible, en visant le second jalon 2 + M : saisie des écritures, puis `partiduo-migrate` importe un FEC (générez-en un de démonstration, par exemple depuis une base NOALYSS créée avec les scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste au centime.
+P + 0 + 1 fonctionnels : `bin/partiduo-provision` crée une instance vierge avec le plan comptable de son régime (FR ou BE), on s'y enrôle, on crée et consulte plan comptable, fiches, exercices et journaux. `partiduo-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible, en visant le second jalon 2 + M : saisie des écritures, puis `partiduo-migrate` importe un FEC (générez-en un de démonstration, par exemple depuis une base NOALYSS créée avec les scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste au centime. Troisième jalon, F : sur une instance « Facturation seule » puis « Comptabilité + Facturation », un devis transformé en facture validée (numéro attribué, PDF/A-3 Factur-X valide selon `pdf-validate`), puis payée ; avec la Comptabilité, l'écriture de vente est générée et lettrée.
 
 ## Reprise
 

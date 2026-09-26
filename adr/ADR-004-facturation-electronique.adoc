@@ -95,8 +95,10 @@ Les jetons d'accès sont chiffrés en base.
 
 === D3 — Formats produits et lus
 
-* *Émission* : Factur-X (PDF/A-3 + `factur-x.xml`, profils EN16931 et BASIC WL),
-  CII D22B, UBL 2.1 EN16931 et EXTENDED-CTC-FR. Le PDF/A-3 s'appuie sur
+* *Émission* : la facture elle-même — PDF/A-3 Factur-X — est *produite par le
+  module Facturation* (ADR-006 D5) ; cette extension la *transmet* et produit, à
+  la demande de la plateforme, les variantes CII D22B, UBL 2.1 EN16931 et
+  EXTENDED-CTC-FR. Profils Factur-X : EN16931 et BASIC WL. Le PDF/A-3 s'appuie sur
   `prod-crystal/pdf-a`, contrôlé par `prod-crystal/pdf-validate`.
   `pdf-signature` reste facultatif.
 * *Réception* : lecture UBL, CII et Factur-X (extraction du XML embarqué),
