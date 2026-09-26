@@ -31,8 +31,9 @@ Quatre décisions sont prises ici :
   provisionnement, sur le modèle éprouvé de QUIMEO.
 . *HTMX + Bulma + Opal* pour l'interface : HTMX par défaut, Opal réservé aux
   écrans de saisie réellement interactifs.
-. *Rupture assumée* : le schéma change, une migration de données auditée
-  accompagne chaque bascule de dossier.
+. *Rupture assumée* : le schéma change. Partiduo démarre sans aucune donnée
+  reprise, mais un outil de reprise audité permet d'y importer un dossier
+  comptable existant, depuis NOALYSS ou tout autre logiciel.
 
 Le projet exige *Marten 0.7.0 ou supérieur*, qui fournit le type `decimal`
 indispensable aux montants. Aucune limite de Marten ne bloque plus le
@@ -380,13 +381,25 @@ autre syntaxe.
 Le schéma change, les _large objects_ disparaissent, l'EAV est démonté : une
 base NOALYSS n'est pas lisible par la nouvelle application.
 
-En revanche, l'instance par dossier rend la bascule *progressive par dossier* :
-chaque société migre quand elle est prête, sans affecter les autres. Il n'y a
-pas de jour J global.
+*Point de départ (26 septembre 2026) : aucune reprise.* Partiduo démarre de
+zéro — aucun dossier, aucun utilisateur n'est à migrer. Les utilisateurs ne sont
+jamais repris : chacun s'enrôle sur son instance (ADR-002).
 
-Un outil `partiduo-migrate` est un livrable de premier rang :
+L'instance par dossier rend en revanche toute reprise future *progressive par
+dossier* : chaque société arrive quand elle est prête, sans affecter les autres.
 
-* lecture d'une base dossier NOALYSS en DBVERSION 208 ;
+Un outil `partiduo-migrate` reste un livrable de premier rang, car reprendre un
+dossier comptable est un besoin courant (changement de logiciel, nouveau
+client d'un cabinet). Il accepte deux sources :
+
+* *FEC* (fichier des écritures comptables, article A47 A-1 du LPF) — source
+  prioritaire : tout logiciel français sait le produire, NOALYSS compris. Il
+  apporte plan comptable, journaux, écritures, tiers et lettrage ;
+* *base NOALYSS* en DBVERSION 208 — pour ce que le FEC ne porte pas : fiches
+  complètes, comptabilité analytique, paramètres de TVA, pièces jointes.
+
+Dans les deux cas :
+
 * écriture dans le schéma cible d'une instance neuve ;
 * *rapport de réconciliation obligatoire* : balance générale, balance âgée,
   totaux par journal et par période, comparés avant / après. Une migration qui
@@ -415,7 +428,7 @@ src/
 
 bin/
 ├── partiduo-provision   # création d'une instance
-└── partiduo-migrate     # reprise d'un dossier NOALYSS + réconciliation
+└── partiduo-migrate     # reprise d'un dossier (FEC ou base NOALYSS) + réconciliation
 ----
 
 Les spécificités fiscales belges (12 tables `tva_belge`) restent isolées dans
@@ -454,15 +467,17 @@ Les 97 fonctions ne sont pas transposées mécaniquement. Chacune est classée :
 |4 |TVA et déclarations (BE + FR) |~10 %
 |5 |Comptabilité analytique |~10 %
 |6 |Stocks, prévisions, GED et suivi |~15 %
-|M |`partiduo-migrate` + rapport de réconciliation |transverse, démarre au lot 1
+|M |`partiduo-migrate` (FEC puis base NOALYSS) + rapport de réconciliation |après le lot 2, rapport complété au lot 3
 |===
 
 L'ancien lot 7 — administration multi-dossiers, ~5 % — disparaît. Son reliquat
 utile (création d'un dossier, jeu de données initial) est absorbé par le lot 0
 sous forme de script.
 
-Premier jalon démontrable : *P + 0 + 1*. Provisionner une instance, y migrer un
-dossier réel, s'y connecter, consulter son plan comptable et ses fiches, et
+Premier jalon démontrable : *P + 0 + 1*. Provisionner une instance vierge avec
+son jeu de données initial (plan comptable du régime choisi), s'y enrôler, créer
+et consulter plan comptable, fiches, exercices et journaux. La reprise d'un
+dossier fait l'objet d'un second jalon, *2 + M* : importer un FEC réel et
 présenter un rapport de réconciliation qui tombe juste.
 
 == Conséquences

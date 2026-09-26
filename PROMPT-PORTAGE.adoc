@@ -139,7 +139,7 @@ Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour co
 3. Factur-X, CII et connexion à une Plateforme Agréée : traités par l'extension `partiduo-einvoicing` (ADR-004), portée dans une exécution ultérieure. Hors périmètre ici, sauf les champs et l'événement cités plus haut.
 4. CAPTCHA : abandonné.
 5. Lot 6 (stocks, prévisions, suivi) : reporté, après tout le reste. La GED devient l'extension `partiduo-document` (ADR-003).
-6. Auth : passkey + TOTP + mot de passe local ; SAML intégré via `prod-crystal/saml` ; OIDC en interface pluggable (implémentation après le noyau). Codes de récupération par défaut. Comptes comptables nominatifs. Instances en sous-domaines `<dossier>.partiduo.local`, `rp.id` = `partiduo.local`. Jetons machine : hors périmètre. TOTP : compatible avec n'importe quelle application d'authentification, sans en recommander ni en nommer aucune ; paramètres par défaut de la RFC 6238 uniquement (SHA-1, 6 chiffres, 30 s), QR code et secret base32 affichés. Aucun compte utilisateur n'est repris de NOALYSS : `partiduo-migrate` ne migre ni les utilisateurs ni leurs secrets TOTP. `TOTP::Authenticator#verify` renvoie un compteur : le stocker (`last_otp_counter`) et le repasser en `after:`, sinon un code reste rejouable.
+6. Auth : passkey + TOTP + mot de passe local ; SAML intégré via `prod-crystal/saml` ; OIDC en interface pluggable (implémentation après le noyau). Codes de récupération par défaut. Comptes comptables nominatifs. Instances en sous-domaines `<dossier>.partiduo.local`, `rp.id` = `partiduo.local`. Jetons machine : hors périmètre. TOTP : compatible avec n'importe quelle application d'authentification, sans en recommander ni en nommer aucune ; paramètres par défaut de la RFC 6238 uniquement (SHA-1, 6 chiffres, 30 s), QR code et secret base32 affichés. Aucun utilisateur n'est jamais repris : `partiduo-migrate` ne migre ni les utilisateurs ni leurs secrets TOTP. `TOTP::Authenticator#verify` renvoie un compteur : le stocker (`last_otp_counter`) et le repasser en `after:`, sinon un code reste rejouable.
 7. TVA : BE et FR, isolées dans `vat/be/` et `vat/fr/`.
 
 ## Stack imposée
@@ -154,7 +154,7 @@ Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/mart
 
 ## Ordre et parallélisation
 
-Plan de lots de l'ADR-001 : P → 0 → 1 → M → 2 → 3 → 4 → 5 → 6.
+Plan de lots de l'ADR-001 : P → 0 → 1 → 2 → M → 3 → 4 → 5 → 6. Partiduo démarre de zéro (aucune donnée à reprendre), mais l'outil de reprise `partiduo-migrate` est obligatoire (ADR-001 D5) : source FEC d'abord, base NOALYSS ensuite.
 - Un agent « architecte » pose le squelette et les conventions partagées ; l'extraction des règles de mot de passe peut avancer en parallèle de lui. Rien d'autre ne démarre avant que le squelette compile.
 - Ensuite, parallélisez par application Marten (`core`, `accounting`, `cards`, `vat`, `analytic`, `reporting`…) en respectant les dépendances de modèles.
 - Pour chaque lot : un agent implémente, un agent `ruby-crystal-tester` écrit les specs, un agent `ruby-crystal-reviewer` relit ; corrigez ses remarques avant le commit.
@@ -169,7 +169,7 @@ Plan de lots de l'ADR-001 : P → 0 → 1 → M → 2 → 3 → 4 → 5 → 6.
 
 ## Jalon minimal exigé à la fin
 
-P + 0 + 1 + M fonctionnels : `bin/partiduo-provision` crée une instance, `bin/partiduo-migrate` y importe un dossier NOALYSS de démonstration (généré à partir des scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste, on se connecte, on consulte plan comptable et fiches. `partiduo-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible dans les lots suivants.
+P + 0 + 1 fonctionnels : `bin/partiduo-provision` crée une instance vierge avec le plan comptable de son régime (FR ou BE), on s'y enrôle, on crée et consulte plan comptable, fiches, exercices et journaux. `partiduo-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible, en visant le second jalon 2 + M : saisie des écritures, puis `bin/partiduo-migrate` importe un FEC (générez-en un de démonstration, par exemple depuis une base NOALYSS créée avec les scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste au centime.
 
 ## Reprise
 
