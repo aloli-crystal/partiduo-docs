@@ -152,6 +152,14 @@ Qualité :
 * *langues* : français, anglais et néerlandais au départ ; *à terme, les
   24 langues officielles de l'Union européenne*. Voir D7.
 
+=== D6 — La maquette fait référence
+
+La maquette validée (tableau de bord, saisie d'une écriture, plan comptable)
+fixe l'apparence et l'ergonomie de `partiduo-ui-bulma`. Elle vit dans
+`maquette/` (Bulma 1.0.4, `theme.css`) et est publiée sur
+https://claude.ai/artifact/PWX5XRVHre9TWqEFv1k1WS. Son `theme.css` est le point de
+départ du thème de l'interface.
+
 === D7 — Prêt pour toutes les langues de l'Union européenne
 
 Seules trois langues sont livrées au départ, mais rien ne doit empêcher d'ajouter
@@ -179,14 +187,9 @@ ro, sk, sl, sv) par un simple fichier de traduction :
 * *contenu métier* : les libellés du plan comptable, des taux de TVA et des
   journaux sont des données du dossier, dans la langue du dossier, pas des
   traductions de l'interface.
-
-=== D6 — La maquette fait référence
-
-La maquette validée (tableau de bord, saisie d'une écriture, plan comptable)
-fixe l'apparence et l'ergonomie de `partiduo-ui-bulma`. Elle vit dans
-`maquette/` (Bulma 1.0.4, `theme.css`) et est publiée sur
-https://claude.ai/artifact/PWX5XRVHre9TWqEFv1k1WS. Son `theme.css` est le point de
-départ du thème de l'interface.
+* *qui traduit quoi* : les libellés d'écran sont dans l'interface ; les libellés
+  métier et les messages d'erreur sont dans le cœur, pour qu'une nouvelle
+  interface en hérite.
 
 == Conséquences
 
