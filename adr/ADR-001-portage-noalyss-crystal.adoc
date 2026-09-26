@@ -1,0 +1,603 @@
+= ADR-001 — Portage de NOALYSS en Crystal sur Marten
+:toc: left
+:toc-title: Table des matières
+:toclevels: 3
+:source-highlighter: rouge
+:icons: font
+
+*Statut.* Proposé — en attente de validation Philippe. +
+*Date.* 14 septembre 2026. +
+*Révision.* v2 — l'architecture multi-société est abandonnée au profit d'une
+*instance par dossier*. Voir <<d2>> et <<alternatives>>. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Source.* Analyse de `noalyss-app` `rel10200-7-g4bd46a13f` — voir
+`CARTOGRAPHIE-NOALYSS.adoc`.
+
+== Résumé
+
+NOALYSS est une plate-forme de comptabilité et d'ERP libre (GPL v2), née en
+2002, écrite en PHP sur PostgreSQL : ~147 000 lignes de PHP applicatif,
+36 942 lignes de JavaScript maison, 122 tables et 97 fonctions PL/pgSQL.
+Le langage ne convient pas. Cet ADR fixe les choix structurants d'un portage
+en Crystal.
+
+Quatre décisions sont prises ici :
+
+. *Marten* comme framework, avec un *schéma de base repensé* pour coller à ses
+  conventions — et non le schéma legacy repris tel quel.
+. *Une instance par dossier.* Un dossier comptable = une application, une base,
+  une URL. La base d'administration `account_repository` et tout le
+  multi-dossier disparaissent. Les instances sont créées par un script de
+  provisionnement, sur le modèle éprouvé de QUIMEO.
+. *HTMX + Bulma + Opal* pour l'interface : HTMX par défaut, Opal réservé aux
+  écrans de saisie réellement interactifs.
+. *Rupture assumée* : le schéma change, une migration de données auditée
+  accompagne chaque bascule de dossier.
+
+Le projet exige *Marten 0.7.0 ou supérieur*, qui fournit le type `decimal`
+indispensable aux montants. Aucune limite de Marten ne bloque plus le
+démarrage — voir <<limites-marten>>.
+
+== Glossaire
+
+Le vocabulaire de NOALYSS est dense et souvent abrégé. Cet ADR l'emploie au
+sens strict défini ici, et propose pour chaque terme le nom retenu côté Crystal.
+
+[cols="1,1,3",options="header"]
+|===
+|Terme NOALYSS |Nom cible |Définition
+
+|*Dossier* (`ac_dossier`)
+|— (l'instance)
+|Comptabilité d'une société. Aujourd'hui : une base dans un parc administré par
+`account_repository`. Demain : *une instance complète de l'application*, avec sa
+base, son URL et sa configuration. Ce n'est plus une entité du modèle.
+
+|*Société*
+|`Settings` (ligne unique)
+|Identité de la société — raison sociale, adresse, numéro de TVA, régime fiscal.
+Devient une ligne de configuration dans la base du dossier, héritière de la
+table `parameter`.
+
+|*Journal* (`jrn_def`)
+|`Ledger`
+|Journal comptable : achat (`ACH`), vente (`VEN`), financier (`FIN`), opérations
+diverses (`ODS`). Porte ses comptes par défaut, sa numérotation de pièces, sa
+devise, ses limites de lignes.
+
+|*Opération* (`jrn`)
+|`Entry`
+|En-tête d'écriture : date, montant, commentaire, période, pièce justificative,
+échéance, devise. Identifiée par `jr_id`, regroupe ses lignes via `jr_grpt_id`.
+
+|*Ligne d'opération* (`jrnx`)
+|`EntryLine`
+|Ligne d'écriture : compte (`j_poste`), sens (`j_debit` booléen), montant
+`numeric(20,4)`, tiers éventuel (`f_id`), période technique. Regroupées par
+`j_grpt`.
+
+|*Poste* (`tmp_pcmn`)
+|`Account`
+|Compte du plan comptable. Hiérarchique via `pcm_val_parent`. Le type
+`account_type` est un `varchar(40)` : les numéros de compte sont
+*alphanumériques*, pas des entiers.
+
+|*Fiche* (`fiche`)
+|`Card`
+|Tiers ou objet géré : client, fournisseur, article, banque, salarié. Ses
+attributs sont stockés en *EAV* dans `fiche_detail` (`ad_id`, `ad_value text`).
+
+|*Catégorie de fiche* (`fiche_def`)
+|`CardCategory`
+|Modèle de fiche : quels attributs, quel compte comptable rattaché.
+
+|*Quick code* (`j_qcode`)
+|`Card#code`
+|Code court et unique d'une fiche, saisi à la place du numéro de compte.
+
+|*Exercice / période* (`parm_periode`)
+|`FiscalYear` / `Period`
+|Un exercice (`p_exercice`) contient des périodes (`p_start`, `p_end`),
+clôturables individuellement (`p_closed`) et centralisables (`p_central`).
+
+|*Lettrage* (`letter_deb`, `letter_cred`, `jnt_letter`)
+|`Matching`
+|Rapprochement d'écritures débit / crédit d'un même tiers.
+
+|*Analytique* (`anc_*`, `poste_analytique`)
+|`Analytic*`
+|Comptabilité analytique : plans, postes, clés de répartition, groupes.
+
+|*Profil* (`profile`, `profile_menu`, `user_sec_jrn`)
+|`Profile`
+|Droits : accès aux menus et aux journaux, par utilisateur. Reste dans la base
+du dossier.
+|===
+
+== Contexte
+
+=== Ce qui est porté
+
+La cartographie établit les volumes suivants (hors `vendor/`) :
+
+[cols="3,1"]
+|===
+|PHP applicatif |~147 000 lignes (782 fichiers)
+|Tests PHPUnit |17 768 lignes (68 fichiers)
+|JavaScript maison |36 942 lignes (189 fichiers)
+|Tables |122 (`mod1` belge) / 110 (`mod2` français)
+|Fonctions PL/pgSQL |97
+|Routes |200 (table `menu_ref`)
+|===
+
+=== Ce qui rend le portage difficile
+
+. *Pas de couche de vue à extraire.* 979 `echo` dans 76 des 145 classes de
+  `include/class/`. Les classes métier écrivent du HTML directement. La
+  présentation est à réécrire intégralement, elle ne se transpose pas.
+. *État global omniprésent.* `$g_user`, `$cn`, `$g_parameter`, `$_SESSION`
+  utilisés dans 100 fichiers hors `html/`.
+. *JavaScript généré depuis PHP.* `include/lib/function_javascript.php`
+  (2 823 lignes) produit du JS à la volée.
+. *Modèle EAV pour les tiers.* Nom, adresse, numéro de TVA, compte bancaire
+  d'un client sont des lignes `(f_id, ad_id, ad_value text)`. Tout est `text`,
+  sans typage ni contrainte.
+
+=== Ce qui aide
+
+. *97 fonctions PL/pgSQL* portent le cœur comptable : `check_balance`,
+  `insert_jrnx`, `tva_insert`, `account_compute`, `get_pcm_tree`, `is_closed`,
+  `find_periode`. Ce sont des *spécifications lisibles* du métier, même si le
+  schéma change.
+. *68 fichiers de tests PHPUnit* couvrant `acc_ledger`, `acc_ledger_purchase`,
+  `fiche`. Spécification exécutable à traduire en specs Crystal.
+. *SQL paramétré* (`$1`, `$2`) dans les 750 requêtes en dur : la logique de
+  chaque requête est lisible et transposable.
+. *Schéma commenté* : `COMMENT ON` présents sur tables et colonnes.
+
+[[limites-marten]]
+== Dépendance à Marten 0.7.0
+
+=== Le type `decimal` existe depuis la 0.7.0
+
+[IMPORTANT]
+====
+La v1 de cet ADR posait *l'absence de type `decimal`* comme prérequis bloquant.
+*C'était faux.* Le constat reposait sur un checkout local de Marten devenu
+obsolète. La version publiée *0.7.0* fournit `Marten::DB::Field::Decimal`.
+
+Il n'y a donc *rien à écrire* : le projet exige simplement Marten `~> 0.7`.
+====
+
+Le champ amont couvre exactement le besoin :
+
+* valeurs exposées en `BigDecimal` ;
+* colonne `numeric(max_digits, decimal_places)` sous PostgreSQL ;
+* transmission à la base sous forme de littéral décimal — `DB::Any` n'ayant pas
+  de membre décimal, c'est la seule représentation exacte ;
+* `src/marten/ext/pg/big_decimal.cr` charge l'extension `crystal-pg`
+  nécessaire à la lecture des `numeric` ;
+* validation *stricte* : une valeur portant plus de décimales que
+  `decimal_places` est *refusée*, pas arrondie. C'est le bon comportement en
+  comptabilité — un arrondi silencieux est la façon dont les centimes
+  disparaissent. L'appelant arrondit explicitement et assume la décision.
+
+La signature diffère de celle envisagée : ce sont `max_digits` et
+`decimal_places`, non `precision` et `scale`.
+
+[source,crystal]
+----
+field :amount, :decimal, max_digits: 20, decimal_places: 4
+----
+
+=== Réserve : SQLite perd l'exactitude
+
+Marten 0.7.0 déclare la colonne `decimal(max_digits, decimal_places)` sous
+SQLite. Or SQLite n'a pas de type décimal : ce nom de type lui donne l'affinité
+`NUMERIC`, et une chaîne décimale insérée dans une telle colonne est convertie
+en `REAL` — un flottant binaire.
+
+Vérification faite :
+
+[source]
+----
+CREATE TABLE m (a decimal(20,4), b TEXT);
+INSERT INTO m VALUES ('123456789012345.6789','123456789012345.6789');
+
+a -> real | 123456789012345.67      <-- quatre chiffres perdus
+b -> text | 123456789012345.6789    <-- exact
+----
+
+*Sans incidence sur ce projet* : `ADR-001` retient PostgreSQL, où
+`numeric(p,s)` est exact, et les tests tournent sur le même backend que la
+production — c'est d'ailleurs la seule façon de tester une comptabilité
+sérieusement.
+
+*Une PR est prévue* en direction de Marten pour stocker les décimaux en `TEXT`
+sous SQLite, avec le cas de reproduction ci-dessus. Contribution de bon
+citoyen : elle n'est pas sur le chemin critique et sera proposée quand elle
+sera commode.
+
+=== Ce qui reste vrai en 0.7.0
+
+Les autres constats de la v1 ont été revérifiés contre la 0.7.0 publiée et
+tiennent tous :
+
+* `Connection.for(table_name)` est toujours un `TODO` qui renvoie `default` ;
+* il n'y a toujours aucun `close` sur `Connection::Base` ;
+* `search_path` reste absent des sources ;
+* `marten migrate --db=X` applique toujours *toutes* les migrations.
+
+Ils ne concernent que le multi-base, écarté par <<d2>> — voir
+<<alternatives>>.
+
+
+=== Ce qui n'est plus un problème
+
+La décision <<d2>> rend caduques trois limites relevées en v1 de cet ADR :
+
+* l'absence de routeur de base (`Connection.for` renvoie toujours `default`) ;
+* l'impossibilité de fermer une connexion — pas de `close` sur
+  `Connection::Base`, registre qui ne fait que croître ;
+* `marten migrate --db=X` qui applique *toutes* les migrations sans pouvoir
+  cibler une app.
+
+Avec une seule base par instance, Marten est utilisé dans son *mode nominal* :
+une base `default`, un pool, toutes les migrations. Aucun patch du framework
+n'est nécessaire. C'est le principal bénéfice technique de cette décision.
+
+== Décision
+
+=== D1 — Marten, avec un schéma repensé
+
+Marten 0.6.x est retenu : ORM, migrations, i18n, routing, formulaires et
+interface d'administration intégrés. Pour un ERP, ce socle vaut le coût du
+cadre imposé. Il est déjà présent dans `prod-crystal/`, accompagné de
+`marten-tools` et `marten-docs-fr`.
+
+Le schéma est *repensé aux conventions Marten* — table `<app_label>_<model>`,
+clé primaire `id` auto-incrémentée, noms de colonnes sans préfixe de table.
+
+Correspondances types :
+
+[cols="2,2,3",options="header"]
+|===
+|NOALYSS |Cible |Note
+
+|`jrn.jr_id` |`accounting_entry.id` |préfixes `jr_`, `j_`, `f_`, `pcm_` supprimés
+|`jrnx.j_debit boolean` |`side enum(:debit, :credit)` |plus lisible qu'un booléen
+|`jrnx.j_montant numeric(20,4)` |`amount decimal(20,4)` |champ `decimal` natif de Marten 0.7.0
+|`jrnx.j_poste account_type` |FK `account_id` |le compte devient une vraie relation
+|`jrnx.j_qcode text` |dénormalisation supprimée |résolue par la FK `card_id`
+|`j_tech_per` |FK `period_id` |
+|`fiche_detail` (EAV) |colonnes typées + `extra jsonb` |voir D3
+|`jrn.jr_pj oid` (large object) |`file` field |les _large objects_ PostgreSQL sont abandonnés
+|`f_enable char(1) '0'/'1'` |`enabled bool` |
+|===
+
+Une règle tranche les cas ambigus : *le schéma cible est conçu pour le métier
+comptable, pas pour ressembler à l'ancien.* La compatibilité est assurée par
+l'outil de migration, pas par le nommage.
+
+[[d2]]
+=== D2 — Une instance par dossier
+
+*Un dossier comptable = une application, une base PostgreSQL, une URL.*
+
+Il n'y a plus de base d'administration, plus de table `ac_dossier`, plus de
+`company_id`, plus de sélection de dossier à la connexion. L'application ne
+connaît qu'une société : la sienne.
+
+C'est le modèle de déploiement déjà pratiqué sur QUIMEO — un sous-domaine par
+instance (`<instance>.<domaine>`), une base créée par
+`createdb --owner=… --encoding=UTF8`, un vhost généré depuis un gabarit.
+
+Les 11 tables d'`account_repository` disparaissent :
+
+[cols="2,3",options="header"]
+|===
+|Table |Devenir
+
+|`ac_dossier` |la liste des dossiers devient l'inventaire des instances, hors application
+|`ac_users`, `jnt_use_dos` |les utilisateurs vivent dans la base du dossier
+|`modeledef` |remplacé par les migrations Marten + un jeu de données initial
+|`theme`, `user_global_pref` |préférences dans la base du dossier
+|`recover_pass` |mécanisme standard de l'app
+|`audit_connect` |journalisation dans la base du dossier
+|`progress`, `dossier_sent_email`, `version` |sans objet
+|===
+
+`admin-noalyss.php` (1 825 lignes) et l'écran de sélection de dossier
+d'`index.php` ne sont pas portés.
+
+==== Provisionnement
+
+Un script `noalyss-provision` crée une instance :
+
+. `createdb --owner=<user> --encoding=UTF8 <dossier>` ;
+. `marten migrate` sur cette base ;
+. chargement du jeu de données initial — plan comptable (BE ou FR), journaux
+   par défaut, catégories de fiches, taux de TVA, profil administrateur ;
+. génération du vhost depuis un gabarit et rechargement du serveur web ;
+. création de l'unité de service et démarrage.
+
+La configuration d'une instance tient dans son environnement : URL, chaîne de
+connexion, régime fiscal, langue par défaut.
+
+==== Ce que cette décision coûte
+
+*Un comptable qui suit plusieurs sociétés a désormais une URL et un compte par
+société.* C'est la perte fonctionnelle réelle de ce choix, et elle est visible
+par l'utilisateur : NOALYSS permet aujourd'hui un login unique donnant accès à
+plusieurs dossiers (`jnt_use_dos`). Trois réponses possibles, à trancher :
+authentification centralisée (OIDC) partagée entre instances, portail de
+redirection listant les instances d'un utilisateur, ou statu quo assumé.
+
+*La mise à jour devient une opération de parc.* Passer 300 dossiers en version
+N+1 suppose un outillage de déploiement et une stratégie de migration
+progressive. C'est un problème d'exploitation connu et maîtrisé, mais il est
+réel et doit être outillé dès le lot 0.
+
+=== D3 — Les fiches sortent de l'EAV
+
+`fiche` + `fiche_detail` forment un EAV pur : le nom d'un client, son adresse,
+son numéro de TVA sont des lignes `ad_value text`. Tout est `text`, rien n'est
+contraint, et toute lecture de fiche impose une jointure par attribut.
+
+Le schéma cible :
+
+* *colonnes typées* pour les attributs universels — `name`, `code`,
+  `vat_number`, `iban`, `email`, `address`, `enabled`, `account_id` ;
+* *`extra jsonb`* pour les attributs définis par l'utilisateur via
+  `CardCategory`, avec validation applicative selon la définition de catégorie ;
+* un index `GIN` sur `extra` pour la recherche.
+
+On conserve donc l'extensibilité — c'est une fonctionnalité réelle de NOALYSS —
+sans en payer le prix sur les attributs que *toute* fiche possède.
+
+=== D4 — HTMX + Bulma, Opal en dernier recours
+
+Par défaut : *rendu serveur + HTMX*. Les 98 handlers AJAX actuels renvoient déjà
+des fragments : ils deviennent des vues Marten qui rendent du HTML partiel.
+Bulma pour la présentation, en cohérence avec les autres projets.
+
+*Opal est réservé* aux écrans où le seul HTMX serait une régression d'ergonomie :
+
+* saisie d'écriture multi-lignes, avec calcul d'équilibre débit/crédit en
+  direct et complétion des quick codes ;
+* lettrage ;
+* rapprochement bancaire.
+
+Règle : *aucun écran ne démarre en Opal.* On écrit d'abord la version HTMX, et
+on ne bascule en Opal que sur constat d'un problème d'usage réel. L'objectif est
+de remplacer 36 942 lignes de JavaScript maison, pas de les reconduire sous une
+autre syntaxe.
+
+=== D5 — Rupture, et migration auditée
+
+Le schéma change, les _large objects_ disparaissent, l'EAV est démonté : une
+base NOALYSS n'est pas lisible par la nouvelle application.
+
+En revanche, l'instance par dossier rend la bascule *progressive par dossier* :
+chaque société migre quand elle est prête, sans affecter les autres. Il n'y a
+pas de jour J global.
+
+Un outil `noalyss-migrate` est un livrable de premier rang :
+
+* lecture d'une base dossier NOALYSS en DBVERSION 208 ;
+* écriture dans le schéma cible d'une instance neuve ;
+* *rapport de réconciliation obligatoire* : balance générale, balance âgée,
+  totaux par journal et par période, comparés avant / après. Une migration qui
+  ne réconcilie pas au centime près est un échec, pas un avertissement.
+
+C'est ce rapport, et non les specs, qui autorise la mise en production d'un
+dossier.
+
+== Organisation du code
+
+Découpage en applications Marten, selon les domaines relevés dans la
+cartographie :
+
+[source]
+----
+src/
+├── core/            # Settings (société), User, Profile, Period, FiscalYear, Currency
+├── accounting/      # Account, Ledger, Entry, EntryLine, Matching
+├── cards/           # Card, CardCategory, attributs dynamiques
+├── vat/             # taux, déclarations ; sous-module be/ et fr/
+├── analytic/        # plans, postes, clés de répartition
+├── reporting/       # balances, grand livre, bilan, FEC
+├── stock/           # dépôts, mouvements
+├── followup/        # GED, suivi, actions
+└── web/             # layouts, composants HTMX, assets Bulma
+
+bin/
+├── noalyss-provision   # création d'une instance
+└── noalyss-migrate     # reprise d'un dossier NOALYSS + réconciliation
+----
+
+Les spécificités fiscales belges (12 tables `tva_belge`) restent isolées dans
+`vat/be/`. La distinction `mod1` / `mod2` disparaît : l'instance déclare son
+régime fiscal dans sa configuration, et le jeu de données initial suit.
+
+=== Où va le métier qui était en PL/pgSQL
+
+Les 97 fonctions ne sont pas transposées mécaniquement. Chacune est classée :
+
+[cols="2,3",options="header"]
+|===
+|Catégorie |Destination
+
+|Intégrité comptable — `check_balance`, `proc_check_balance`, `is_closed`, `jrn_check_periode`
+|*Reste en base*, sous forme de contraintes et de triggers. Une écriture déséquilibrée doit être refusée par PostgreSQL, quel que soit le code qui l'écrit.
+|Logique applicative — `insert_jrnx`, `tva_insert`, `jrn_def_add`
+|*Remonte en Crystal*, dans les modèles et les services.
+|Calcul et arborescence — `get_pcm_tree`, `account_compute`, `get_menu_tree`
+|*Reste en base* quand la récursivité SQL est plus efficace qu'un aller-retour applicatif.
+|Formatage — `format_account`, `four_upper_letter`, `html_quote`, `trim_cvs_quote`
+|*Disparaît* : relève de la couche de présentation.
+|===
+
+== Plan de lots
+
+[cols="1,4,1",options="header"]
+|===
+|Lot |Contenu |Poids
+
+|*P* |*Prérequis* : squelette du projet, CI, dépendance Marten `~> 0.7`. Les prérequis d'authentification sont dans `ADR-002` |~1 %
+|0 |Socle : configuration société, authentification et TOTP, layout Bulma, i18n fr/en/nl, `noalyss-provision`, outillage de déploiement de parc |~8 %
+|1 |Référentiel : plan comptable, fiches, exercices et périodes, journaux |~15 %
+|2 |Écritures : saisie achat / vente / financier / OD, consultation, lettrage |~25 %
+|3 |Éditions : balances, grand livre, bilan, FEC |~15 %
+|4 |TVA et déclarations (BE + FR) |~10 %
+|5 |Comptabilité analytique |~10 %
+|6 |Stocks, prévisions, GED et suivi |~15 %
+|M |`noalyss-migrate` + rapport de réconciliation |transverse, démarre au lot 1
+|===
+
+L'ancien lot 7 — administration multi-dossiers, ~5 % — disparaît. Son reliquat
+utile (création d'un dossier, jeu de données initial) est absorbé par le lot 0
+sous forme de script.
+
+Premier jalon démontrable : *P + 0 + 1*. Provisionner une instance, y migrer un
+dossier réel, s'y connecter, consulter son plan comptable et ses fiches, et
+présenter un rapport de réconciliation qui tombe juste.
+
+== Conséquences
+
+=== Positives
+
+* *Marten est utilisé dans son mode nominal* : une base, un pool, toutes les
+  migrations. Aucun patch du framework, aucune dépendance à une fonctionnalité
+  marquée expérimentale en amont.
+* *Isolation parfaite entre sociétés* — physique, pas applicative. Meilleure que
+  ce qu'une politique RLS aurait offert, et sans code à écrire pour l'obtenir.
+* *`pg_dump` et `DROP DATABASE` par société conservés.* Sauvegarde, restauration,
+  suppression et archivage d'un dossier restent des opérations PostgreSQL
+  élémentaires.
+* *Bascule progressive* : chaque société migre quand elle est prête. Pas de
+  jour J.
+* *Pas de problème de volumétrie partagée* : une société volumineuse ne pèse que
+  sur sa propre base.
+* Typage statique et compilation sur un domaine où les erreurs de type coûtent
+  cher.
+* Séparation métier / présentation obtenue par construction.
+* Schéma lisible : les colonnes ne s'appellent plus `jr_`, `j_`, `pcm_`, `ad_`.
+
+=== Négatives et coûts
+
+* *Perte du login unique multi-dossiers.* Un comptable suivant dix sociétés a
+  dix URLs et dix comptes. C'est la régression fonctionnelle assumée de D2 —
+  voir les questions ouvertes.
+* *La mise à jour devient une opération de parc.* N instances à faire monter de
+  version, avec le risque d'un parc hétérogène. À outiller dès le lot 0.
+* *Empreinte à l'exécution* : N processus applicatifs et N pools au lieu d'un.
+  Acceptable pour quelques dizaines d'instances, à mesurer au-delà.
+* *Migration de données comptables* : sensible, auditable, et le rapport de
+  réconciliation est un livrable à part entière.
+* *Écart fonctionnel durable.* NOALYSS existe depuis 2002 et continue
+  d'évoluer — le dépôt amont est actif. Chaque correction amont pendant le
+  portage creuse l'écart. Il faut soit suivre l'amont, soit figer une version de
+  référence et l'assumer.
+* *36 942 lignes de JavaScript* à ne pas reconduire : le pari HTMX doit tenir
+  sur les écrans de saisie, qui sont les plus interactifs de l'application.
+
+=== Neutres
+
+* *Licence.* Le portage reprend le modèle de données, la logique métier et la
+  structure de NOALYSS : c'est une œuvre dérivée au sens de la GPL. Le projet
+  reste sous *GPL v2*, avec attribution explicite au projet amont dans le
+  `README` et le `LICENSE`. Point à confirmer, mais il n'y a pas réellement de
+  marge.
+* *Nom du projet.* `noalyss-cr` est employé comme nom de travail. À trancher,
+  sachant que « NOALYSS » est le nom d'un projet existant et actif : mieux vaut
+  un nom distinct, avec mention « compatible NOALYSS ».
+* Les 200 routes de `menu_ref` deviennent des routes Marten déclarées en code ;
+  les droits associés (`profile_menu`) restent en base.
+
+[[alternatives]]
+== Alternatives considérées
+
+=== A. Mono-base multi-société — `company_id` + Row-Level Security
+
+Une base unique, une colonne discriminante, une politique PostgreSQL
+`USING (company_id = current_setting('noalyss.company_id')::bigint)` posée par
+transaction via `SET LOCAL`.
+
+*Écartée* : impose de réoutiller la sauvegarde, la restauration et la
+suppression par société, fait peser la volumétrie d'une société sur toutes les
+autres, et échange une isolation physique gratuite contre une isolation logique
+à maintenir.
+
+=== B. Une base par dossier dans une instance unique — routeur de connexions
+
+Techniquement viable, et plus qu'il n'y paraissait : `Connection.for(db_table)`
+(`src/marten/db/connection.cr:27`) est un *point de passage unique* — toutes les
+requêtes y transitent via `Model.connection`, y compris `save`, `delete` et les
+relations. Les pools sont par ailleurs *paresseux*
+(`connection/base.cr:187` : `@db ||= ::DB.open(@url)`), donc enregistrer une
+base n'ouvre rien.
+
+*Écartée* pour trois raisons cumulées :
+
+. `Connection.for` est un `TODO` qui renvoie `default` — le routeur est à
+  écrire, et la documentation amont annonce le support multi-base comme
+  _experimental and lacking features such as DB routing_ ;
+. *aucun moyen de fermer une connexion* — pas de `close` sur `Connection::Base`,
+  `@db` est `protected`, le registre est un `Hash` qui ne fait que croître. Avec
+  `max_idle_pool_size = 1`, chaque dossier consulté garde une connexion
+  PostgreSQL résidente, sans éviction possible ;
+. `marten migrate --db=X` applique *toutes* les migrations : impossible de
+  cibler les tables d'administration sur une base et les tables métier sur une
+  autre.
+
+À quoi s'ajoute un piège : un enregistrement *ne mémorise pas sa base
+d'origine*. Lire avec `using("dossier25")` puis appeler `save` écrit dans
+`default`, silencieusement. En comptabilité, c'est inacceptable.
+
+=== C. Schéma PostgreSQL par société (`search_path`)
+
+*Écartée* : `grep -rin search_path src/` ne renvoie rien dans Marten.
+Nécessiterait de patcher le framework.
+
+=== D. Kemal + couche d'accès maison, schéma legacy conservé
+
+Le plus proche de l'existant : transposition littérale des 750 requêtes, aucune
+migration de données, cohabitation possible avec le PHP.
+
+*Écartée* : reconduit la dette de 2002 (EAV, préfixes, `char(1)` en guise de
+booléens, _large objects_) et impose de reconstruire migrations, i18n,
+formulaires et administration.
+
+=== E. Décision retenue — une instance par dossier
+
+Supprime le multi-tenant au lieu de le résoudre. Marten sert dans son mode
+nominal, l'isolation est physique, la bascule est progressive, et le coût se
+déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
+
+== Questions ouvertes
+
+. [line-through]#*Comment sert-on un comptable multi-sociétés ?*# — *tranché* :
+  SSO, plus un rôle `comptable` doté de méthodes d'authentification
+  pluggables. Voir `ADR-002-authentification.adoc`.
+. *Suivre l'amont ou figer une version de référence ?* Le dépôt NOALYSS est
+  actif. À décider avant le lot 1.
+. *Nom et licence* du projet — voir « Neutres ».
+. *ZUGFeRD / Factur-X* : `horstoeko/zugferd` n'a pas d'équivalent Crystal.
+  Facturation électronique obligatoire en France — à traiter comme un projet à
+  part, en s'appuyant sur `prod-crystal/pdf-a` et `pdf-signature`.
+. *CAPTCHA* (`html/securimage`, 1 606 lignes) : à reconduire ou à abandonner ?
+. *Périmètre du lot 6* (stocks, prévisions, GED) : réellement nécessaire, ou
+  reportable après une première mise en production du noyau comptable ?
+
+== Références
+
+* `../CARTOGRAPHIE-NOALYSS.adoc` — analyse détaillée de l'existant
+* `ADR-002-authentification.adoc` — authentification et rôle comptable
+* Dépôt analysé : `prod-github/noalyss/noalyss-app/` (clone de https://gitlab.com/noalyss/noalyss) — `rel10200-7-g4bd46a13f`
+* Projet amont : https://noalyss.eu — manuel développeur : https://manuel-fr.noalyss.eu/
+* Marten : `prod-crystal/marten` (branche `main`), https://martenframework.com
+* Champs personnalisés Marten :
+  `docs/docs/models-and-databases/how-to/create-custom-model-fields.md`
+* Multi-base Marten : `docs/docs/models-and-databases/multiple-databases.md`
+* Modèle de déploiement : `prod-quimeo/capistrano-quimeo`

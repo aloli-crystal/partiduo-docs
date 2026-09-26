@@ -1,0 +1,45 @@
+= noalyss-docs — Décisions et pilotage du portage de NOALYSS en Crystal
+:icons: font
+
+Dépôt transverse du groupe `prod-crystal/noalyss/` : il porte les décisions
+d'architecture (ADR), l'analyse de l'existant et les prompts de lancement qui
+valent pour *tous* les projets du groupe.
+
+== Organisation des dépôts
+
+Le groupe Crystal est le miroir du groupe amont https://gitlab.com/noalyss :
+chaque projet PHP porté a son équivalent Crystal.
+
+[cols="2,2,3",options="header"]
+|===
+|Amont — `prod-github/noalyss/` (lecture seule) |Crystal — `prod-crystal/noalyss/` |Remarque
+
+|`noalyss-app` (gitlab `noalyss/noalyss`) |`noalyss-cr` |Le cœur, application Marten
+|`peppol-connect` |`noalyss-cr-einvoicing` |Prochaine extension portée — voir ADR-004
+|`noalyss-plugins` |découpé — voir ADR-003 |15 extensions
+|`noalyss_xmlpayment` |`noalyss-cr-sepa` |Virements SEPA
+|`advancedimport` |`noalyss-cr-import` |Import avancé
+|`noalyss_document` |`noalyss-cr-document` |Documents ; dépendance d'`einvoicing`
+|`noalyss-form` |`noalyss-cr-form` |Saisie de fiches depuis d'autres sites
+|`noalyss-export` |intégré au lot 3 du cœur |Export CSV / FEC
+|`profile-management` |absorbé par ADR-002 |Profils et droits
+|`copy_parameter` |absorbé par `noalyss-provision` |Sans objet avec une instance par dossier
+|`noalyss-documentation` |— |Référence, non portée
+|`dolibarr-noalyss` |— |Écarté, non cloné
+|===
+
+Chaque dépôt Crystal a deux branches longues : `development` (intégration) et
+`production` (déployée). Pour suivre l'amont : `git -C prod-github/noalyss/<projet> pull`.
+
+== Contenu
+
+* `CARTOGRAPHIE-NOALYSS.adoc` — analyse du cœur PHP.
+* `adr/ADR-001-portage-noalyss-crystal.adoc` — choix structurants du portage.
+* `adr/ADR-002-authentification.adoc` — authentification, MFA, rôle comptable.
+* `adr/ADR-003-contrat-extensions.adoc` — comment une extension se branche sur le cœur.
+* `adr/ADR-004-facturation-electronique.adoc` — conformité à la réforme française.
+* `PROMPT-PORTAGE.adoc` — prompt de lancement du portage du cœur.
+
+== Licence
+
+GPL v2, comme NOALYSS dont le portage est une œuvre dérivée.

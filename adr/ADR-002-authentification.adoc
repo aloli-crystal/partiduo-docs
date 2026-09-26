@@ -1,0 +1,429 @@
+= ADR-002 — Authentification, MFA et rôle comptable
+:toc: left
+:toc-title: Table des matières
+:toclevels: 3
+:source-highlighter: rouge
+:icons: font
+
+*Statut.* Proposé — en attente de validation Philippe. +
+*Date.* 14 septembre 2026. +
+*Révision.* v2 — la passkey est confirmée comme cible, et non comme option
+tardive. Voir <<d6>>. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Contexte.* Répond à la question ouverte n°1 d'`ADR-001-portage-noalyss-crystal.adoc`.
+
+== Résumé
+
+`ADR-001` décide qu'un dossier comptable est une instance autonome, avec sa
+base et son URL. Cela supprime le login unique multi-dossiers de NOALYSS
+(`jnt_use_dos`) et pose un problème pour le comptable externe, qui suit
+plusieurs sociétés.
+
+Cet ADR tranche :
+
+. *`user`/`password` reste disponible*, mais comme *point d'entrée et filet de
+  sécurité*, pas comme régime permanent.
+. *La cible est la passkey* : une clé générée et détenue par le trousseau de
+  l'utilisateur, déverrouillée par sa machine. L'application *pousse* vers elle
+  par un parcours d'élévation explicite.
+. *Trois méthodes activables par utilisateur*, non exclusives : mot de passe
+  (avec TOTP), identité fédérée (SSO), passkey.
+. *Un rôle `comptable`* distinct des utilisateurs de la société, avec ses
+  droits, sa traçabilité et sa révocation propres.
+. *Authentification fédérée, autorisation locale* — le principe qui rend le SSO
+  acceptable entre instances appartenant à des sociétés différentes.
+
+Le volume d'utilisateurs n'est pas un critère de conception : une instance en
+sert typiquement deux ou trois, et rien dans ce qui suit ne change à mille.
+
+== Contexte
+
+=== Ce que faisait NOALYSS
+
+Un compte dans `ac_users` (base d'administration), relié aux dossiers
+accessibles par `jnt_use_dos`. Un login, N dossiers. Les droits fins — accès
+aux menus, aux journaux — vivaient dans chaque base dossier
+(`profile_user`, `user_sec_jrn`, `profile_menu`).
+
+L'authentification à deux facteurs existe déjà, via
+`chillerlan/php-authenticator` (TOTP), avec `user_active_security` et le
+mécanisme `is_double_identified()` visible dans `html/do.php`.
+
+=== Ce que change l'instance par dossier
+
+Il n'y a plus de `ac_users` : chaque instance a sa propre table d'utilisateurs.
+Un comptable suivant dix sociétés aurait dix comptes et dix mots de passe. C'est
+la régression que cet ADR corrige.
+
+=== Deux populations distinctes
+
+*Les utilisateurs de la société* — deux ou trois personnes, internes, un seul
+dossier. Elles n'ont pas d'IdP et n'en veulent pas.
+
+*Le comptable externe* — une personne, N sociétés, N instances. C'est lui qui a
+besoin d'une identité unique, et lui seul.
+
+Concevoir une authentification unique pour ces deux populations serait une
+erreur : on imposerait un IdP à des sociétés de trois personnes. D'où des
+méthodes activables *par utilisateur*.
+
+== Décision
+
+=== D1 — Méthodes d'authentification pluggables
+
+L'application Marten générée avec `--with-auth` fournit `Auth::User` *dans le
+projet* (`src/apps/auth`), donc extensible et migrable comme n'importe quel
+modèle. On s'appuie dessus.
+
+Un utilisateur porte une ou plusieurs méthodes actives :
+
+[cols="1,3,2",options="header"]
+|===
+|Méthode |Description |Rôle
+
+|`password`
+|Mot de passe BCrypt via `marten-auth`, TOTP activable et exigible par
+politique.
+|Amorçage, repli
+
+|`passkey`
+|Clé liée à l'appareil : `credential_id`, clé publique, compteur de signature,
+`transports`, date de dernier usage. Déverrouillée par le trousseau.
+|*Cible*
+
+|`federated`
+|Identité vérifiée par un fournisseur externe — `provider` + `subject`.
+|Comptable multi-sociétés
+|===
+
+La table `parameter` de l'instance porte la politique : méthodes autorisées,
+niveau minimum exigé, durée de session.
+
+*Règle :* l'authentification est une propriété de l'utilisateur, pas de
+l'instance. Deux utilisateurs de la même instance peuvent s'authentifier
+différemment.
+
+=== D2 — Ce qu'est la passkey, et pourquoi c'est déjà du MFA
+
+L'usage visé — *l'utilisateur déverrouille sa machine, et la clé de connexion
+est appelée* — correspond à un *authentificateur de plate-forme WebAuthn* :
+
+* la clé privée est générée et détenue par la machine — Trousseau macOS,
+  Windows Hello, TPM sous Linux — et ne la quitte jamais ;
+* elle est déverrouillée par l'authentification du système : mot de passe de
+  session, empreinte, visage ;
+* le serveur ne détient qu'une clé publique. Il n'y a *aucun secret partagé* à
+  voler côté serveur ;
+* la signature est liée à l'origine : une passkey pour `noalyss.example` ne peut
+  pas être présentée à un site d'hameçonnage.
+
+*Point important pour la conception du MFA.* Une passkey enrôlée avec
+`userVerification: "required"` est *déjà multifacteur en un seul geste* :
+possession de l'appareil, plus déverrouillage par connaissance ou biométrie.
+
+[cols="1,2,2",options="header"]
+|===
+|Niveau |Méthode |Facteurs
+
+|1 |Mot de passe seul |Un — connaissance
+|2 |Mot de passe + TOTP |Deux — connaissance et possession
+|3 |*Passkey* |Deux en un geste, et résistant à l'hameçonnage
+|===
+
+*Le niveau 3 ne s'empile pas sur le niveau 2.* Exiger un TOTP en plus d'une
+passkey n'ajoute aucune sécurité et dégrade l'ergonomie. Le TOTP est le second
+facteur *du mot de passe*, rien de plus.
+
+[NOTE]
+====
+Les jetons d'accès machine — export FEC automatisé, intégration bancaire — sont
+un besoin *distinct*, à traiter séparément. Ne pas les confondre avec une
+méthode de connexion humaine.
+====
+
+=== D3 — Authentification fédérée, autorisation locale
+
+C'est le principe central de cet ADR.
+
+Une instance appartient à une société. Elle accepte qu'un fournisseur d'identité
+externe *atteste qui est la personne*. Elle ne lui délègue jamais *le droit
+d'entrer*.
+
+Concrètement :
+
+. Le comptable s'authentifie auprès de l'IdP et présente son identité à
+  l'instance.
+. L'instance cherche un utilisateur *déjà créé localement* dont l'identité
+  fédérée correspond. S'il n'existe pas, l'accès est refusé — il n'y a pas
+  d'auto-provisionnement.
+. Les droits appliqués sont ceux du compte local.
+
+Sans cette règle, toute personne connue de l'IdP entrerait dans toutes les
+instances qui lui font confiance. Avec elle, chaque société garde la main :
+elle ouvre l'accès à son comptable, et le referme quand elle veut, dans sa
+propre instance, sans dépendre de personne.
+
+=== D4 — Le rôle `comptable`
+
+`comptable` n'est pas seulement une manière de se connecter, c'est un profil de
+droits et un régime de traçabilité.
+
+[cols="1,3",options="header"]
+|===
+|Aspect |Décision
+
+|Droits
+|Accès complet à la comptabilité — journaux, écritures, éditions, TVA. *Pas*
+d'administration des utilisateurs ni de modification de la configuration de la
+société. Les droits fins restent portés par le mécanisme existant, hérité de
+`profile_menu` et `user_sec_jrn`.
+
+|Niveau exigé
+|*Niveau 3 obligatoire.* C'est le compte qui traverse plusieurs sociétés :
+c'est celui dont la compromission coûte le plus cher.
+
+|Traçabilité
+|Actions journalisées nominativement, sur le modèle d'`audit_connect`. Une
+société doit pouvoir répondre à « qui a passé cette écriture ».
+
+|Révocation
+|Coupure immédiate dans l'instance concernée, sans effet sur les autres
+instances où le même comptable intervient.
+
+|Durée
+|Un accès `comptable` peut porter une date de fin — fin de mission, changement
+de cabinet.
+|===
+
+=== D5 — Portée d'une passkey entre instances
+
+Une passkey est liée à un domaine. WebAuthn permet de déclarer comme `rp.id`
+tout suffixe de domaine enregistrable de l'origine : une instance servie à
+`client1.noalyss.example` peut déclarer `rp.id = noalyss.example`.
+
+Conséquence : *la même clé d'appareil est présentable à toutes les instances du
+domaine*. Le comptable ne gère qu'une clé.
+
+Limite à énoncer honnêtement : chaque instance ne connaît que les clés publiques
+enregistrées dans *sa* base. L'enrôlement reste donc *par instance* — une fois,
+à l'ouverture de l'accès. L'usage courant, lui, est transparent.
+
+Si les instances sont réparties sur des domaines différents, cette propriété
+disparaît et seul le SSO assure la continuité. *Le plan d'adressage des
+instances est donc une décision d'authentification autant que d'exploitation* —
+à arbitrer au lot 0.
+
+[[d6]]
+=== D6 — Le parcours d'élévation
+
+« Pousser vers » doit être un mécanisme, pas une intention. Il se décline ainsi :
+
+. *À la création d'un compte*, la passkey est proposée en premier ; le mot de
+  passe est présenté comme le repli.
+. *Après une connexion par mot de passe*, invitation à enrôler une passkey —
+  refusable, mais rappelée.
+. *Une page « sécurité du compte »* affiche le niveau atteint et ce qu'il
+  manque pour monter.
+. *La société peut exiger un niveau minimum* par politique d'instance.
+. *Le rôle `comptable` exige le niveau 3* — voir D4.
+
+Le mot de passe n'est jamais supprimé d'office : il reste le chemin d'amorçage
+et de récupération. Mais dès qu'une passkey est active, une connexion par mot de
+passe *exige le TOTP* — sinon le repli affaiblirait ce qu'on vient de renforcer.
+
+=== D7 — Récupération : jamais une seule clé
+
+Une passkey perdue avec son appareil, c'est un accès perdu. Sur une comptabilité,
+ce n'est pas acceptable sans filet.
+
+*Règle : on n'enrôle jamais une passkey seule.* L'enrôlement n'est réputé complet
+que si l'utilisateur dispose d'au moins l'un des recours suivants :
+
+* une *seconde passkey* sur un autre appareil — recommandé pour le comptable ;
+* des *codes de récupération à usage unique*, générés à l'enrôlement, affichés
+  une seule fois ;
+* le *mot de passe avec TOTP*, conservé actif comme repli.
+
+Pour un `comptable` bloqué, un recours supplémentaire existe et découle
+directement de D3 : *la société peut rouvrir l'accès depuis sa propre instance*.
+L'autorisation étant locale, personne n'est dépendant d'un administrateur
+central. C'est ici que le principe paie.
+
+== État de l'écosystème Crystal
+
+Inventaire de `prod-crystal/` et de Marten.
+
+[cols="2,3,2",options="header"]
+|===
+|Brique |État |Reste à faire
+
+|*Mot de passe*
+|`marten-auth`, officiel. Marten génère l'app `auth` dans le projet : BCrypt,
+inscription, connexion, réinitialisation, jetons.
+|Rien.
+
+|*Règles de mot de passe*
+|`prod-crystal/kemal-auth` porte des règles conformes CNIL — mais lié à Kemal.
+|Extraire les règles.
+
+|*TOTP*
+|Rien dans l'écosystème local.
+|À écrire : RFC 6238, HMAC-SHA1 et base32. Petit.
+
+|*WebAuthn / passkey*
+|Rien — ni WebAuthn, ni CBOR, ni COSE. *Mais `jose` couvre déjà une bonne part
+du travail cryptographique* : vérification ES256, et surtout construction d'une
+clé EC depuis ses coordonnées affines
+(`EC_POINT_set_affine_coordinates`, `BN_bin2bn`) — ce qui est *exactement* ce que
+fournit une clé COSE EC2.
+|Shard à écrire — périmètre en <<perimetre-webauthn>>.
+
+|*RSA*
+|`prod-crystal/jose` v0.1.3 est *uniquement elliptique* : ES256, ES384, ES512.
+Aucun RSA dans `src/`.
+|*RS256 à ajouter à `jose`.* Nécessaire deux fois : Windows Hello enrôle
+couramment en RS256, et les fournisseurs OIDC signent en RS256.
+
+|*SAML 2.0*
+|`prod-crystal/saml` v1.18.1.3, portage de `ruby-saml`, annoncé compatible
+Marten.
+|Intégration, pas d'écriture.
+
+|*OIDC*
+|Dépend du RSA ci-dessus.
+|Après RS256.
+|===
+
+[[perimetre-webauthn]]
+=== Périmètre du shard WebAuthn
+
+Ce qu'il faut écrire, et ce qui est déjà couvert :
+
+[cols="2,3,1",options="header"]
+|===
+|Composant |Contenu |État
+
+|Décodeur CBOR
+|Sous-ensemble suffisant : entiers, entiers négatifs, chaînes d'octets, chaînes
+de texte, tableaux, tables. Le CBOR complet n'est pas nécessaire.
+|À écrire
+
+|Clé COSE
+|Table CBOR vers clé publique. EC2 (`alg -7`, ES256) : `crv`, `x`, `y` — mapping
+direct vers `JWK::ECKey`. RSA (`alg -257`, RS256) : `n`, `e`.
+|À écrire (EC trivial via `jose`)
+
+|`authenticatorData`
+|Analyse binaire : empreinte du `rp.id` (32 o), drapeaux (1 o), compteur (4 o),
+puis données de credential — AAGUID, identifiant, clé publique COSE.
+|À écrire
+
+|Enregistrement
+|Vérification du `clientDataJSON` — type, défi, origine — puis extraction de la
+clé. Attestation `none` : pas de vérification de provenance matérielle.
+|À écrire
+
+|Authentification
+|Vérification de la signature sur `authData ‖ SHA-256(clientDataJSON)`, contrôle
+des drapeaux `UP` et `UV`, gestion du compteur.
+|Signature : `jose`
+
+|Vérification ES256
+|ECDSA P-256 / SHA-256.
+|*Fourni par `jose`*
+
+|Vérification RS256
+|RSASSA-PKCS1-v1_5 / SHA-256.
+|Avec l'ajout RSA à `jose`
+|===
+
+=== Pièges d'implémentation à consigner
+
+* *Le compteur de signature vaut souvent 0.* Les authentificateurs Apple le
+  renvoient toujours à zéro. Rejeter un compteur nul ou non croissant exclurait
+  tous les utilisateurs macOS et iOS. Le contrôle ne s'applique que si le
+  compteur enrôlé était non nul.
+* *Attestation `none`.* On n'a pas besoin de prouver la provenance matérielle de
+  la clé, et l'attestation directe soulève des questions de vie privée pour un
+  gain nul ici.
+* *Credentials découvrables* (`residentKey`) : c'est ce qui permet de se
+  connecter *sans saisir d'identifiant*. C'est précisément le geste visé — le
+  demander à l'enrôlement.
+* *Algorithmes à accepter* : ES256 (`-7`) et RS256 (`-257`). Le premier couvre
+  Apple et Android, le second Windows Hello. En accepter un seul exclut une
+  population entière.
+* *`rp.id` au domaine parent* — voir D5. À figer avant le premier enrôlement :
+  le changer invalide toutes les passkeys déjà enrôlées.
+
+== Conséquences
+
+=== Positives
+
+* La régression de `ADR-001` — dix URLs, dix mots de passe — est levée pour le
+  comptable, sans imposer d'IdP aux sociétés de trois personnes.
+* Chaque société garde la maîtrise de qui entre chez elle, et peut révoquer
+  seule et immédiatement.
+* La passkey supprime tout secret réutilisable côté serveur, sur les comptes les
+  plus exposés — ceux qui traversent plusieurs sociétés.
+* *Le MFA se fait en un geste*, pas en deux écrans. C'est ce qui rend
+  l'élévation acceptable par les utilisateurs plutôt que subie.
+* `jose` couvre déjà la cryptographie elliptique du chemin WebAuthn : le shard à
+  écrire est plus étroit qu'il n'y paraissait.
+* Deux briques produites — TOTP et WebAuthn — sont réutilisables au-delà de ce
+  projet, et l'ajout RSA à `jose` sert aussi OIDC.
+
+=== Négatives et coûts
+
+* *Le shard WebAuthn est sur le chemin critique.* Il n'est plus reportable :
+  c'est la cible, pas une option. Le sous-estimer décale le lot 2.
+* *Trois chemins d'authentification à maintenir et à tester*, contre un
+  aujourd'hui, plus leurs combinaisons et le parcours d'élévation.
+* *La récupération est un sujet à part entière* (D7), avec sa propre interface
+  et ses propres tests. Une passkey perdue sans filet, c'est une comptabilité
+  inaccessible.
+* *Le `rp.id` est irréversible en pratique* : le modifier invalide tous les
+  enrôlements.
+* *Le SSO crée une dépendance externe* : IdP indisponible, comptable bloqué.
+  D'où le repli mot de passe + TOTP maintenu actif.
+* *L'enrôlement d'une passkey reste par instance.* Le geste est ponctuel, mais
+  il existe et doit être expliqué.
+
+=== Neutres
+
+* Le TOTP existant dans NOALYSS (`user_active_security`,
+  `is_double_identified`) se transpose sans difficulté : même algorithme, même
+  ergonomie.
+* Le choix SAML ou OIDC n'engage pas le modèle de données : `federated` porte un
+  `provider` et un `subject` dans les deux cas.
+
+== Questions ouvertes
+
+. *SAML, OIDC, ou les deux ?* SAML est prêt ; OIDC devient accessible dès que
+  `jose` sait faire du RSA — ajout déjà nécessaire pour Windows Hello. Le choix
+  dépend des IdP réellement rencontrés chez les cabinets comptables.
+. *Plan d'adressage des instances* — sous-domaines d'un domaine commun, ou
+  domaines distincts par société ? Structurant pour la portée des passkeys, et
+  irréversible. Voir D5.
+. *Codes de récupération ou seconde passkey obligatoire ?* D7 impose un filet
+  sans trancher lequel est exigé par défaut.
+. *Un comptable peut-il être plusieurs personnes ?* Un cabinet fait tourner ses
+  collaborateurs. Comptes nominatifs — ce que suppose la traçabilité de D4 — ou
+  compte de cabinet ?
+. *Jetons d'accès machine* — export FEC automatisé, intégrations bancaires.
+  Besoin distinct, à traiter dans un ADR séparé.
+
+== Références
+
+* `ADR-001-portage-noalyss-crystal.adoc` — instance par dossier
+* Authentification Marten : `prod-crystal/marten/docs/docs/authentication/`
+* `prod-crystal/jose` — JWS / JWE / JWK, courbes elliptiques ; bindings OpenSSL
+  réutilisables dans `src/jose/openssl_ext.cr`
+* `prod-crystal/saml` — SAML v2, portage de `ruby-saml` v1.18.1
+* `prod-crystal/kemal-auth` — règles de mot de passe conformes CNIL
+* NOALYSS : `include/class/noalyss_user.class.php`, `html/do.php`
+  (`is_double_identified`), tables `ac_users`, `jnt_use_dos`,
+  `user_active_security`
+* WebAuthn Level 3 : https://www.w3.org/TR/webauthn-3/
+* RFC 8152 — COSE : https://www.rfc-editor.org/rfc/rfc8152
+* RFC 8949 — CBOR : https://www.rfc-editor.org/rfc/rfc8949
+* RFC 6238 — TOTP : https://www.rfc-editor.org/rfc/rfc6238

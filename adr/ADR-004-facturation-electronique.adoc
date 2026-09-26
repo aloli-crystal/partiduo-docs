@@ -1,0 +1,162 @@
+= ADR-004 — Facturation électronique : conformité à la réforme française
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Proposé — en attente de validation Philippe. +
+*Date.* 26 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Contexte.* Prochaine extension à porter après le cœur. Remplace le portage à
+l'identique de `prod-github/noalyss/peppol-connect`.
+
+== Résumé
+
+L'extension amont `peppol-connect` ne rend pas un dossier français conforme à
+la réforme de la facturation électronique, et son portage à l'identique ne le
+ferait pas davantage. Cet ADR décide de porter à sa place une extension
+`noalyss-cr-einvoicing`, construite autour d'un *connecteur vers une Plateforme
+Agréée* (PA), et qui garde le point d'accès PEPPOL de NOALYSS comme option pour
+les dossiers belges.
+
+== Contexte
+
+=== La réforme, au 26 septembre 2026
+
+Sources DGFiP consultées le 26/09/2026 — voir <<references>>.
+
+* *Calendrier.* Depuis le 1^er^ septembre 2026, *toutes* les entreprises
+  doivent recevoir leurs factures via une PA, et les grandes entreprises et ETI
+  doivent émettre. Les PME et TPE émettront au plus tard le 1^er^ septembre
+  2027. Le e-reporting suit le même calendrier.
+* *Passage obligatoire par une PA.* Émission, réception et e-reporting passent
+  par une Plateforme Agréée immatriculée. Un logiciel dit « compatible » doit
+  être raccordé à une PA et ne transmet pas lui-même.
+* *PEPPOL.* La DGFiP est l'autorité PEPPOL française. Il faut être immatriculé
+  PA pour émettre et recevoir sur le réseau : PEPPOL est un moyen
+  d'interopérabilité *entre PA*, pas une voie de conformité en soi.
+* *Formats.* UBL 2.1, CII D22B ou Factur-X ; profils EN16931 et
+  EXTENDED-CTC-FR, et Factur-X BASIC WL (norme AFNOR XP Z12-012). Spécifications
+  externes en version 3.2 du 30/04/2026.
+* *API logiciel ↔ PA.* Normalisée par AFNOR XP Z12-013.
+* *Statuts obligatoires.* Déposée, Rejetée, Refusée, Encaissée. « Encaissée »
+  porte les données de paiement et est émis par le fournisseur.
+* *Nouvelles mentions obligatoires* : SIREN du client, catégorie d'opération
+  (biens, services, mixte), option pour la TVA sur les débits, adresse de
+  livraison si elle diffère.
+* *E-reporting.* Données de transaction (B2C, international) et de paiement,
+  transmises par la PA.
+
+=== Ce que fait `peppol-connect`
+
+* Client HTTP mince vers l'API propriétaire « NOALYSS Peppol API », hébergée
+  par l'éditeur belge. *Ce point d'accès ne figure pas dans la liste des PA*
+  (vérifié dans la liste du 22/09/2026).
+* Émission : envoie le XML UBL 2.1 PEPPOL BIS Billing 3.0 déjà généré par le
+  cœur (`noalyss-app/include/XMLDocument/invoiceubl21.class.php`).
+* Réception : stocke le XML brut, sans lecture ni comptabilisation.
+* Statuts internes seulement (`N`, `S`, `E`) ; aucun statut de cycle de vie.
+* Ni Factur-X, ni CII, ni e-reporting, ni annuaire, ni SIREN.
+* Vérification TLS désactivée (`CURLOPT_SSL_VERIFYPEER => false`,
+  `class/peppol_synchro.class.php`).
+
+Le cœur contient un générateur Factur-X
+(`noalyss-app/include/XMLDocument/facturx.class.php`, profil EN16931), inutilisé
+par `peppol-connect`, qui déclare le SIREN du vendeur avec le schéma `0009`
+(SIRET) au lieu de `0002`, et n'ajoute pas le SIREN de l'acheteur.
+
+== Décision
+
+=== D1 — Une extension `noalyss-cr-einvoicing`, pas `noalyss-cr-peppol`
+
+L'extension couvre émission, réception, statuts et e-reporting. Elle suit le
+contrat d'extension de l'ADR-003.
+
+=== D2 — Un connecteur de PA abstrait
+
+[source,crystal]
+----
+abstract class Einvoicing::Connector
+  abstract def submit(invoice : OutgoingInvoice) : Submission
+  abstract def fetch_incoming : Array(IncomingInvoice)
+  abstract def send_status(event : LifecycleEvent) : Nil
+  abstract def fetch_statuses(since : Time) : Array(LifecycleEvent)
+  abstract def send_ereporting(batch : EReportingBatch) : Nil
+end
+----
+
+Adaptateurs prévus, dans cet ordre :
+
+. *XP Z12-013* — l'API normalisée ; couvre toute PA qui l'implémente.
+. *Adaptateur spécifique* à la PA retenue, si elle s'écarte de la norme.
+. *NOALYSS-PEPPOL* — reprise de `peppol-connect`, réservée aux dossiers belges
+  (régime `be` de l'ADR-001), TLS vérifié.
+
+Les jetons d'accès sont chiffrés en base.
+
+=== D3 — Formats produits et lus
+
+* *Émission* : Factur-X (PDF/A-3 + `factur-x.xml`, profils EN16931 et BASIC WL),
+  CII D22B, UBL 2.1 EN16931 et EXTENDED-CTC-FR. Le PDF/A-3 s'appuie sur
+  `prod-crystal/pdf-a`, contrôlé par `prod-crystal/pdf-validate`.
+  `pdf-signature` reste facultatif.
+* *Réception* : lecture UBL, CII et Factur-X (extraction du XML embarqué),
+  pré-comptabilisation dans le journal d'achats, détection des doublons.
+
+=== D4 — Cycle de vie
+
+Table `invoice_lifecycle_events` (code AFNOR, date, motif, émetteur). Déposée et
+Rejetée remontent de la PA ; Refusée est émis à la réception ; *Encaissée est
+émis automatiquement au lettrage du paiement* dans le cœur.
+
+=== D5 — Données ajoutées au cœur
+
+Ces champs appartiennent au cœur, pas à l'extension, car ils figurent sur toute
+facture française :
+
+* fiches client et fournisseur : SIREN, SIRET, identifiant de routage de
+  l'annuaire ;
+* facture : catégorie d'opération, option TVA sur les débits, adresse de
+  livraison.
+
+Le schéma d'identifiant du SIREN est `0002`.
+
+=== D6 — Le choix de la PA reste hors code
+
+Choisir une PA est une décision commerciale. Le code ne dépend d'aucune PA
+particulière ; les tests tournent contre une PA simulée.
+
+== Conséquences
+
+=== Positives
+
+* Conformité réelle pour les dossiers français, émission et réception.
+* Les dossiers belges gardent leur chemin actuel.
+* Pas de dépendance à `horstoeko/zugferd`, qui n'a pas d'équivalent Crystal :
+  la question ouverte Factur-X de l'ADR-001 est tranchée ici.
+
+=== Négatives et coûts
+
+* Nettement plus gros qu'un portage de `peppol-connect` (environ 600 Ko de PHP) :
+  génération CII et Factur-X, lecture des trois formats, statuts, e-reporting.
+* Un abonnement à une PA est nécessaire pour la production.
+* Les spécifications externes évoluent (v3.2) : prévoir leur suivi.
+
+== Questions ouvertes
+
+. *Quelle PA ?* À choisir avant la mise en production ; conditionne l'éventuel
+  adaptateur spécifique.
+. *Format et fréquence du e-reporting* : à confirmer dans les spécifications
+  externes v3.2 et auprès de la PA retenue.
+. *Remonter le correctif SIREN `0002` à l'amont ?*
+
+[[references]]
+== Références
+
+* https://www.impots.gouv.fr/facturation-electronique-et-plateformes-agreees
+* https://www.impots.gouv.fr/rejoindre-le-reseau-peppol
+* https://www.impots.gouv.fr/je-consulte-la-liste-des-plateformes-agreees
+* https://www.impots.gouv.fr/specifications-externes-b2b
+* FAQ DGFiP « Je découvre la facturation électronique », version du 01/09/2026
+* Fiches réforme DGFiP n^os^ 4 et 6, fiche PA
+* `prod-github/noalyss/peppol-connect` — extension amont analysée
+* `ADR-001-portage-noalyss-crystal.adoc`, `ADR-003-contrat-extensions.adoc`

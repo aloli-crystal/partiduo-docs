@@ -1,0 +1,175 @@
+= Prompt de lancement — Portage de NOALYSS en Crystal
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Usage.* Ouvrir une nouvelle session Claude Code dans le dossier de groupe
+`/Users/philippe/prod-crystal/noalyss`, en mode auto, et coller le contenu du bloc
+<<prompt>> ci-dessous. Pour reprendre après une interruption, recoller le même
+prompt : l'équipe repart de `ETAT-PORTAGE.adoc`.
+
+== État des prérequis au 26 septembre 2026
+
+[cols="2,1,3",options="header"]
+|===
+|Prérequis |État |Constat
+
+|Crystal / Shards
+|icon:check[] OK
+|Crystal 1.19.1, Shards 0.20.0.
+
+|Marten `~> 0.7` avec `decimal`
+|icon:check[] OK
+|`prod-crystal/marten` en `v0.7.0-20-gdaabb7c2`, `Marten::DB::Field::Decimal` présent.
+
+|`jose` avec RS256
+|icon:check[] OK
+|v0.2.0, RS256 présent, 102 specs vertes.
+
+|`saml`
+|icon:check[] OK
+|v1.18.1.3 — intégration seulement.
+
+|`i18n`, `pdf-a`, `pdf-signature`
+|icon:check[] OK
+|Présents dans `prod-crystal/`.
+
+|Modèle de déploiement
+|icon:check[] OK
+|`prod-quimeo/capistrano-quimeo` présent.
+
+|`webauthn`
+|icon:warning[] Partiel
+|v0.1.0 : CBOR et COSE (ES256 + RS256) faits, 48 specs vertes. *Manquent*
+`authenticatorData`, enregistrement, authentification (ADR-002, périmètre WebAuthn).
+
+|TOTP (RFC 6238)
+|icon:times[] Absent
+|Aucun shard. À écrire (petit).
+
+|Règles de mot de passe CNIL
+|icon:times[] Non extraites
+|Toujours liées à `kemal-auth`.
+
+|PostgreSQL local
+|icon:check[] OK
+|PostgreSQL 18.6, joignable par la socket Unix `/tmp/.s.PGSQL.5432` une fois
+celle-ci autorisée. TCP (`127.0.0.1`) reste bloqué par le bac à sable.
+
+|Sources amont
+|icon:check[] OK
+|`prod-github/noalyss/` : cœur et 10 projets d'extension clonés
+(`dolibarr-noalyss` écarté).
+
+|Contrat d'extension, facturation électronique
+|icon:check[] Rédigés
+|ADR-003 et ADR-004. Le cœur doit prévoir dès le lot 0 le registre
+d'extensions, les événements et les champs de facturation française.
+
+|Squelette `noalyss-cr`, CI
+|icon:times[] À faire
+|Normal : c'est le lot P, pris en charge par le prompt.
+
+|Statut des ADR
+|icon:warning[] « Proposé »
+|ADR-001 à ADR-004 : à passer en « Accepté » si le prompt ci-dessous vous convient.
+|===
+
+=== À faire par vous avant le lancement
+
+. Démarrer PostgreSQL 18 (`brew services start postgresql@18`) et autoriser
+  sa socket Unix dans `/Users/philippe/prod-crystal/noalyss/.claude/settings.local.json`,
+  sinon aucune migration ni aucun test ne pourra tourner :
++
+[source,json]
+----
+{
+  "sandbox": {
+    "network": {
+      "allowUnixSockets": ["/tmp/.s.PGSQL.5432", "/private/tmp/.s.PGSQL.5432"]
+    }
+  }
+}
+----
+. Passer ADR-001 à ADR-004 au statut « Accepté ».
+. Relire la section « Arbitrages » du prompt : ce sont vos décisions.
+. Facultatif : lever la limite de taille des workflows (« Dynamic workflow size »
+  dans `/config`, depuis un terminal `claude` interactif).
+
+Les prérequis logiciels manquants (WebAuthn, TOTP, règles de mot de passe) sont
+confiés à l'équipe dans le lot P : ils ne bloquent pas le lancement.
+
+[[prompt]]
+== Prompt
+
+[source,markdown]
+----
+ultracode — Utilisez un workflow multi-agents pour porter NOALYSS en Crystal. Taille de workflow libre : lancez autant d'agents que nécessaire.
+
+## Mission
+
+Porter le cœur de NOALYSS, `/Users/philippe/prod-github/noalyss/noalyss-app/` (PHP), en Crystal dans `/Users/philippe/prod-crystal/noalyss/noalyss-cr/`.
+
+La spécification est dans `/Users/philippe/prod-crystal/noalyss/noalyss-docs/` : `CARTOGRAPHIE-NOALYSS.adoc` et `adr/ADR-001` à `adr/ADR-004`. Je les considère validés. En particulier :
+- ADR-003 (contrat d'extension) : le cœur doit accueillir les extensions dès le lot 0 — registre et manifeste, routes `/ext/<code>/`, permissions déclaratives, événements, API publique documentée. Aucune extension n'est portée dans cette exécution, mais créez `noalyss-cr-skel` (ADR-003 D8) pour prouver que le contrat fonctionne.
+- ADR-004 D5 : les champs de facturation française (SIREN, SIRET, identifiant de routage, catégorie d'opération, TVA sur les débits, adresse de livraison) et l'événement `payment.matched` appartiennent au cœur. Prévoyez-les dans les lots 1 et 2.
+
+Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour comprendre ce que le cœur doit leur exposer. Toute la documentation produite est en AsciiDoc (`.adoc`), en français.
+
+## Autonomie totale
+
+- Ne me posez aucune question. Pour toute ambiguïté, choisissez l'option la plus simple et réversible, consignez-la dans `noalyss-cr/DECISIONS.adoc` (contexte, choix, alternative écartée), et continuez.
+- Ne vous arrêtez pas sur un blocage : contournez-le, notez-le dans `noalyss-cr/BLOCAGES.adoc`, passez au lot suivant.
+- Autorisé : créer `noalyss-cr/` et `noalyss-cr-skel/` dans `prod-crystal/noalyss/`, `git init` avec une branche `development` (si le bac à sable refuse l'écriture de `.git/config`, faites le `git init` dans `$TMPDIR` puis déplacez le dépôt), commiter (commits conventionnels, par lot, sans ligne Co-Authored-By), installer des shards, créer des bases PostgreSQL locales préfixées `noalyss_cr_` (dev/test uniquement), modifier les shards `prod-crystal/webauthn` et créer `prod-crystal/totp` (voir Lot P).
+- Interdit : pousser vers un dépôt distant, modifier quoi que ce soit dans `prod-github/noalyss/`, modifier les ADR (proposez plutôt un amendement dans DECISIONS), toucher à d'autres bases que `noalyss_cr_*`, modifier d'autres shards de `prod-crystal/` que ceux cités.
+- PostgreSQL est joignable uniquement par socket Unix (`/tmp/.s.PGSQL.5432`), pas en TCP : utilisez `psql` sans `-h`, et des URL de connexion de la forme `postgres:///noalyss_cr_dev?host=/tmp`.
+- Si PostgreSQL est injoignable, écrivez quand même le code et les specs, notez-le dans BLOCAGES, et continuez.
+
+## Arbitrages (questions ouvertes des ADR)
+
+1. Version amont : figée sur `rel10200-7-g4bd46a13f`.
+2. Nom : `noalyss-cr` ; licence GPL v2 (œuvre dérivée).
+3. Factur-X, CII et connexion à une Plateforme Agréée : traités par l'extension `noalyss-cr-einvoicing` (ADR-004), portée dans une exécution ultérieure. Hors périmètre ici, sauf les champs et l'événement cités plus haut.
+4. CAPTCHA : abandonné.
+5. Lot 6 (stocks, prévisions, suivi) : reporté, après tout le reste. La GED devient l'extension `noalyss-cr-document` (ADR-003).
+6. Auth : passkey + TOTP + mot de passe local ; SAML intégré via `prod-crystal/saml` ; OIDC en interface pluggable (implémentation après le noyau). Codes de récupération par défaut. Comptes comptables nominatifs. Instances en sous-domaines `<dossier>.noalyss.local`, `rp.id` = `noalyss.local`. Jetons machine : hors périmètre.
+7. TVA : BE et FR, isolées dans `vat/be/` et `vat/fr/`.
+
+## Stack imposée
+
+Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma, Opal uniquement pour la saisie d'écritures. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `saml`, `i18n`, `pdf-a`, `pdf-signature`) avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
+
+## Lot P — prérequis à terminer en premier
+
+- `prod-crystal/webauthn` : compléter selon ADR-002 (§ Périmètre du shard WebAuthn et § Pièges) : analyse de `authenticatorData`, enregistrement (attestation `none`), authentification (drapeaux UP/UV, compteur nul toléré), specs. Version 0.2.0, commit dans son dépôt.
+- `prod-crystal/totp` : nouveau shard RFC 6238 (HMAC-SHA1, base32, fenêtre de tolérance, URI `otpauth://`), specs sur les vecteurs de test de la RFC.
+- Règles de mot de passe CNIL : extraire celles de `prod-crystal/kemal-auth` dans `noalyss-cr` (module indépendant de Kemal).
+- Squelette `noalyss-cr` : projet Marten, applications de l'ADR-001 § Organisation du code, plus `extensions/` (registre, manifeste, permissions, événements — ADR-003), CI (GitHub Actions : format, ameba, specs avec service PostgreSQL), README.adoc.
+
+## Ordre et parallélisation
+
+Plan de lots de l'ADR-001 : P → 0 → 1 → M → 2 → 3 → 4 → 5 → 6.
+- Un agent « architecte » pose le squelette et les conventions partagées ; les shards WebAuthn et TOTP peuvent avancer en parallèle de lui. Rien d'autre ne démarre avant que le squelette compile.
+- Ensuite, parallélisez par application Marten (`core`, `accounting`, `cards`, `vat`, `analytic`, `reporting`…) en respectant les dépendances de modèles.
+- Pour chaque lot : un agent implémente, un agent `ruby-crystal-tester` écrit les specs, un agent `ruby-crystal-reviewer` relit ; corrigez ses remarques avant le commit.
+- Chaque agent lit le code PHP et le SQL d'origine correspondant (`prod-github/noalyss/noalyss-app/`) pour reproduire les règles métier, pas seulement les écrans.
+
+## Définition de « terminé » pour chaque lot
+
+- `crystal tool format src/ spec/` puis `crystal spec` : 100 % vert.
+- `marten migrate` passe sur une base vierge.
+- Contraintes d'intégrité comptable en base (écriture déséquilibrée refusée par PostgreSQL), testées.
+- Commit du lot.
+
+## Jalon minimal exigé à la fin
+
+P + 0 + 1 + M fonctionnels : `bin/noalyss-provision` crée une instance, `bin/noalyss-migrate` y importe un dossier NOALYSS de démonstration (généré à partir des scripts SQL de `noalyss-app/`) avec un rapport de réconciliation juste, on se connecte, on consulte plan comptable et fiches. `noalyss-cr-skel` s'active sur l'instance, affiche sa page sous `/ext/SKEL/` pour un profil autorisé, la refuse aux autres, et reçoit l'événement `entry.posted`. Continuez ensuite aussi loin que possible dans les lots suivants.
+
+## Reprise
+
+Tenez à jour `noalyss-cr/ETAT-PORTAGE.adoc` : lots terminés, lot en cours, prochaines étapes, commandes pour lancer l'application et les tests. Si ce fichier existe déjà au lancement, reprenez là où il s'arrête au lieu de recommencer.
+
+## Livrable final
+
+Un résumé : lots terminés, nombre de specs, commandes pour lancer, ce qui reste à faire, et le contenu de `DECISIONS.adoc` et `BLOCAGES.adoc` à relire.
+----

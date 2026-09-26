@@ -1,0 +1,243 @@
+= Cartographie de NOALYSS — préalable au portage Crystal
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:lang: fr
+
+Analyse de `noalyss-app` (version `rel10200-7-g4bd46a13f`, NOALYSS_VERSION 10200,
+DBVERSION 208, DBVERSIONREPO 21) réalisée le 2026-09-14.
+
+== Résumé exécutif
+
+NOALYSS est une plate-forme de comptabilité / ERP multi-dossiers, sous GPL v2,
+écrite en PHP procédural-objet sur PostgreSQL.
+
+[cols="2,1,4"]
+|===
+|Élément |Volume |Commentaire
+
+|PHP applicatif |~147 000 lignes (782 fichiers) |hors `vendor/` et hors tests
+|Tests PHPUnit |17 768 lignes (68 fichiers `*Test.php`) |**oracle de portage réutilisable**
+|JavaScript |36 942 lignes (189 fichiers) |maison, pas de framework SPA
+|Schéma SQL |122 tables + 97 fonctions PL/pgSQL |logique métier partiellement en base
+|Routes |200 entrées `menu_ref` → 75 fichiers `.inc.php` |**routage piloté par la base**
+|Langues |fr (défaut), en_US, nl_NL |gettext (`.po`)
+|===
+
+*Le point important :* une part significative du métier comptable vit déjà en
+PL/pgSQL (contrôle d'équilibre, insertion en journal, lettrage, TVA, séquences,
+arbre de plan comptable). Cette couche est **portable telle quelle** et
+constitue le socle de sécurité du portage.
+
+== Architecture actuelle
+
+=== Bases de données
+
+Deux niveaux, et c'est structurant :
+
+`account_repository`:: base d'administration unique — 11 tables : `ac_dossier`,
+`ac_users`, `jnt_use_dos`, `audit_connect`, `theme`, `modeledef`,
+`recover_pass`, `user_global_pref`, `progress`, `dossier_sent_email`, `version`.
+
+`dossier<N>`:: **une base PostgreSQL par dossier comptable** (société), créée
+depuis un modèle. Deux modèles livrés :
++
+* `include/sql/mod1` — 122 tables, dont le schéma `tva_belge` (12 tables :
+  déclaration TVA, intracomm, assujetti, représentant) → *modèle belge*
+* `include/sql/mod2` — 110 tables, identique à mod1 moins `tva_belge` → *modèle français*
++
+Chaque modèle se compose de `schema.sql`, `data.sql`, `function.sql`,
+`constraint.sql`, `sequence.sql`, `index.sql`, `view.sql`.
+
+Le multi-tenant est donc réalisé par **isolation physique** (une base par
+société), pas par une colonne de discriminant. Ce choix est à conserver ou à
+trancher explicitement — voir <<decisions>>.
+
+Schémas PostgreSQL utilisés dans un dossier : `public`, `comptaproc`
+(procédures métier), `tva_belge`.
+
+=== Domaines fonctionnels
+
+[cols="1,3,2"]
+|===
+|Préfixe |Domaine |Fichiers
+
+|`acc_*`, `compta_*` |Comptabilité générale : journaux (achat, vente, financier, OD), opérations, lettrage |`acc_ledger` (3 729 l.), `acc_ledger_purchase` (2 291 l.), `acc_ledger_sale` (1 919 l.), `acc_ledger_fin` (1 180 l.), `acc_operation` (1 473 l.), `lettering` (926 l.)
+|`anc_*` |Comptabilité analytique : plans, postes, clés de répartition, balances |11 modules, `anc_operation` (1 098 l.)
+|`fiche*` |Fiches (tiers : clients, fournisseurs, articles, banques) avec attributs dynamiques |`fiche` (2 012 l.), `fiche_def` (941 l.)
+|`impress_*`, `balance*` |Éditions : balances, grand livre, bilan, âge des dettes |6 + 4 modules
+|`stock_*` |Stocks et dépôts |5 modules
+|`action*`, `follow_up` |Gestion (GED, suivi, CRM léger) |`follow_up` (2 238 l.), `document` (1 998 l.)
+|`tva_*`, `tax_*` |TVA, déclarations, autres taxes |+ schéma `tva_belge`
+|`forecast*` |Prévisions budgétaires |
+|`user_*`, `profile_*` |Utilisateurs, profils, droits par journal et par menu |`noalyss_user` (2 201 l.)
+|===
+
+=== Routage
+
+Le routage n'est pas dans le code : il est **en base**.
+
+[source,sql]
+----
+CREATE TABLE public.menu_ref (
+    me_code text NOT NULL,      -- code de route, ex. 'ANCHOP'
+    me_menu text,               -- libellé
+    me_file text,               -- ex. 'anc_history.inc.php'
+    me_url text,
+    me_parameter text,
+    me_javascript text,
+    me_type varchar(2)          -- ME (menu) / PL (plugin) / PR (profil)
+);
+----
+
+`html/do.php` lit `?ac=CODE`, résout le chemin de menu via les vues
+`v_menu_profile` / `v_menu_description`, vérifie le droit via `profile_menu`,
+puis `include` le fichier `.inc.php` correspondant.
+
+Répartition : 59 `ME`, 44 `PL`, 2 `PR` — 200 routes au total.
+
+*Conséquence pour le portage :* la table de routage et les droits associés sont
+des **données**, pas du code. Elles se reprennent telles quelles.
+
+=== Points d'entrée
+
+`do.php` (12 ko):: routeur principal de l'application dossier
+`index.php` (13 ko):: accueil / sélection de dossier
+`admin-noalyss.php`:: administration (dossiers, utilisateurs, modèles)
+`ajax.php` + `ajax_misc.php` (25 ko):: 98 handlers AJAX dans `include/ajax/` (11 212 l.)
+`export.php`:: 49 modules d'export dans `include/export/` (5 619 l.) — PDF, CSV, ODS, XML
+`install.php` (25 ko):: installation / mise à jour du schéma
+`login.php`, `user_login.php`, `logout.php`:: authentification (avec TOTP via `chillerlan/php-authenticator`)
+`compute.php`, `direct.php`, `popup.php`, `recherche.php`, `mobile.php`, `fid*.php`, `extension.raw.php`:: annexes
+
+=== Couche d'accès aux données
+
+`include/lib/database_core.class.php` (1 177 l.) est un **wrapper mince sur
+`pg_*`** : `exec_sql`, `get_array`, `get_row`, `get_value`, `start/commit/rollback`,
+gestion des _large objects_ (`lo_read`, `lo_write`), séquences, introspection
+(`exist_table`, `exist_column`…).
+
+Pas d'ORM. 750 requêtes SQL sont écrites en dur dans `include/class/` et
+`include/lib/`. Les requêtes sont paramétrées (`$1`, `$2`), ce qui limite le
+risque d'injection et **facilite la transposition littérale** vers Crystal.
+
+=== Dépendances externes (Composer)
+
+[cols="2,3"]
+|===
+|Paquet |Rôle |Équivalent Crystal à prévoir
+
+|`horstoeko/zugferd` |Facture électronique ZUGFeRD / Factur-X |à écrire (XML + PDF/A-3)
+|`smalot/pdfparser` |Lecture de PDF |`prod-crystal/pdf2text` ?
+|`endroid/qr-code` |QR codes |shard existant
+|`chillerlan/php-authenticator` |TOTP (2FA) |`prod-crystal/jose` ? sinon ~200 l.
+|`phpmailer/phpmailer` |Envoi de courriel |shard SMTP
+|`php-curl-class/php-curl-class` |HTTP client |`HTTP::Client` (stdlib)
+|(embarqué) `include/tfpdf` |Génération PDF, 3 681 l. |`prod-crystal/pdf`
+|(embarqué) `html/securimage` |CAPTCHA, 1 606 l. |à trancher (utile ?)
+|===
+
+Plusieurs de ces briques existent déjà dans `prod-crystal/` (pdf, pdf-a,
+pdf-signature, combine-pdf, i18n, kemal-auth, crystal-sepa).
+
+== Difficultés identifiées
+
+[cols="1,3,1"]
+|===
+|# |Difficulté |Gravité
+
+|1
+|*Logique et présentation mélangées* : 979 `echo` répartis dans 76 des 145
+classes de `include/class/`. Les classes métier produisent du HTML.
+Il n'y a pas de couche de vue à extraire — elle est à **réécrire**.
+|Élevée
+
+|2
+|*État global* : `$g_user`, `$cn`, `$g_parameter`, `$_SESSION` utilisés
+directement dans 100 fichiers hors `html/`. Chaque unité portée doit recevoir
+son contexte explicitement.
+|Élevée
+
+|3
+|*36 942 lignes de JavaScript maison* (189 fichiers), dont
+`function_javascript.php` (2 823 l.) qui **génère du JS depuis PHP**.
+C'est un chantier à part entière.
+|Élevée
+
+|4
+|*Une base par dossier* : la couche d'accès doit gérer un pool de connexions
+par tenant, pas une connexion unique.
+|Moyenne
+
+|5
+|*228 patchs SQL incrémentaux* (`include/sql/patch/`) : la migration des
+données existantes suppose un dossier déjà à jour en DBVERSION 208.
+|Moyenne
+
+|6
+|*Spécificités fiscales belges* (schéma `tva_belge`, 12 tables + formulaires
+de déclaration) : métier réglementaire, à porter à l'identique et à tester
+finement.
+|Moyenne
+|===
+
+== Atouts pour le portage
+
+. *97 fonctions PL/pgSQL* portent déjà le cœur comptable (`check_balance`,
+  `insert_jrnx`, `jrnx_ins`, `tva_insert`, `account_compute`, `get_pcm_tree`,
+  `is_closed`, `find_periode`…). Elles ne sont pas à réécrire : elles sont à
+  **conserver**. C'est le filet de sécurité du portage.
+. *68 fichiers de tests PHPUnit* (17 768 l.) couvrant `acc_ledger`,
+  `acc_ledger_purchase`, `fiche`, etc. Ils constituent une **spécification
+  exécutable** : chaque test porté en spec Crystal valide le portage.
+. *Routage et droits en base* : reprise sans réécriture.
+. *SQL paramétré* : transposition quasi littérale.
+. *Schéma stable et documenté* (`COMMENT ON` présents sur les tables/colonnes).
+
+== Estimation d'effort
+
+Le portage intégral à iso-fonctionnalité représente de l'ordre de
+**150 000 lignes de PHP + 37 000 lignes de JS**. Ce n'est pas un projet de
+quelques semaines. Une approche par tranches verticales est la seule viable.
+
+Découpage proposé, par ordre de valeur décroissante :
+
+[cols="1,4,1"]
+|===
+|Lot |Contenu |Poids
+
+|0 |Socle : connexion multi-tenant, contexte de requête, authentification, layout, i18n |~5 %
+|1 |Plan comptable, fiches (tiers), périodes, journaux — le référentiel |~15 %
+|2 |Saisie et consultation des opérations (achat, vente, financier, OD) + lettrage |~25 %
+|3 |Éditions : balances, grand livre, bilan, FEC |~15 %
+|4 |TVA et déclarations (BE + FR) |~10 %
+|5 |Comptabilité analytique |~10 %
+|6 |Stocks, prévisions, GED / suivi |~15 %
+|7 |Administration multi-dossiers, import/export, extensions |~5 %
+|===
+
+Le lot 0 + lot 1 constitue le premier jalon démontrable : se connecter à un
+dossier existant et consulter son plan comptable et ses fiches, **sur la base
+de production PostgreSQL actuelle, sans migration**.
+
+[[decisions]]
+== Décisions à trancher avant d'écrire du code
+
+. *Framework* — Marten 0.6.3 (présent dans `prod-crystal/`, ORM + migrations +
+  i18n + admin) ou Kemal (plus léger, `kemal-auth` déjà disponible) ?
+. *Schéma* — conserver le schéma PostgreSQL existant à l'identique (portage
+  progressif, cohabitation possible avec le PHP) ou repartir d'un modèle propre
+  (rupture, migration de données à écrire) ?
+. *Interface* — HTMX + Bulma (cohérent avec les autres projets) ou rendu
+  serveur classique ?
+. *Périmètre cible* — iso-fonctionnel, ou noyau comptable seulement dans un
+  premier temps ?
+. *Licence* — GPL v2 conservée ? Un portage est une œuvre dérivée au sens de la
+  GPL dès lors qu'il reprend le schéma, les fonctions PL/pgSQL et la structure.
+
+== Références
+
+* Dépôt analysé : `prod-github/noalyss/noalyss-app/` (clone de https://gitlab.com/noalyss/noalyss)
+* Site amont : https://noalyss.eu — forum : https://forum.noalyss.eu
+* Manuel développeur : https://manuel-fr.noalyss.eu/

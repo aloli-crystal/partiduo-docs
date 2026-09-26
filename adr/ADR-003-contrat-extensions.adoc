@@ -1,0 +1,228 @@
+= ADR-003 — Contrat d'extension
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Proposé — en attente de validation Philippe. +
+*Date.* 26 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Source.* Analyse de `prod-github/noalyss/noalyss-app` et des neuf projets
+d'extension du groupe https://gitlab.com/noalyss.
+
+== Résumé
+
+Le groupe NOALYSS compte, en plus du cœur, neuf projets d'extension qui totalisent
+environ 72 000 lignes de PHP, dont 15 extensions dans `noalyss-plugins`. Le cœur
+Crystal doit savoir les accueillir *dès le lot 0*, faute de quoi il faudra le
+retoucher à chaque extension portée.
+
+NOALYSS n'a pas de contrat d'extension explicite : une extension est un
+répertoire inclus par `require` dans le contexte du cœur, qui lit et écrit
+directement les tables `public`. Cet ADR définit le contrat du portage : *une
+extension est un shard qui fournit une application Marten*, déclarée par un
+manifeste, qui n'accède au cœur que par ses modèles et services publics et par
+des événements.
+
+== Contexte
+
+=== Le mécanisme NOALYSS
+
+Références : `noalyss-app/include/class/extension.class.php`,
+`include/lib/ac_common.php:1201-1313`, `html/ajax.php:73-120`,
+`html/extension.raw.php`.
+
+* *Emplacement.* Un répertoire dans `ext/`, installé par dézippage d'un paquet
+  téléchargé depuis `package.noalyss.eu`.
+* *Manifeste.* `plugin.xml` : code, nom, fichier d'entrée, menu parent (`depend`),
+  ordre, version, version minimale du cœur, schéma (informatif).
+* *Enregistrement.* Chaque entrée devient une ligne `menu_ref` de type `PL` ;
+  l'activation par profil ajoute une ligne `profile_menu`.
+* *Points d'entrée.* Trois seulement : la page (`me_file`), `ajax.php` et
+  `raw.php` (exports, JS, CSS).
+* *Droits.* Uniquement « menu visible ou non » par profil.
+* *Données.* Un schéma PostgreSQL par extension, avec sa table `version`.
+  Beaucoup posent des clés étrangères vers `public.fiche`, `jrn` ou `jrn_def` ;
+  certaines modifient `menu_ref` ou `profile_menu`.
+* *Migrations.* Faites par l'extension elle-même, à l'ouverture de sa page :
+  `install.sql`, puis boucle sur des `upgradeN.sql`. Aucune convention commune,
+  aucun verrou, aucune transaction globale.
+* *Hooks.* Aucun. Le cœur n'appelle jamais une extension en dehors de ses trois
+  points d'entrée.
+* *Surface utilisée.* SQL brut sur les tables du cœur (`get_value`, `exec_sql`,
+  `get_array`), composants de formulaire (`HtmlInput`, `IText`, `ISelect`,
+  `ICard`…), `Fiche`, `Acc_Ledger`, `Periode`, `Acc_Tva`, `Document`.
+
+Défauts relevés : le contrôle d'accès de `extension_get.inc.php` est toujours
+vrai (valeurs de retour mal testées) ; les dépendances entre extensions sont
+implicites (`peppol-connect` installe le schéma de `noalyss_document`).
+
+=== Ce qui change avec le portage
+
+* Crystal est compilé : pas d'installation d'extension par dézippage à chaud.
+* Marten a une notion native d'application (`Marten::App`) avec ses modèles,
+  routes, gabarits, traductions et migrations.
+* ADR-001 impose une instance par dossier.
+
+== Décision
+
+=== D1 — Une extension est un shard qui fournit une application Marten
+
+Chaque extension vit dans son dépôt, `prod-crystal/noalyss/noalyss-cr-<nom>`, et
+dépend du cœur `noalyss-cr` comme shard.
+
+*Composition à la compilation, activation à l'exécution.* Le binaire distribué
+inclut toutes les extensions officielles du groupe. Une instance active celles
+dont elle a besoin dans sa configuration (`noalyss-provision --with einvoicing,sepa`).
+Un seul binaire à construire et déployer pour tout le parc, ce qui répond au coût
+signalé par ADR-001 (« parc hétérogène »).
+
+=== D2 — Un manifeste déclaratif en Crystal
+
+[source,crystal]
+----
+Noalyss::Extensions.register do
+  code "EINV"
+  name "extensions.einvoicing.name"      # clé i18n
+  version "1.0.0"
+  requires_core "~> 1.0"
+  depends_on "DOCUMENT"                  # dépendances explicites
+  menu "EINV_OUT", parent: "VENMENU", order: 100, route: "einvoicing:outgoing"
+  menu "EINV_IN",  parent: "MENUACH", order: 100, route: "einvoicing:incoming"
+  permission "einvoicing.send"
+  permission "einvoicing.configure"
+end
+----
+
+Le cœur vérifie au démarrage la version requise et les dépendances ; une
+incohérence empêche le démarrage, au lieu d'échouer à l'usage.
+
+=== D3 — Routes : une seule convention
+
+Les routes de l'extension sont montées sous `/ext/<code>/`. Pages et fragments
+HTMX sont des handlers Marten ordinaires : `ajax.php` et `raw.php` disparaissent.
+Le contrôle d'accès est fait par le cœur, avant le handler, à partir du
+manifeste — il n'est plus laissé à l'extension.
+
+=== D4 — Droits fins et déclaratifs
+
+Une extension déclare des permissions nommées. Le cœur les rattache aux profils
+d'ADR-002 ; l'administrateur les coche comme les autres. La visibilité des menus
+découle des permissions.
+
+=== D5 — Données : migrations Marten, pas de schéma dédié
+
+* Les tables d'une extension sont des modèles Marten de son application, avec
+  les migrations Marten, suivies par le cœur comme les siennes. Les tables sont
+  préfixées par le libellé de l'application (`einvoicing_*`), ce qui remplace le
+  schéma PostgreSQL dédié.
+* Les liens vers le cœur sont des relations Marten (`many_to_one`) vers ses
+  modèles publics.
+* Une extension *ne modifie jamais* une table du cœur. Un besoin de champ
+  supplémentaire passe par une évolution du cœur (exemple : SIREN, ADR-004 D5).
+* Migrations exécutées par `marten migrate` au déploiement, en transaction —
+  jamais à l'ouverture d'une page.
+
+=== D6 — Surface publique du cœur
+
+Les extensions n'exécutent pas de SQL sur les tables du cœur. Le cœur publie
+une API stable, documentée et versionnée, déduite de l'usage réel des extensions
+amont :
+
+[cols="2,3",options="header"]
+|===
+|Domaine |Exposé
+
+|Fiches |`Cards::Card`, catégories, attributs ; recherche et création
+|Comptabilité |plan comptable, journaux, *service de création d'écriture*
+(le seul moyen d'écrire une écriture), périodes et exercices, lettrage
+|TVA |taux, régime du dossier
+|Devises |`Currency`, taux
+|Documents |pièces jointes d'une écriture ou d'une fiche
+|Analytique |plans et postes
+|Paramètres |paramètres du dossier ; paramètres propres de l'extension, secrets
+chiffrés
+|Interface |gabarits Bulma, composants HTMX — sélecteur de fiche, de compte, de
+date, de montant, de TVA (successeurs de `ICard`, `IPoste`, `IDate`, `INum`,
+`ITva_Popup`), onglets, tableaux triables
+|Exports |CSV, PDF
+|===
+
+Tout ce qui n'est pas dans cette API est interne au cœur et peut changer.
+
+=== D7 — Événements
+
+Le cœur publie des événements synchrones, dans la transaction de l'opération,
+auxquels une extension s'abonne dans son manifeste :
+
+* `entry.posted`, `entry.cancelled`
+* `invoice.issued` (vente enregistrée)
+* `payment.matched` (lettrage d'un paiement avec une facture)
+* `card.saved`
+* `period.closed`
+
+Justification : sans eux, la facturation électronique (ADR-004) ne peut pas
+émettre le statut « Encaissée » au lettrage, et les extensions sont réduites à
+scruter les tables. La liste est volontairement courte ; un événement n'est
+ajouté que lorsqu'une extension portée en a besoin.
+
+=== D8 — Squelette de référence
+
+Le dépôt `noalyss-cr-skel` fournit une extension minimale conforme (manifeste,
+une page, un modèle, une migration, un abonnement, des specs), successeur de
+`SKEL`. Chaque portage d'extension part de lui.
+
+== Sort des extensions amont
+
+[cols="2,1,3",options="header"]
+|===
+|Amont |Lignes PHP |Devenir
+
+|`peppol-connect` |2 100 |`noalyss-cr-einvoicing` — voir ADR-004. *Prochain portage.*
+|`noalyss_document` (NDER, NDC) |5 100 |`noalyss-cr-document` — dépendance de `einvoicing`
+|`noalyss_xmlpayment` (XMLPY) |3 500 |`noalyss-cr-sepa`
+|`advancedimport` (IMPOP2) |7 600 |`noalyss-cr-import`
+|`noalyss-form` (FVAL, FDEF) |2 500 |`noalyss-cr-form`, point d'entrée public par jeton
+|`noalyss-export` |1 100 |Absorbé par le lot 3 du cœur (FEC)
+|`profile-management` |500 |Absorbé par ADR-002
+|`copy_parameter` |1 300 |Absorbé par `noalyss-provision` (modèle de dossier)
+|`noalyss-plugins` / TVA |7 600 |Cœur, `vat/be/` (lot 4)
+|`noalyss-plugins` / AMORTIS |4 700 |`noalyss-cr-amortis`
+|`noalyss-plugins` / IMPORTBANK |5 800 |`noalyss-cr-bankimport`
+|`noalyss-plugins` / RAPAV + LISTING |14 700 |`noalyss-cr-reports`
+|`noalyss-plugins` / INVOICING |2 100 |Fusionné dans `noalyss-cr-einvoicing`
+|`noalyss-plugins` / IMPCARD, TOOLPCMN, TOOLS, MODOP |4 500 |Cœur (import/export de fiches et de plan comptable, outils)
+|`noalyss-plugins` / COPRO, SAV |5 400 |À décider — métiers spécialisés
+|`noalyss-plugins` / TRANSFORM |3 000 |À décider — spécifique à Intervat (Belgique)
+|`noalyss-plugins` / BACKNOADM |90 |Sans objet (sauvegarde gérée par le déploiement)
+|`noalyss-plugins` / SKEL |500 |Remplacé par `noalyss-cr-skel` (D8)
+|`dolibarr-noalyss` |— |Écarté
+|===
+
+== Conséquences
+
+=== Positives
+
+* Le cœur est conçu une fois pour accueillir les extensions ; aucune ne le
+  modifie en douce.
+* Contrôle d'accès centralisé, ce qui corrige le défaut amont.
+* Migrations uniformes, transactionnelles, rejouables.
+* Un seul binaire pour tout le parc.
+
+=== Négatives et coûts
+
+* Le lot 0 du cœur s'alourdit : registre d'extensions, permissions, événements,
+  API publique documentée.
+* L'API publique du cœur devient un engagement : la changer oblige à mettre à
+  jour les extensions.
+* Ajouter une extension tierce impose de recompiler la distribution.
+
+== Questions ouvertes
+
+. Sort de COPRO, SAV et TRANSFORM.
+. Extensions tierces hors du groupe : faut-il un jour les autoriser ?
+
+== Références
+
+* `ADR-001-portage-noalyss-crystal.adoc`, `ADR-002-authentification.adoc`,
+  `ADR-004-facturation-electronique.adoc`
+* Applications Marten : `prod-crystal/marten-docs-fr`
