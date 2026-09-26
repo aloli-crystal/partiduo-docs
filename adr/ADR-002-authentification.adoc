@@ -337,6 +337,18 @@ des drapeaux `UP` et `UV`, gestion du compteur.
 
 === Pièges d'implémentation à consigner
 
+* *TOTP : l'algorithme de NOALYSS est incompatible avec les applications qu'il
+  recommande.* NOALYSS configure `chillerlan` en SHA-512
+  (`include/lib/otp.class.php`) tout en renvoyant vers freeOTP et Google
+  Authenticator (`include/class/noalyss_user.class.php:2133`) ; or Google
+  Authenticator et la plupart de ses clones ignorent le paramètre `algorithm`
+  de l'URI et calculent toujours en SHA-1. Partiduo stocke donc l'algorithme par
+  utilisateur : SHA-1 pour tout nouvel enrôlement, SHA-512 conservé pour les
+  secrets migrés, faute de quoi ils ne produiraient plus les mêmes codes.
+* *TOTP : anti-rejeu.* `TOTP::Authenticator#verify` renvoie le compteur
+  accepté ; il est stocké et repassé en `after:` à la vérification suivante,
+  sinon un code reste valable pendant toute la fenêtre de dérive.
+
 * *Le compteur de signature vaut souvent 0.* Les authentificateurs Apple le
   renvoient toujours à zéro. Rejeter un compteur nul ou non croissant exclurait
   tous les utilisateurs macOS et iOS. Le contrôle ne s'applique que si le
