@@ -39,9 +39,14 @@ prompt : l'équipe repart de `ETAT-PORTAGE.adoc`.
 |`prod-quimeo/capistrano-quimeo` présent.
 
 |`webauthn`
-|icon:warning[] Partiel
-|v0.1.0 : CBOR et COSE (ES256 + RS256) faits, 48 specs vertes. *Manquent*
-`authenticatorData`, enregistrement, authentification (ADR-002, périmètre WebAuthn).
+|icon:check[] OK
+|v0.1.0 complet : CBOR, COSE (ES256 + RS256), `authenticatorData`, `clientData`,
+et les deux cérémonies `verify_registration` / `verify_authentication`.
+97 specs vertes contre le `jose` publié. Chaque contrôle critique — origine,
+présence et vérification utilisateur, empreinte du RP ID, compteur de
+signature, vérification de signature — a été éprouvé par mutation. Reste hors
+périmètre : attestation au-delà de `none`, et aucun test contre un
+authentificateur réel.
 
 |TOTP (RFC 6238)
 |icon:times[] Absent
