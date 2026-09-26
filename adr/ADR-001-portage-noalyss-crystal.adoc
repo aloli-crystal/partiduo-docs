@@ -601,6 +601,28 @@ migration de données, cohabitation possible avec le PHP.
 booléens, _large objects_) et impose de reconstruire migrations, i18n,
 formulaires et administration.
 
+=== F. MariaDB, seule ou en plus de PostgreSQL
+
+Écartée le 26 septembre 2026 : *PostgreSQL est la seule base supportée.*
+
+Marten gère MariaDB (pilote MySQL, `decimal` exact en `numeric(p, s)`,
+requêtes récursives depuis MariaDB 10.2) : l'option n'est pas techniquement
+impossible. Elle est écartée pour ce qu'elle coûterait :
+
+* *pas de contrainte différée* : le refus en base d'une écriture déséquilibrée
+  repose sous PostgreSQL sur un `CONSTRAINT TRIGGER … DEFERRABLE INITIALLY
+  DEFERRED`, vérifié à la validation de la transaction ; MariaDB n'offre que des
+  déclencheurs ligne à ligne, qui rejetteraient la première ligne de toute
+  écriture. Le contournement (contrôle au passage en statut « validée ») est
+  plus fragile, pour la garantie la plus importante d'un logiciel comptable ;
+* *pas de JSON indexable* : Marten stocke son champ JSON en `text` sous
+  MariaDB, ce qui rend les attributs libres des fiches (D3) impossibles à
+  indexer et à filtrer en base ;
+* *double écriture* des règles d'intégrité restées en base, et double CI.
+
+Aucune contrainte d'hébergement ne justifie ce coût : le parc Aloli converge
+vers PostgreSQL.
+
 === E. Décision retenue — une instance par dossier
 
 Supprime le multi-tenant au lieu de le résoudre. Marten sert dans son mode
