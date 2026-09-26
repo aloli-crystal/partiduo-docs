@@ -1,0 +1,201 @@
+= ADR-005 — Interface utilisateur interchangeable
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Proposé — en attente de validation Philippe. +
+*Date.* 26 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Complète.* ADR-001 D4 (HTMX + Bulma, Opal en dernier recours) et ADR-003 D6
+(surface publique du cœur).
+
+== Résumé
+
+L'interface de Partiduo doit pouvoir être *jetée et refaite à côté* sans
+toucher au métier. Cet ADR sépare le logiciel en deux :
+
+* *le métier* — modèles, règles, services — dans `partiduo-app`, *sans une
+  ligne de HTML* ;
+* *l'interface* — routes, handlers, gabarits, CSS, JavaScript — dans un dépôt à
+  part, `partiduo-ui-bulma`, qui ne parle au métier que par un contrat écrit.
+
+Refaire l'interface revient alors à écrire un autre dépôt `partiduo-ui-<nom>`
+qui respecte le même contrat, et à choisir lequel compiler dans la
+distribution. Le reste de l'ADR fixe l'ergonomie de la première interface.
+
+== Contexte
+
+* NOALYSS mêle métier, SQL et HTML dans les mêmes fichiers PHP, avec 37 000
+  lignes de JavaScript maison : impossible d'en changer l'apparence sans tout
+  toucher.
+* Marten sait assembler un projet à partir de plusieurs applications, chacune
+  apportant ses handlers, ses gabarits et ses fichiers statiques.
+* ADR-003 compose déjà la distribution à la compilation (cœur + extensions) :
+  l'interface devient une pièce de plus de cette composition.
+* Aucun projet Aloli existant en Bulma + HTMX ne fournit de conventions à
+  reprendre.
+
+== Décision
+
+=== D1 — Trois couches, trois emplacements
+
+[cols="1,2,2",options="header"]
+|===
+|Couche |Contenu |Emplacement
+
+|*Métier*
+|Modèles Marten, contraintes, *commandes* (écrire) et *requêtes* (lire),
+permissions, événements
+|`partiduo-app` — applications `core`, `accounting`, `cards`, `vat`…
+
+|*Contrat*
+|Signatures publiques des commandes et requêtes, *objets de vue* immuables
+qu'elles renvoient, erreurs de validation typées
+|`partiduo-app`, module `Partiduo::Api` — versionné (ADR-003 D6)
+
+|*Interface*
+|Routes, handlers, gabarits, composants, CSS, JavaScript, Opal, traductions
+d'écran
+|Dépôt `partiduo-ui-bulma`
+|===
+
+`partiduo-app` *ne contient aucun handler, aucun gabarit, aucun fichier
+statique*. L'application `web/` prévue par ADR-001 quitte le cœur.
+
+=== D2 — Le contrat : commandes et requêtes
+
+* *Requêtes* : `Partiduo::Api::Accounting.trial_balance(period:, filter:)`
+  renvoie des objets de vue (`record struct`), jamais un modèle Marten ni un
+  `QuerySet`. L'interface ne peut donc ni déclencher une requête SQL imprévue,
+  ni modifier un objet par mégarde.
+* *Commandes* : `Partiduo::Api::Accounting.post_entry(input) : Result` — un
+  seul point d'entrée par opération métier, qui valide, vérifie la permission,
+  écrit dans une transaction et publie l'événement (ADR-003 D7).
+* *Erreurs* : une commande refusée renvoie des erreurs par champ, avec des clés
+  i18n. L'interface les affiche ; elle ne les calcule pas.
+* *Permissions* vérifiées *dans* chaque commande et requête. Une interface
+  défaillante ne peut pas contourner un droit.
+* *Aucune règle métier dans l'interface* — pas même l'équilibre débit/crédit.
+  Pour un retour instantané, l'interface appelle une requête de contrôle
+  (`Partiduo::Api::Accounting.check_entry(input)`), qui applique la même règle
+  que la commande.
+
+Le contrat a deux autres consommateurs dès le départ, ce qui garantit qu'il se
+suffit à lui-même : `partiduo-migrate` et les specs du cœur, écrites contre
+`Partiduo::Api` et non contre les écrans.
+
+=== D3 — Un garde-fou automatique
+
+La CI de `partiduo-app` échoue si :
+
+* un fichier sous `src/` contient du HTML, un gabarit ou un handler Marten ;
+* un fichier hors de `Partiduo::Api` est référencé par `partiduo-ui-bulma`
+  (règle Ameba propre, ou spec qui analyse les `require` et les constantes).
+
+Sans ce garde-fou, la frontière s'érode au premier raccourci.
+
+=== D4 — Extensions : métier et interface séparés dans le même dépôt
+
+Une extension garde un seul dépôt (ADR-003), organisé en deux :
+
+[source]
+----
+partiduo-einvoicing/
+├── src/einvoicing/        # métier + son module Api
+└── ui/bulma/              # handlers, gabarits, assets pour partiduo-ui-bulma
+----
+
+Le manifeste déclare les interfaces fournies (`ui "bulma", path: "ui/bulma"`).
+Une nouvelle interface ajoute `ui/<nom>/` à chaque extension ; le métier ne
+bouge pas. Les routes `/ext/<code>/` et le contrôle d'accès avant handler
+(ADR-003 D3) sont fournis par le dépôt d'interface.
+
+=== D5 — Première interface : `partiduo-ui-bulma`
+
+Choix techniques :
+
+* *Bulma 1.x* — variables CSS, mode sombre natif ; *HTMX 2.x* ; *Opal* réservé
+  aux écrans listés par ADR-001 D4, et seulement sur constat.
+* *Aucune chaîne de compilation JavaScript* : fichiers versionnés dans le dépôt,
+  servis par Marten.
+* *Icônes* : un seul jeu, en SVG inclus dans le dépôt.
+* *Thème* : couleurs et typographie définies en variables CSS dans un seul
+  fichier (`theme.css`) ; changer de charte ne touche aucun gabarit.
+
+Structure d'écran :
+
+* barre supérieure : nom du dossier, *exercice et période courants* (toujours
+  visibles, modifiables en un clic), recherche globale, utilisateur ;
+* menu latéral par domaine — Tableau de bord, Saisie, Consultation, Fiches,
+  Éditions, TVA, Analytique, Paramètres — puis les extensions activées ;
+* zone de contenu : titre, fil d'Ariane, actions à droite.
+
+Ergonomie comptable :
+
+* *saisie entièrement au clavier* : `Tab` et `Entrée` avancent, `Alt+↓` ajoute
+  une ligne, `Ctrl+Entrée` enregistre, complétion des comptes et des fiches dès
+  le premier caractère ;
+* *équilibre débit/crédit affiché en permanence* pendant la saisie ;
+* *montants* en police à chasse fixe, alignés à droite, séparateurs selon la
+  langue (`1 234,56` en français, `1.234,56` en néerlandais, `1,234.56` en
+  anglais) ;
+* dates au format de la langue, saisie abrégée acceptée (`12` → le 12 du mois de
+  la période courante) ;
+* tableaux triables, filtres persistants, export CSV et PDF depuis chaque liste.
+
+Qualité :
+
+* *accessibilité* : WCAG 2.2 niveau AA (équivalent RGAA) — contrastes, focus
+  visible, libellés, navigation au clavier ;
+* *écrans* : consultation utilisable sur mobile ; saisie optimisée pour
+  ordinateur à partir de 1280 px ;
+* *langues* : français, anglais, néerlandais ; les libellés d'écran sont dans
+  l'interface, les libellés métier et messages d'erreur dans le cœur.
+
+=== D6 — La maquette fait référence
+
+La maquette validée (tableau de bord, saisie d'une écriture, plan comptable)
+fixe l'apparence et l'ergonomie de `partiduo-ui-bulma`. Elle vit dans
+`maquette/` (Bulma 1.0.4, `theme.css`) et est publiée sur
+https://claude.ai/artifact/PWX5XRVHre9TWqEFv1k1WS. Son `theme.css` est le point de
+départ du thème de l'interface.
+
+== Conséquences
+
+=== Positives
+
+* Refaire l'interface est un projet borné : un nouveau dépôt et un dossier
+  `ui/<nom>/` par extension. Le métier, ses specs et `partiduo-migrate` ne
+  changent pas.
+* Deux interfaces peuvent coexister pendant une transition, compilées dans deux
+  distributions différentes.
+* Les règles comptables sont testées sans navigateur.
+* Une API HTTP publique (JSON) devient un simple adaptateur de plus du même
+  contrat, le jour où elle sera utile.
+
+=== Négatives et coûts
+
+* Plus de code au départ : chaque écran passe par une requête et un objet de vue
+  au lieu de lire le modèle directement.
+* Le contrat `Partiduo::Api` doit être tenu : le changer oblige à mettre à jour
+  chaque interface.
+* Un dépôt de plus à maintenir.
+
+== Alternatives considérées
+
+* *Interface dans `partiduo-app`, dans une application `web/` isolée* : plus
+  simple, mais rien n'empêche une interface de lire directement les modèles ;
+  la frontière s'érode et la refonte redevient un chantier global.
+* *API JSON + application JavaScript séparée* : découplage maximal, mais
+  contraire à ADR-001 D4 (pas de JavaScript lourd) ; reste possible plus tard
+  comme adaptateur du contrat.
+
+== Questions ouvertes
+
+. Charte graphique de Partiduo (logo, couleurs) : la maquette utilise une
+  palette neutre, remplaçable dans `theme.css`.
+
+== Références
+
+* `ADR-001-portage-noalyss-crystal.adoc` — D4, Organisation du code
+* `ADR-003-contrat-extensions.adoc` — D3, D6, D7

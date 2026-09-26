@@ -360,6 +360,9 @@ sans en payer le prix sur les attributs que *toute* fiche possède.
 
 === D4 — HTMX + Bulma, Opal en dernier recours
 
+NOTE: Complété par ADR-005 : l'interface est un dépôt séparé et interchangeable,
+`partiduo-ui-bulma`, qui ne parle au métier que par le contrat `Partiduo::Api`.
+
 Par défaut : *rendu serveur + HTMX*. Les 98 handlers AJAX actuels renvoient déjà
 des fragments : ils deviennent des vues Marten qui rendent du HTML partiel.
 Bulma pour la présentation, en cohérence avec les autres projets.
@@ -428,8 +431,10 @@ src/
 ├── analytic/        # plans, postes, clés de répartition
 ├── reporting/       # balances, grand livre, bilan, FEC
 ├── stock/           # dépôts, mouvements
-├── followup/        # GED, suivi, actions
-└── web/             # layouts, composants HTMX, assets Bulma
+└── followup/        # GED, suivi, actions
+
+# Aucune interface dans ce dépôt (ADR-005) : le contrat Partiduo::Api est exposé
+# par chaque application ; l'interface vit dans le dépôt partiduo-ui-bulma.
 
 bin/
 └── partiduo-provision   # création d'une instance

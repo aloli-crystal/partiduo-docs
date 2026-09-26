@@ -1,0 +1,612 @@
+<title>Partiduo maquette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="bulma.min.css">
+<link rel="stylesheet" href="theme.css">
+<style>
+  html, body { height: 100%; }
+  body { background: var(--pd-ground); color: var(--pd-ink); font-family: var(--bulma-family-primary); }
+  .pd-app { display: grid; grid-template-columns: 15rem 1fr; grid-template-rows: auto auto 1fr; min-height: 100%; }
+  .pd-proto { grid-column: 1 / -1; background: var(--pd-warn-bg); color: var(--pd-warn); font-size: .8rem; padding: .3rem 1rem; text-align: center; }
+
+  /* Barre supérieure */
+  .pd-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    background: var(--pd-surface); border-bottom: 1px solid var(--pd-rule); padding: .6rem 1rem;
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+  .pd-brand { display: flex; align-items: baseline; gap: .5rem; font-weight: 700; color: var(--pd-ink); letter-spacing: -.01em; }
+  .pd-brand b { font-size: 1.15rem; }
+  .pd-brand small { font-weight: 400; color: var(--pd-muted); font-size: .8rem; }
+  .pd-dossier { display: flex; flex-direction: column; line-height: 1.2; padding-left: 1rem; border-left: 1px solid var(--pd-rule); }
+  .pd-dossier strong { font-size: .95rem; color: var(--pd-ink); }
+  .pd-dossier span { font-size: .75rem; color: var(--pd-muted); font-variant-numeric: tabular-nums; }
+  .pd-period { display: flex; gap: .5rem; align-items: center; }
+  .pd-period label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--pd-muted); }
+  .pd-grow { flex: 1 1 12rem; min-width: 0; }
+  .pd-user { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: var(--pd-muted); }
+  .pd-avatar { width: 2rem; height: 2rem; border-radius: 50%; background: var(--pd-sidebar); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: .8rem; }
+  .pd-burger { display: none; }
+
+  /* Menu latéral */
+  .pd-side { background: var(--pd-sidebar); color: var(--pd-sidebar-text); padding: 1rem .75rem; }
+  .pd-side .menu-label { color: var(--pd-sidebar-text); opacity: .7; font-size: .68rem; letter-spacing: .08em; margin-top: 1.1rem; }
+  .pd-side .menu-list a { color: var(--pd-sidebar-text); border-radius: var(--bulma-radius); display: flex; justify-content: space-between; align-items: center; padding: .45rem .65rem; }
+  .pd-side .menu-list a:hover { background: var(--pd-sidebar-active-bg); color: var(--pd-sidebar-active); }
+  .pd-side .menu-list a.is-active { background: var(--pd-sidebar-active-bg); color: var(--pd-sidebar-active); font-weight: 600; box-shadow: inset 3px 0 0 #7fd0e2; }
+  .pd-side .menu-list a[aria-disabled="true"] { opacity: .55; cursor: default; }
+  .pd-count { background: #7fd0e2; color: #08323c; border-radius: 1rem; font-size: .7rem; font-weight: 700; padding: 0 .45rem; }
+  .pd-ext { font-size: .65rem; opacity: .7; border: 1px solid currentColor; border-radius: .25rem; padding: 0 .3rem; }
+
+  /* Contenu */
+  .pd-main { padding: 1.25rem 1.5rem 3rem; min-width: 0; }
+  .pd-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .pd-head h1 { font-size: 1.5rem; font-weight: 600; color: var(--pd-ink); text-wrap: balance; }
+  .pd-crumb { font-size: .8rem; color: var(--pd-muted); margin-bottom: .2rem; }
+  .pd-panel { background: var(--pd-surface); border: 1px solid var(--pd-rule); border-radius: var(--bulma-radius); }
+  .pd-panel > header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--pd-rule); }
+  .pd-panel > header h2 { font-size: .95rem; font-weight: 600; color: var(--pd-ink); }
+  .pd-panel > .pd-body { padding: 1rem; }
+  .amount, .pd-mono { font-family: var(--bulma-family-code); font-variant-numeric: tabular-nums; }
+  .amount { text-align: right; white-space: nowrap; }
+  .pd-muted { color: var(--pd-muted); }
+  .pd-scroll { overflow-x: auto; }
+
+  /* Tableau de bord */
+  .pd-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .pd-tile { padding: .9rem 1rem; display: flex; flex-direction: column; gap: .3rem; }
+  .pd-tile .lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--pd-muted); }
+  .pd-tile .val { font-family: var(--bulma-family-code); font-size: 1.35rem; font-weight: 600; color: var(--pd-ink); font-variant-numeric: tabular-nums; }
+  .pd-tile .sub { font-size: .8rem; color: var(--pd-muted); }
+  .pd-tile svg { width: 100%; height: 34px; display: block; }
+  .pd-grid2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; }
+  .pd-todo { display: flex; flex-direction: column; }
+  .pd-todo a { display: flex; gap: .75rem; align-items: flex-start; padding: .75rem 1rem; border-bottom: 1px solid var(--pd-rule); color: var(--pd-ink); }
+  .pd-todo a:last-child { border-bottom: 0; }
+  .pd-todo a:hover { background: var(--pd-row-alt); }
+  .pd-dot { flex: none; width: .6rem; height: .6rem; border-radius: 50%; margin-top: .4rem; }
+  .pd-todo small { display: block; color: var(--pd-muted); font-size: .8rem; }
+
+  /* Tables */
+  .table { background: transparent; color: var(--pd-ink); font-size: .9rem; }
+  .table th { color: var(--pd-muted); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; border-color: var(--pd-rule); }
+  .table td { border-color: var(--pd-rule); vertical-align: middle; }
+  .table.is-hoverable tbody tr:hover { background: var(--pd-row-alt); }
+  .table th.amount { text-align: right; }
+
+  /* Saisie */
+  .pd-form-grid { display: grid; grid-template-columns: 9rem 10rem 9rem minmax(0, 1fr); gap: .75rem 1rem; }
+  .pd-form-grid .field { margin: 0; }
+  .label { font-size: .75rem; font-weight: 600; color: var(--pd-muted); text-transform: uppercase; letter-spacing: .05em; }
+  .pd-origin { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; font-size: .85rem; padding: .6rem 1rem; background: var(--pd-row-alt); border-bottom: 1px solid var(--pd-rule); }
+  .pd-lines td { padding: .25rem .35rem; }
+  .pd-lines input { width: 100%; border: 1px solid transparent; background: transparent; color: var(--pd-ink); font: inherit; padding: .35rem .45rem; border-radius: var(--bulma-radius-small); }
+  .pd-lines input:hover { border-color: var(--pd-rule); }
+  .pd-lines input:focus { outline: 2px solid var(--pd-focus); outline-offset: 0; background: var(--pd-surface); }
+  .pd-lines input.amount, .pd-lines input.pd-mono { font-family: var(--bulma-family-code); }
+  .pd-lines .acc-name { font-size: .75rem; color: var(--pd-muted); padding-left: .45rem; display: block; min-height: 1em; }
+  .pd-lines .acc-name.is-unknown { color: var(--pd-gap); }
+  .pd-del { background: none; border: 0; color: var(--pd-muted); cursor: pointer; font-size: 1.1rem; line-height: 1; padding: .3rem .5rem; border-radius: var(--bulma-radius-small); }
+  .pd-del:hover, .pd-del:focus-visible { color: var(--pd-gap); background: var(--pd-gap-bg); }
+  .pd-balance { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; padding: .75rem 1rem; border-top: 1px solid var(--pd-rule);
+    position: sticky; bottom: 0; background: var(--pd-surface); border-radius: 0 0 var(--bulma-radius) var(--bulma-radius); }
+  .pd-balance .fig { display: flex; flex-direction: column; }
+  .pd-balance .fig span { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--pd-muted); }
+  .pd-balance .fig b { font-family: var(--bulma-family-code); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .pd-state { padding: .3rem .7rem; border-radius: 1rem; font-weight: 600; font-size: .85rem; }
+  .pd-state.ok { background: var(--pd-ok-bg); color: var(--pd-ok); }
+  .pd-state.gap { background: var(--pd-gap-bg); color: var(--pd-gap); }
+  .pd-keys { font-size: .78rem; color: var(--pd-muted); display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .75rem; }
+  kbd { font-family: var(--bulma-family-code); font-size: .72rem; border: 1px solid var(--pd-rule); border-bottom-width: 2px; border-radius: .25rem; padding: 0 .3rem; background: var(--pd-surface); color: var(--pd-ink); }
+  .pd-side-panel dl { display: grid; grid-template-columns: auto 1fr; gap: .35rem .75rem; font-size: .85rem; }
+  .pd-side-panel dt { color: var(--pd-muted); }
+  .pd-side-panel dd { margin: 0; text-align: right; }
+
+  /* Plan comptable */
+  .pd-class { font-weight: 600; background: var(--pd-row-alt); }
+  .pd-lvl1 td:first-child { padding-left: 1.4rem; }
+  .pd-lvl2 td:first-child { padding-left: 2.6rem; }
+  .pd-tabs { display: flex; gap: .35rem; flex-wrap: wrap; }
+  .pd-tabs button { border: 1px solid var(--pd-rule); background: var(--pd-surface); color: var(--pd-ink); border-radius: 1rem; padding: .2rem .7rem; font: inherit; font-size: .82rem; cursor: pointer; }
+  .pd-tabs button[aria-pressed="true"] { background: var(--bulma-primary); border-color: var(--bulma-primary); color: #fff; }
+
+  /* Toast */
+  .pd-toast { position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 50; max-width: calc(100% - 2rem); }
+
+  :focus-visible { outline: 2px solid var(--pd-focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  @media (max-width: 1100px) {
+    .pd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pd-grid2 { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 820px) {
+    .pd-app { grid-template-columns: minmax(0, 1fr); }
+    .pd-side { display: none; }
+    .pd-side.is-open { display: block; }
+    .pd-burger { display: inline-flex; }
+    .pd-dossier { border-left: 0; padding-left: 0; }
+    .pd-main { padding: 1rem 1rem 3rem; }
+    .pd-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .pd-form-grid .pd-wide { grid-column: 1 / -1; }
+    .pd-user span { display: none; }
+  }
+  @media (max-width: 480px) {
+    .pd-tiles { grid-template-columns: minmax(0, 1fr); }
+    .pd-period { flex-wrap: wrap; }
+  }
+</style>
+
+<div class="pd-app">
+  <div class="pd-proto" data-i18n="proto">Maquette de référence de partiduo-ui-bulma — données d'exemple, aucune donnée réelle</div>
+
+  <header class="pd-top">
+    <button class="button is-small pd-burger" id="burger" aria-controls="side" aria-expanded="false" aria-label="Menu">☰</button>
+    <div class="pd-brand"><b>Partiduo</b><small>portage de NOALYSS</small></div>
+    <div class="pd-dossier">
+      <strong>Atelier Brunet SARL</strong>
+      <span>SIREN 812 457 390 · régime FR</span>
+    </div>
+    <div class="pd-period">
+      <div>
+        <label for="exercice" data-i18n="fy">Exercice</label>
+        <div class="select is-small"><select id="exercice"><option>2026</option><option>2025 (clos)</option></select></div>
+      </div>
+      <div>
+        <label for="periode" data-i18n="period">Période</label>
+        <div class="select is-small"><select id="periode"></select></div>
+      </div>
+    </div>
+    <div class="pd-grow">
+      <input class="input is-small" id="search" type="search" placeholder="Rechercher un compte, une fiche, une pièce… (/)" data-i18n-ph="search" aria-label="Recherche">
+    </div>
+    <div class="select is-small" title="Langue">
+      <select id="lang" aria-label="Langue">
+        <option value="fr">FR</option><option value="nl">NL</option><option value="en">EN</option>
+      </select>
+    </div>
+    <div class="pd-user"><div class="pd-avatar" aria-hidden="true">PN</div><span>P. Nénert · comptable</span></div>
+  </header>
+
+  <nav class="pd-side menu" id="side" aria-label="Navigation principale">
+    <ul class="menu-list">
+      <li><a href="#tableau" data-view="tableau" data-i18n="nav_dash">Tableau de bord</a></li>
+    </ul>
+    <p class="menu-label" data-i18n="nav_entry">Saisie</p>
+    <ul class="menu-list">
+      <li><a href="#saisie" data-view="saisie"><span data-i18n="nav_purch">Achats</span><span class="pd-count" title="Factures électroniques reçues à comptabiliser">3</span></a></li>
+      <li><a aria-disabled="true"><span data-i18n="nav_sales">Ventes</span></a></li>
+      <li><a aria-disabled="true"><span data-i18n="nav_bank">Financier</span></a></li>
+      <li><a aria-disabled="true"><span data-i18n="nav_misc">Opérations diverses</span></a></li>
+    </ul>
+    <p class="menu-label" data-i18n="nav_ref">Référentiel</p>
+    <ul class="menu-list">
+      <li><a href="#plan" data-view="plan" data-i18n="nav_coa">Plan comptable</a></li>
+      <li><a aria-disabled="true" data-i18n="nav_cards">Fiches</a></li>
+      <li><a aria-disabled="true" data-i18n="nav_ledgers">Journaux</a></li>
+    </ul>
+    <p class="menu-label" data-i18n="nav_reports">Éditions</p>
+    <ul class="menu-list">
+      <li><a aria-disabled="true" data-i18n="nav_tb">Balance</a></li>
+      <li><a aria-disabled="true" data-i18n="nav_gl">Grand livre</a></li>
+      <li><a aria-disabled="true">FEC</a></li>
+    </ul>
+    <p class="menu-label" data-i18n="nav_ext">Extensions</p>
+    <ul class="menu-list">
+      <li><a aria-disabled="true"><span data-i18n="nav_einv">Factures électroniques</span><span class="pd-ext">EINV</span></a></li>
+      <li><a aria-disabled="true"><span data-i18n="nav_sepa">Virements SEPA</span><span class="pd-ext">SEPA</span></a></li>
+    </ul>
+  </nav>
+
+  <main class="pd-main" id="main">
+
+    <!-- Tableau de bord -->
+    <section data-screen="tableau">
+      <div class="pd-head">
+        <div>
+          <div class="pd-crumb">Atelier Brunet SARL</div>
+          <h1 data-i18n="nav_dash">Tableau de bord</h1>
+        </div>
+        <a class="button is-primary" href="#saisie" data-view="saisie" data-i18n="new_entry">Nouvelle écriture d'achat</a>
+      </div>
+
+      <div class="pd-tiles">
+        <div class="pd-panel pd-tile">
+          <span class="lbl" data-i18n="t_cash">Trésorerie · 512</span>
+          <span class="val" data-amount="48215.30"></span>
+          <svg viewBox="0 0 200 34" preserveAspectRatio="none" aria-label="Évolution de la trésorerie sur 9 mois">
+            <path d="M0,26 L25,22 L50,24 L75,17 L100,19 L125,12 L150,14 L175,8 L200,6 L200,34 L0,34 Z" fill="var(--bulma-primary)" opacity=".12"/>
+            <path d="M0,26 L25,22 L50,24 L75,17 L100,19 L125,12 L150,14 L175,8 L200,6" fill="none" stroke="var(--bulma-primary)" stroke-width="2"/>
+            <circle cx="198" cy="6" r="3" fill="var(--bulma-primary)"/>
+          </svg>
+        </div>
+        <div class="pd-panel pd-tile">
+          <span class="lbl" data-i18n="t_recv">Clients à encaisser · 411</span>
+          <span class="val" data-amount="23480.00"></span>
+          <span class="sub"><span class="tag is-danger is-light"><span data-amount="6120.00"></span>&nbsp;<span data-i18n="late">en retard</span></span></span>
+        </div>
+        <div class="pd-panel pd-tile">
+          <span class="lbl" data-i18n="t_pay">Fournisseurs à payer · 401</span>
+          <span class="val" data-amount="9872.64"></span>
+          <span class="sub" data-i18n="t_pay_sub">dont 1 facture échue</span>
+        </div>
+        <div class="pd-panel pd-tile">
+          <span class="lbl" data-i18n="t_vat">TVA due · septembre</span>
+          <span class="val" data-amount="3214.00"></span>
+          <span class="sub"><span data-i18n="due">Échéance</span> <span data-date="2026-10-19"></span></span>
+        </div>
+      </div>
+
+      <div class="pd-grid2">
+        <div class="pd-panel">
+          <header><h2 data-i18n="recent">Dernières écritures</h2><a class="is-size-7" aria-disabled="true" data-i18n="see_all">Tout voir</a></header>
+          <div class="pd-scroll">
+            <table class="table is-fullwidth is-hoverable is-narrow">
+              <thead><tr><th>Date</th><th data-i18n="c_ledger">Journal</th><th data-i18n="c_doc">Pièce</th><th data-i18n="c_label">Libellé</th><th class="amount" data-i18n="c_amount">Montant</th></tr></thead>
+              <tbody id="recent"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pd-panel">
+          <header><h2 data-i18n="todo">À traiter</h2></header>
+          <div class="pd-todo">
+            <a href="#saisie" data-view="saisie"><span class="pd-dot" style="background:var(--bulma-primary)"></span><span><span data-i18n="todo1">3 factures électroniques reçues à comptabiliser</span><small data-i18n="todo1s">Reçues via votre plateforme agréée · statut « Déposée »</small></span></a>
+            <a aria-disabled="true"><span class="pd-dot" style="background:var(--pd-warn)"></span><span><span data-i18n="todo2">12 opérations bancaires non rapprochées</span><small data-i18n="todo2s">Relevé importé le 24 septembre</small></span></a>
+            <a aria-disabled="true"><span class="pd-dot" style="background:var(--pd-gap)"></span><span><span data-i18n="todo3">Période d'août non clôturée</span><small data-i18n="todo3s">La déclaration de TVA d'août est déposée</small></span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Saisie d'achat -->
+    <section data-screen="saisie" hidden>
+      <div class="pd-head">
+        <div>
+          <div class="pd-crumb"><span data-i18n="nav_entry">Saisie</span> › ACH</div>
+          <h1 data-i18n="entry_title">Écriture d'achat</h1>
+        </div>
+        <div class="buttons">
+          <button class="button" id="split" type="button" data-i18n="split">Ventiler la facture</button>
+          <button class="button is-primary" id="save" type="button" data-i18n="save">Enregistrer</button>
+        </div>
+      </div>
+
+      <div class="pd-grid2">
+        <form class="pd-panel" id="entry" autocomplete="off">
+          <div class="pd-origin">
+            <span class="tag is-link is-light">Factur-X</span>
+            <span data-i18n="origin">Reçue via la plateforme agréée le</span> <span data-date="2026-09-24"></span>
+            <span class="tag is-light" data-i18n="status_dep">Déposée</span>
+          </div>
+          <div class="pd-body">
+            <div class="pd-form-grid">
+              <div class="field"><label class="label" for="f-journal" data-i18n="c_ledger">Journal</label>
+                <div class="select is-fullwidth"><select id="f-journal"><option>ACH · Achats</option></select></div></div>
+              <div class="field"><label class="label" for="f-date">Date</label>
+                <input class="input pd-mono" id="f-date" value="24/09/2026" inputmode="numeric"></div>
+              <div class="field"><label class="label" for="f-piece" data-i18n="c_doc">Pièce</label>
+                <input class="input pd-mono" id="f-piece" value="ACH-0142"></div>
+              <div class="field pd-wide"><label class="label" for="f-tiers" data-i18n="supplier">Fournisseur (fiche)</label>
+                <input class="input" id="f-tiers" list="dl-tiers" value="FOUR-ORANGE · Orange Business"></div>
+              <div class="field pd-wide" style="grid-column: 1 / -1"><label class="label" for="f-libelle" data-i18n="c_label">Libellé</label>
+                <input class="input" id="f-libelle" value="Abonnement fibre et mobile · septembre 2026"></div>
+            </div>
+          </div>
+          <div class="pd-scroll">
+            <table class="table is-fullwidth pd-lines" aria-label="Lignes de l'écriture">
+              <thead><tr><th style="width:9.5rem" data-i18n="c_account">Compte</th><th data-i18n="c_label">Libellé</th><th class="amount" style="width:9rem" data-i18n="c_debit">Débit</th><th class="amount" style="width:9rem" data-i18n="c_credit">Crédit</th><th style="width:2.5rem"><span class="is-sr-only">Supprimer</span></th></tr></thead>
+              <tbody id="lines"></tbody>
+            </table>
+          </div>
+          <div class="pd-body" style="padding-top:0">
+            <button class="button is-small is-ghost" type="button" id="addline">+ <span data-i18n="add_line">Ajouter une ligne</span></button>
+            <div class="pd-keys">
+              <span><kbd>Tab</kbd> / <kbd>Entrée</kbd> <span data-i18n="k_next">champ suivant</span></span>
+              <span><kbd>Alt</kbd>+<kbd>↓</kbd> <span data-i18n="k_add">nouvelle ligne</span></span>
+              <span><kbd>Ctrl</kbd>+<kbd>Entrée</kbd> <span data-i18n="k_save">enregistrer</span></span>
+            </div>
+          </div>
+          <div class="pd-balance" aria-live="polite">
+            <div class="fig"><span data-i18n="tot_d">Total débit</span><b id="tot-d"></b></div>
+            <div class="fig"><span data-i18n="tot_c">Total crédit</span><b id="tot-c"></b></div>
+            <span class="pd-state" id="state"></span>
+          </div>
+        </form>
+
+        <aside class="pd-panel pd-side-panel">
+          <header><h2 data-i18n="invoice">Facture reçue</h2></header>
+          <div class="pd-body">
+            <dl>
+              <dt data-i18n="inv_no">N° facture</dt><dd class="pd-mono">FB-2026-0918-4471</dd>
+              <dt data-i18n="inv_date">Date facture</dt><dd><span data-date="2026-09-18"></span></dd>
+              <dt data-i18n="inv_ht">Total HT</dt><dd class="amount" data-amount="72.00"></dd>
+              <dt data-i18n="inv_vat">TVA 20 %</dt><dd class="amount" data-amount="14.40"></dd>
+              <dt><strong data-i18n="inv_ttc">Total TTC</strong></dt><dd class="amount"><strong data-amount="86.40"></strong></dd>
+              <dt data-i18n="inv_cat">Catégorie</dt><dd data-i18n="services">Prestations de services</dd>
+              <dt data-i18n="inv_debits">TVA sur les débits</dt><dd data-i18n="no">Non</dd>
+            </dl>
+            <p class="is-size-7 pd-muted mt-4" data-i18n="inv_note">Le PDF et le XML de la facture restent attachés à l'écriture. Enregistrer fait passer la facture au statut « Prise en charge » auprès de la plateforme.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Plan comptable -->
+    <section data-screen="plan" hidden>
+      <div class="pd-head">
+        <div>
+          <div class="pd-crumb"><span data-i18n="nav_ref">Référentiel</span></div>
+          <h1 data-i18n="nav_coa">Plan comptable</h1>
+        </div>
+        <div class="buttons"><button class="button" type="button" aria-disabled="true">Export CSV</button><button class="button is-primary" type="button" aria-disabled="true" data-i18n="new_acc">Nouveau compte</button></div>
+      </div>
+      <div class="pd-panel">
+        <header>
+          <div class="pd-tabs" id="classes" role="group" aria-label="Classes"></div>
+          <div style="flex:0 1 16rem"><input class="input is-small" id="coa-filter" type="search" placeholder="Filtrer : numéro ou libellé" data-i18n-ph="filter" aria-label="Filtrer le plan comptable"></div>
+        </header>
+        <div class="pd-scroll">
+          <table class="table is-fullwidth is-hoverable is-narrow">
+            <thead><tr><th style="width:9rem" data-i18n="c_account">Compte</th><th data-i18n="c_label">Libellé</th><th class="amount" data-i18n="c_debit">Débit</th><th class="amount" data-i18n="c_credit">Crédit</th><th class="amount" data-i18n="c_balance">Solde</th></tr></thead>
+            <tbody id="coa"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<datalist id="dl-accounts"></datalist>
+<datalist id="dl-tiers">
+  <option value="FOUR-ORANGE · Orange Business"></option>
+  <option value="FOUR-OVH · OVHcloud"></option>
+  <option value="FOUR-TILLEULS · SCI Les Tilleuls"></option>
+  <option value="FOUR-BUREAU · Bureau Vallée Tours"></option>
+</datalist>
+<div class="pd-toast" id="toast" hidden><div class="notification is-success" role="status"></div></div>
+
+<script>
+(function () {
+  "use strict";
+  var LOCALES = { fr: "fr-FR", nl: "nl-BE", en: "en-GB" };
+  var T = {
+    fr: {},
+    nl: { proto: "Referentiemaquette van partiduo-ui-bulma — voorbeeldgegevens", fy: "Boekjaar", period: "Periode", search: "Zoek een rekening, fiche, stuk… (/)",
+      nav_dash: "Dashboard", nav_entry: "Invoer", nav_purch: "Aankopen", nav_sales: "Verkopen", nav_bank: "Financieel", nav_misc: "Diverse verrichtingen",
+      nav_ref: "Referentiegegevens", nav_coa: "Rekeningstelsel", nav_cards: "Fiches", nav_ledgers: "Dagboeken", nav_reports: "Rapporten", nav_tb: "Proef- en saldibalans",
+      nav_gl: "Grootboek", nav_ext: "Uitbreidingen", nav_einv: "E-facturen", nav_sepa: "SEPA-overschrijvingen", new_entry: "Nieuwe aankoopboeking",
+      t_cash: "Thesaurie · 512", t_recv: "Te innen klanten · 411", t_pay: "Te betalen leveranciers · 401", t_vat: "Verschuldigde btw · september",
+      late: "achterstallig", t_pay_sub: "waarvan 1 vervallen factuur", due: "Vervaldag", recent: "Laatste boekingen", see_all: "Alles tonen",
+      c_ledger: "Dagboek", c_doc: "Stuk", c_label: "Omschrijving", c_amount: "Bedrag", c_account: "Rekening", c_debit: "Debet", c_credit: "Credit", c_balance: "Saldo",
+      todo: "Te verwerken", todo1: "3 ontvangen e-facturen te boeken", todo1s: "Ontvangen via uw erkend platform · status « Ingediend »",
+      todo2: "12 niet-afgepunte bankverrichtingen", todo2s: "Uittreksel ingelezen op 24 september", todo3: "Periode augustus niet afgesloten", todo3s: "De btw-aangifte van augustus is ingediend",
+      entry_title: "Aankoopboeking", split: "Factuur uitsplitsen", save: "Opslaan", origin: "Ontvangen via het erkend platform op", status_dep: "Ingediend",
+      supplier: "Leverancier (fiche)", add_line: "Regel toevoegen", k_next: "volgend veld", k_add: "nieuwe regel", k_save: "opslaan",
+      tot_d: "Totaal debet", tot_c: "Totaal credit", invoice: "Ontvangen factuur", inv_no: "Factuurnr.", inv_date: "Factuurdatum", inv_ht: "Totaal excl. btw",
+      inv_vat: "Btw 20 %", inv_ttc: "Totaal incl. btw", inv_cat: "Categorie", services: "Dienstverlening", inv_debits: "Btw op debet", no: "Nee",
+      inv_note: "De pdf en xml van de factuur blijven aan de boeking gekoppeld.", new_acc: "Nieuwe rekening", filter: "Filteren: nummer of omschrijving",
+      balanced: "In evenwicht", gap: "Verschil", saved: "Boeking {p} opgeslagen", cannot: "Onevenwichtige boeking: verschil {g}" },
+    en: { proto: "Reference mock-up of partiduo-ui-bulma — sample data", fy: "Fiscal year", period: "Period", search: "Search an account, card, document… (/)",
+      nav_dash: "Dashboard", nav_entry: "Entry", nav_purch: "Purchases", nav_sales: "Sales", nav_bank: "Bank", nav_misc: "Journal entries",
+      nav_ref: "Master data", nav_coa: "Chart of accounts", nav_cards: "Cards", nav_ledgers: "Ledgers", nav_reports: "Reports", nav_tb: "Trial balance",
+      nav_gl: "General ledger", nav_ext: "Extensions", nav_einv: "E-invoices", nav_sepa: "SEPA transfers", new_entry: "New purchase entry",
+      t_cash: "Cash · 512", t_recv: "Receivables · 411", t_pay: "Payables · 401", t_vat: "VAT due · September", late: "overdue", t_pay_sub: "including 1 overdue invoice",
+      due: "Due", recent: "Latest entries", see_all: "See all", c_ledger: "Ledger", c_doc: "Document", c_label: "Description", c_amount: "Amount", c_account: "Account",
+      c_debit: "Debit", c_credit: "Credit", c_balance: "Balance", todo: "To do", todo1: "3 received e-invoices to post", todo1s: "Received via your approved platform · status “Submitted”",
+      todo2: "12 unreconciled bank transactions", todo2s: "Statement imported on 24 September", todo3: "August period not closed", todo3s: "The August VAT return is filed",
+      entry_title: "Purchase entry", split: "Split invoice", save: "Save", origin: "Received via the approved platform on", status_dep: "Submitted",
+      supplier: "Supplier (card)", add_line: "Add a line", k_next: "next field", k_add: "new line", k_save: "save", tot_d: "Total debit", tot_c: "Total credit",
+      invoice: "Received invoice", inv_no: "Invoice no.", inv_date: "Invoice date", inv_ht: "Net total", inv_vat: "VAT 20%", inv_ttc: "Gross total",
+      inv_cat: "Category", services: "Services", inv_debits: "VAT on debits", no: "No", inv_note: "The invoice PDF and XML stay attached to the entry.",
+      new_acc: "New account", filter: "Filter: number or name", balanced: "Balanced", gap: "Difference", saved: "Entry {p} saved", cannot: "Unbalanced entry: difference {g}" }
+  };
+  var FR = { balanced: "Équilibrée", gap: "Écart", saved: "Écriture {p} enregistrée", cannot: "Écriture déséquilibrée : écart de {g}" };
+
+  var ACCOUNTS = [
+    ["1", "Comptes de capitaux"], ["101300", "Capital souscrit appelé versé", 0, 20000], ["106800", "Autres réserves", 0, 14250], ["164000", "Emprunts auprès des établissements de crédit", 3600, 31800],
+    ["2", "Comptes d'immobilisations"], ["215400", "Matériel industriel", 42600, 0], ["218300", "Matériel de bureau et informatique", 7840, 0], ["281830", "Amortissements du matériel de bureau", 0, 3120],
+    ["4", "Comptes de tiers"], ["401000", "Fournisseurs", 58310.20, 68182.84], ["411000", "Clients", 131260, 107780], ["421000", "Personnel – rémunérations dues", 38400, 42650],
+    ["445660", "TVA déductible sur autres biens et services", 9412.80, 6198.80], ["445710", "TVA collectée", 21036, 24250], ["445510", "TVA à décaisser", 18640, 21854],
+    ["5", "Comptes financiers"], ["512000", "Banque", 162480.90, 114265.60], ["530000", "Caisse", 1210, 985.40],
+    ["6", "Comptes de charges"], ["601000", "Achats stockés – matières premières", 28940, 0], ["606300", "Fournitures d'entretien et petit équipement", 1832.45, 0],
+    ["606400", "Fournitures administratives", 614.20, 0], ["613200", "Locations immobilières", 16200, 0], ["626000", "Frais postaux et de télécommunications", 1296, 0],
+    ["641000", "Rémunérations du personnel", 42650, 0], ["661100", "Intérêts des emprunts", 812.30, 0],
+    ["7", "Comptes de produits"], ["706000", "Prestations de services", 0, 121250], ["708500", "Ports et frais accessoires facturés", 0, 1380]
+  ];
+  var byNum = {};
+  ACCOUNTS.forEach(function (a) { if (a[0].length > 1) byNum[a[0]] = a[1]; });
+
+  var RECENT = [
+    ["2026-09-24", "VEN", "VEN-0311", "Atelier Morel · restauration buffet", 2640],
+    ["2026-09-23", "BQ", "BQ-0198", "Règlement SCI Les Tilleuls · loyer", -1800],
+    ["2026-09-22", "ACH", "ACH-0141", "OVHcloud · hébergement septembre", 43.19],
+    ["2026-09-20", "OD", "OD-0057", "Salaires septembre", 4265],
+    ["2026-09-18", "VEN", "VEN-0310", "Mairie de Joué-lès-Tours · devis 26-114", 5760]
+  ];
+
+  var lang = "fr";
+  try { lang = localStorage.getItem("pd-lang") || "fr"; } catch (e) {}
+  var nf = function () { return new Intl.NumberFormat(LOCALES[lang], { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var money = function (v) { return nf().format(v); };
+  var dateFmt = function (iso) { return new Date(iso + "T12:00:00").toLocaleDateString(LOCALES[lang], { day: "2-digit", month: "2-digit", year: "numeric" }); };
+  var t = function (k) { return (T[lang] && T[lang][k]) || FR[k] || k; };
+  function parseAmount(s) {
+    if (!s) return 0;
+    s = String(s).replace(/[\s  ]/g, "");
+    var lastComma = s.lastIndexOf(","), lastDot = s.lastIndexOf(".");
+    var dec = lastComma > lastDot ? "," : ".";
+    s = s.split(dec === "," ? "." : ",").join("").replace(dec, ".");
+    var v = parseFloat(s);
+    return isNaN(v) ? 0 : Math.round(v * 100) / 100;
+  }
+
+  // Périodes
+  var per = document.getElementById("periode");
+  ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"].forEach(function (m, i) {
+    var o = document.createElement("option"); o.textContent = String(i + 1).padStart(2, "0") + " · " + m + (i < 7 ? " (close)" : ""); if (i === 8) o.selected = true; per.appendChild(o);
+  });
+
+  // Comptes en datalist
+  var dl = document.getElementById("dl-accounts");
+  Object.keys(byNum).forEach(function (n) { var o = document.createElement("option"); o.value = n; o.label = byNum[n]; dl.appendChild(o); });
+
+  // Écran courant
+  var screens = document.querySelectorAll("[data-screen]");
+  function show(view) {
+    screens.forEach(function (s) { s.hidden = s.getAttribute("data-screen") !== view; });
+    document.querySelectorAll(".pd-side a[data-view]").forEach(function (a) { a.classList.toggle("is-active", a.getAttribute("data-view") === view); });
+    document.getElementById("side").classList.remove("is-open");
+    document.getElementById("burger").setAttribute("aria-expanded", "false");
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest("[data-view]");
+    if (a) { e.preventDefault(); show(a.getAttribute("data-view")); history.replaceState(null, "", "#" + a.getAttribute("data-view")); window.scrollTo(0, 0); }
+  });
+  document.getElementById("burger").addEventListener("click", function () {
+    var s = document.getElementById("side"); var open = s.classList.toggle("is-open"); this.setAttribute("aria-expanded", String(open));
+  });
+
+  // Lignes de l'écriture
+  var lines = [
+    { acc: "626000", lib: "Orange · fibre et mobile 09/2026", d: 72, c: 0 },
+    { acc: "445660", lib: "TVA déductible 20 %", d: 14.40, c: 0 },
+    { acc: "401000", lib: "Orange Business · FB-2026-0918-4471", d: 0, c: 86.40 }
+  ];
+  var tbody = document.getElementById("lines");
+  function row(l, i) {
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><input class="pd-mono" list="dl-accounts" id="acc-' + i + '" aria-label="Compte, ligne ' + (i + 1) + '"><span class="acc-name"></span></td>' +
+      '<td><input id="lib-' + i + '" aria-label="Libellé, ligne ' + (i + 1) + '"></td>' +
+      '<td><input class="amount" id="d-' + i + '" inputmode="decimal" aria-label="Débit, ligne ' + (i + 1) + '"></td>' +
+      '<td><input class="amount" id="c-' + i + '" inputmode="decimal" aria-label="Crédit, ligne ' + (i + 1) + '"></td>' +
+      '<td><button class="pd-del" type="button" aria-label="Supprimer la ligne ' + (i + 1) + '">×</button></td>';
+    var acc = tr.querySelector("#acc-" + i), lib = tr.querySelector("#lib-" + i), d = tr.querySelector("#d-" + i), c = tr.querySelector("#c-" + i), name = tr.querySelector(".acc-name");
+    acc.value = l.acc; lib.value = l.lib; d.value = l.d ? money(l.d) : ""; c.value = l.c ? money(l.c) : "";
+    function accName() { var n = byNum[acc.value.trim()]; name.textContent = acc.value.trim() ? (n || "Compte inconnu") : ""; name.classList.toggle("is-unknown", !!acc.value.trim() && !n); }
+    accName();
+    acc.addEventListener("input", function () { l.acc = acc.value.trim(); accName(); });
+    lib.addEventListener("input", function () { l.lib = lib.value; });
+    d.addEventListener("input", function () { l.d = parseAmount(d.value); if (l.d) { l.c = 0; c.value = ""; } balance(); });
+    c.addEventListener("input", function () { l.c = parseAmount(c.value); if (l.c) { l.d = 0; d.value = ""; } balance(); });
+    [d, c].forEach(function (f) { f.addEventListener("blur", function () { var v = parseAmount(f.value); f.value = v ? money(v) : ""; }); });
+    tr.querySelector(".pd-del").addEventListener("click", function () { lines.splice(lines.indexOf(l), 1); render(); });
+    return tr;
+  }
+  function render() { tbody.innerHTML = ""; lines.forEach(function (l, i) { tbody.appendChild(row(l, i)); }); balance(); }
+  function totals() {
+    var td = 0, tc = 0; lines.forEach(function (l) { td += l.d || 0; tc += l.c || 0; });
+    return { d: Math.round(td * 100) / 100, c: Math.round(tc * 100) / 100 };
+  }
+  function balance() {
+    var tt = totals(), gap = Math.round((tt.d - tt.c) * 100) / 100, st = document.getElementById("state");
+    document.getElementById("tot-d").textContent = money(tt.d);
+    document.getElementById("tot-c").textContent = money(tt.c);
+    if (gap === 0 && tt.d > 0) { st.className = "pd-state ok"; st.textContent = "✓ " + t("balanced"); }
+    else { st.className = "pd-state gap"; st.textContent = t("gap") + " " + money(Math.abs(gap)); }
+  }
+  function addLine() {
+    var tt = totals(), gap = Math.round((tt.d - tt.c) * 100) / 100;
+    lines.push({ acc: "", lib: document.getElementById("f-libelle").value, d: gap < 0 ? -gap : 0, c: gap > 0 ? gap : 0 });
+    render(); document.getElementById("acc-" + (lines.length - 1)).focus();
+  }
+  document.getElementById("addline").addEventListener("click", addLine);
+  document.getElementById("split").addEventListener("click", function () {
+    lines = [
+      { acc: "626000", lib: "Orange · fibre et mobile 09/2026", d: 72, c: 0 },
+      { acc: "445660", lib: "TVA déductible 20 %", d: 14.40, c: 0 },
+      { acc: "401000", lib: "Orange Business · FB-2026-0918-4471", d: 0, c: 86.40 }
+    ]; render();
+  });
+
+  var toastT;
+  function toast(msg, ok) {
+    var box = document.getElementById("toast"), n = box.firstElementChild;
+    n.className = "notification " + (ok ? "is-success" : "is-danger"); n.textContent = msg; box.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { box.hidden = true; }, 3200);
+  }
+  var pieceNo = 142;
+  function save() {
+    var tt = totals(), gap = Math.round((tt.d - tt.c) * 100) / 100;
+    if (gap !== 0 || tt.d === 0) { toast(t("cannot").replace("{g}", money(Math.abs(gap))), false); return; }
+    var p = document.getElementById("f-piece").value;
+    RECENT.unshift(["2026-09-24", "ACH", p, document.getElementById("f-libelle").value, tt.d]);
+    renderRecent(); toast(t("saved").replace("{p}", p), true);
+    pieceNo += 1; document.getElementById("f-piece").value = "ACH-0" + pieceNo;
+  }
+  document.getElementById("save").addEventListener("click", save);
+  document.getElementById("entry").addEventListener("submit", function (e) { e.preventDefault(); });
+  document.getElementById("entry").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save(); return; }
+    if (e.key === "ArrowDown" && e.altKey) { e.preventDefault(); addLine(); return; }
+    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+      var f = Array.prototype.slice.call(this.querySelectorAll("input, select")); var i = f.indexOf(e.target);
+      if (f[i + 1]) f[i + 1].focus(); else addLine();
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); document.getElementById("search").focus(); }
+  });
+
+  // Dernières écritures
+  function renderRecent() {
+    var tb = document.getElementById("recent"); tb.innerHTML = "";
+    RECENT.slice(0, 6).forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td class="pd-mono">' + dateFmt(r[0]) + '</td><td><span class="tag is-light">' + r[1] + '</span></td><td class="pd-mono">' + r[2] + '</td><td></td><td class="amount">' + money(r[4]) + '</td>';
+      tr.children[3].textContent = r[3];
+      tb.appendChild(tr);
+    });
+  }
+
+  // Plan comptable
+  var cls = "all";
+  function renderCoa() {
+    var q = document.getElementById("coa-filter").value.trim().toLowerCase(), tb = document.getElementById("coa"); tb.innerHTML = "";
+    ACCOUNTS.forEach(function (a) {
+      var n = a[0], isClass = n.length === 1;
+      if (cls !== "all" && n.charAt(0) !== cls) return;
+      if (q && !isClass && n.indexOf(q) !== 0 && a[1].toLowerCase().indexOf(q) === -1) return;
+      var tr = document.createElement("tr");
+      if (isClass) {
+        if (q) return;
+        tr.className = "pd-class"; tr.innerHTML = '<td class="pd-mono">' + n + '</td><td colspan="4"></td>'; tr.children[1].textContent = a[1];
+      } else {
+        var bal = Math.round((a[2] - a[3]) * 100) / 100;
+        tr.className = "pd-lvl1";
+        tr.innerHTML = '<td class="pd-mono">' + n + '</td><td></td><td class="amount">' + (a[2] ? money(a[2]) : "") + '</td><td class="amount">' + (a[3] ? money(a[3]) : "") +
+          '</td><td class="amount">' + money(Math.abs(bal)) + ' <span class="pd-muted is-size-7">' + (bal >= 0 ? "D" : "C") + '</span></td>';
+        tr.children[1].textContent = a[1];
+      }
+      tb.appendChild(tr);
+    });
+  }
+  var tabs = document.getElementById("classes");
+  [["all", "Toutes"], ["1", "1"], ["2", "2"], ["4", "4"], ["5", "5"], ["6", "6"], ["7", "7"]].forEach(function (c) {
+    var b = document.createElement("button"); b.type = "button"; b.textContent = c[0] === "all" ? "Toutes" : "Classe " + c[1]; b.setAttribute("aria-pressed", String(c[0] === cls));
+    b.addEventListener("click", function () { cls = c[0]; tabs.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); renderCoa(); });
+    tabs.appendChild(b);
+  });
+  document.getElementById("coa-filter").addEventListener("input", renderCoa);
+
+  // Langue
+  var frText = {};
+  document.querySelectorAll("[data-i18n]").forEach(function (el) { var k = el.getAttribute("data-i18n"); if (!(k in frText)) frText[k] = el.textContent; });
+  var frPh = {};
+  document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { frPh[el.getAttribute("data-i18n-ph")] = el.placeholder; });
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { var k = el.getAttribute("data-i18n"); el.textContent = (T[lang] && T[lang][k]) || frText[k]; });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { var k = el.getAttribute("data-i18n-ph"); el.placeholder = (T[lang] && T[lang][k]) || frPh[k]; });
+    document.querySelectorAll("[data-amount]").forEach(function (el) { el.textContent = money(parseFloat(el.getAttribute("data-amount"))); });
+    document.querySelectorAll("[data-date]").forEach(function (el) { el.textContent = dateFmt(el.getAttribute("data-date")); });
+    render(); renderRecent(); renderCoa();
+  }
+  var ls = document.getElementById("lang"); ls.value = lang;
+  ls.addEventListener("change", function () { lang = ls.value; try { localStorage.setItem("pd-lang", lang); } catch (e) {} applyLang(); });
+
+  applyLang();
+  var start = (location.hash || "#tableau").slice(1);
+  show(["tableau", "saisie", "plan"].indexOf(start) >= 0 ? start : "tableau");
+})();
+</script>

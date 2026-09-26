@@ -98,7 +98,8 @@ incohérence empêche le démarrage, au lieu d'échouer à l'usage.
 
 === D3 — Routes : une seule convention
 
-Les routes de l'extension sont montées sous `/ext/<code>/`. Pages et fragments
+Les routes de l'extension sont montées sous `/ext/<code>/` par le dépôt
+d'interface, à partir du dossier `ui/<interface>/` de l'extension (ADR-005 D4). Pages et fragments
 HTMX sont des handlers Marten ordinaires : `ajax.php` et `raw.php` disparaissent.
 Le contrôle d'accès est fait par le cœur, avant le handler, à partir du
 manifeste — il n'est plus laissé à l'extension.
