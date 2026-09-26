@@ -9,6 +9,8 @@
 *Date.* 14 septembre 2026. +
 *Révision.* v2 — la passkey est confirmée comme cible, et non comme option
 tardive. Voir <<d6>>. +
+*Révision.* v3, 26 septembre 2026 — plan d'adressage fixé pour le
+développement (D5), questions ouvertes tranchées. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Contexte.* Répond à la question ouverte n°1 d'`ADR-001-portage-noalyss-crystal.adoc`.
 
@@ -96,7 +98,8 @@ politique.
 |Comptable multi-sociétés
 |===
 
-La table `parameter` de l'instance porte la politique : méthodes autorisées,
+La configuration de l'instance (`Settings`, héritière de la table `parameter`
+de NOALYSS) porte la politique : méthodes autorisées,
 niveau minimum exigé, durée de session.
 
 *Règle :* l'authentification est une propriété de l'utilisateur, pas de
@@ -114,7 +117,7 @@ est appelée* — correspond à un *authentificateur de plate-forme WebAuthn* :
   session, empreinte, visage ;
 * le serveur ne détient qu'une clé publique. Il n'y a *aucun secret partagé* à
   voler côté serveur ;
-* la signature est liée à l'origine : une passkey pour `noalyss.example` ne peut
+* la signature est liée à l'origine : une passkey pour `partiduo.example` ne peut
   pas être présentée à un site d'hameçonnage.
 
 *Point important pour la conception du MFA.* Une passkey enrôlée avec
@@ -199,7 +202,7 @@ de cabinet.
 
 Une passkey est liée à un domaine. WebAuthn permet de déclarer comme `rp.id`
 tout suffixe de domaine enregistrable de l'origine : une instance servie à
-`client1.noalyss.example` peut déclarer `rp.id = noalyss.example`.
+`client1.partiduo.example` peut déclarer `rp.id = partiduo.example`.
 
 Conséquence : *la même clé d'appareil est présentable à toutes les instances du
 domaine*. Le comptable ne gère qu'une clé.
@@ -210,8 +213,20 @@ enregistrées dans *sa* base. L'enrôlement reste donc *par instance* — une fo
 
 Si les instances sont réparties sur des domaines différents, cette propriété
 disparaît et seul le SSO assure la continuité. *Le plan d'adressage des
-instances est donc une décision d'authentification autant que d'exploitation* —
-à arbitrer au lot 0.
+instances est donc une décision d'authentification autant que d'exploitation.*
+
+*Tranché le 26 septembre 2026* : les instances sont servies en *sous-domaines
+d'un domaine commun*, `<dossier>.<domaine>`, avec `rp.id = <domaine>`.
+
+* *Développement* : `<dossier>.partiduo.localhost`, `rp.id = partiduo.localhost`.
+  Les navigateurs résolvent `*.localhost` vers la boucle locale sans DNS ni
+  `/etc/hosts`, et le traitent comme un contexte sécurisé : les passkeys y
+  fonctionnent sans HTTPS. `.local` est écarté (résolution mDNS lente sous
+  macOS, HTTPS obligatoire pour WebAuthn).
+* *Production* : le domaine reste à choisir. *Décision bloquante pour la mise
+  en service* : il doit être fixé avant le premier enrôlement réel, puisque le
+  changer invalide toutes les passkeys enrôlées. Le domaine est un paramètre de
+  configuration, jamais écrit en dur.
 
 [[d6]]
 === D6 — Le parcours d'élévation
@@ -429,19 +444,22 @@ des drapeaux `UP` et `UV`, gestion du compteur.
 
 == Questions ouvertes
 
-. *SAML, OIDC, ou les deux ?* SAML est prêt ; OIDC devient accessible dès que
-  `jose` sait faire du RSA — ajout déjà nécessaire pour Windows Hello. Le choix
-  dépend des IdP réellement rencontrés chez les cabinets comptables.
-. *Plan d'adressage des instances* — sous-domaines d'un domaine commun, ou
-  domaines distincts par société ? Structurant pour la portée des passkeys, et
-  irréversible. Voir D5.
-. *Codes de récupération ou seconde passkey obligatoire ?* D7 impose un filet
-  sans trancher lequel est exigé par défaut.
-. *Un comptable peut-il être plusieurs personnes ?* Un cabinet fait tourner ses
-  collaborateurs. Comptes nominatifs — ce que suppose la traçabilité de D4 — ou
-  compte de cabinet ?
-. *Jetons d'accès machine* — export FEC automatisé, intégrations bancaires.
-  Besoin distinct, à traiter dans un ADR séparé.
+Toutes tranchées le 26 septembre 2026.
+
+. [line-through]#*SAML, OIDC, ou les deux ?*# — *tranché* : les deux. SAML est
+  intégré dès le noyau via `prod-crystal/saml` ; OIDC est prévu comme interface
+  pluggable, implémentée après le noyau.
+. [line-through]#*Plan d'adressage des instances*# — *tranché* : sous-domaines
+  d'un domaine commun. `partiduo.localhost` en développement ; domaine de
+  production à fixer avant le premier enrôlement réel. Voir D5.
+. [line-through]#*Codes de récupération ou seconde passkey obligatoire ?*# —
+  *tranché* : *codes de récupération* par défaut (D7) ; la seconde passkey reste
+  recommandée au comptable.
+. [line-through]#*Un comptable peut-il être plusieurs personnes ?*# — *tranché* :
+  non. Les comptes `comptable` sont *nominatifs*, ce que suppose la traçabilité
+  de D4 ; un cabinet ouvre un compte par collaborateur.
+. [line-through]#*Jetons d'accès machine*# — *tranché* : hors périmètre du
+  portage ; ADR séparé le jour où un besoin se présente.
 
 == Références
 

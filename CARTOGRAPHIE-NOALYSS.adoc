@@ -224,17 +224,17 @@ de production PostgreSQL actuelle, sans migration**.
 [[decisions]]
 == Décisions à trancher avant d'écrire du code
 
-. *Framework* — Marten 0.6.3 (présent dans `prod-crystal/`, ORM + migrations +
-  i18n + admin) ou Kemal (plus léger, `kemal-auth` — aujourd'hui `authn` — déjà disponible) ?
-. *Schéma* — conserver le schéma PostgreSQL existant à l'identique (portage
-  progressif, cohabitation possible avec le PHP) ou repartir d'un modèle propre
-  (rupture, migration de données à écrire) ?
-. *Interface* — HTMX + Bulma (cohérent avec les autres projets) ou rendu
-  serveur classique ?
-. *Périmètre cible* — iso-fonctionnel, ou noyau comptable seulement dans un
-  premier temps ?
-. *Licence* — _tranché par ADR-001 : AGPL-3.0-or-later._ GPL v2 conservée ? Un portage est une œuvre dérivée au sens de la
-  GPL dès lors qu'il reprend le schéma, les fonctions PL/pgSQL et la structure.
+NOTE: Section conservée pour l'historique de l'analyse du 14 septembre 2026.
+*Toutes ces questions sont tranchées par les ADR*, qui font foi.
+
+. [line-through]#*Framework*# — *tranché* : Marten `~> 0.7` (ADR-001 D1).
+. [line-through]#*Schéma*# — *tranché* : schéma repensé, rupture et outil de
+  reprise `partiduo-migrate` (ADR-001 D1, D5).
+. [line-through]#*Interface*# — *tranché* : HTMX + Bulma + Opal, dans un dépôt
+  d'interface séparé (ADR-001 D4, ADR-005).
+. [line-through]#*Périmètre cible*# — *tranché* : plan de lots de l'ADR-001,
+  socle et modules activables (ADR-006).
+. [line-through]#*Licence*# — *tranché* : AGPL-3.0-or-later (ADR-001, « Neutres »).
 
 == Références
 

@@ -5,6 +5,9 @@
 
 *Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
+*Révision.* 26 septembre 2026 — registre dans `src/modules/`, dépendance
+alternative `depends_on_any`, pièces jointes au socle, composants d'interface
+sortis de la surface du cœur (D2, D6). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Source.* Analyse de `prod-github/noalyss/noalyss-app` et des neuf projets
 d'extension du groupe https://gitlab.com/noalyss.
@@ -85,18 +88,26 @@ signalé par ADR-001 (« parc hétérogène »).
 
 [source,crystal]
 ----
-Partiduo::Extensions.register do
+Partiduo::Modules.register do
   code "EINV"
   name "extensions.einvoicing.name"      # clé i18n
   version "1.0.0"
   requires_core "~> 1.0"
-  depends_on "DOCUMENT"                  # dépendances explicites
+  depends_on "DOCUMENT"                  # toutes requises
+  depends_on_any "INVOICING", "ACCOUNTING" # au moins une requise
   menu "EINV_OUT", parent: "VENMENU", order: 100, route: "einvoicing:outgoing"
   menu "EINV_IN",  parent: "MENUACH", order: 100, route: "einvoicing:incoming"
   permission "einvoicing.send"
   permission "einvoicing.configure"
 end
 ----
+
+Le registre vit dans l'application `modules/` du cœur (ADR-001 § Organisation
+du code) ; il sert aux modules officiels comme aux extensions (ADR-006 D1).
+
+`depends_on` exige *toutes* les pièces citées ; `depends_on_any` en exige *au
+moins une* — c'est le cas du module Stock, qui fonctionne avec la Facturation
+*ou* la Comptabilité (ADR-006 D1).
 
 Le cœur vérifie au démarrage la version requise et les dépendances ; une
 incohérence empêche le démarrage, au lieu d'échouer à l'usage.
@@ -143,17 +154,23 @@ amont :
 (le seul moyen d'écrire une écriture), périodes et exercices, lettrage
 |TVA |taux, régime du dossier
 |Devises |`Currency`, taux
-|Documents |pièces jointes d'une écriture ou d'une fiche
+|Pièces jointes |stockage des fichiers rattachés à une écriture, une fiche ou
+une facture (socle, ADR-006 D1) ; la boîte « Justificatifs à traiter » et la
+prise de vue relèvent de l'extension `partiduo-document` (ADR-005 D8)
 |Analytique |plans et postes
 |Paramètres |paramètres du dossier ; paramètres propres de l'extension, secrets
 chiffrés
-|Interface |gabarits Bulma, composants HTMX — sélecteur de fiche, de compte, de
-date, de montant, de TVA (successeurs de `ICard`, `IPoste`, `IDate`, `INum`,
-`ITva_Popup`), onglets, tableaux triables
 |Exports |CSV, PDF
 |===
 
 Tout ce qui n'est pas dans cette API est interne au cœur et peut changer.
+
+Les *composants d'interface* — sélecteurs de fiche, de compte, de date, de
+montant, de TVA (successeurs de `ICard`, `IPoste`, `IDate`, `INum`,
+`ITva_Popup`), onglets, tableaux triables, gabarits Bulma — ne font *pas* partie
+de cette surface : le cœur ne contient aucun gabarit (ADR-005 D1). Ils sont la
+surface publique du *dépôt d'interface* `partiduo-ui-bulma`, que le dossier
+`ui/bulma/` de chaque extension réutilise (ADR-005 D4).
 
 === D7 — Événements
 

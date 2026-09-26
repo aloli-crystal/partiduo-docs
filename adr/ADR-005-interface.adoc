@@ -5,8 +5,10 @@
 
 *Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
+*Révision.* 26 septembre 2026 — Opal pleinement dans la stack, seule
+compilation admise côté client (D5) ; stockage des pièces jointes au socle (D8). +
 *Auteur.* Philippe Nénert (Aloli). +
-*Complète.* ADR-001 D4 (HTMX + Bulma, Opal en dernier recours) et ADR-003 D6
+*Complète.* ADR-001 D4 (HTMX + Bulma, Opal pour les écrans interactifs) et ADR-003 D6
 (surface publique du cœur).
 
 == Résumé
@@ -114,10 +116,15 @@ bouge pas. Les routes `/ext/<code>/` et le contrôle d'accès avant handler
 
 Choix techniques :
 
-* *Bulma 1.x* — variables CSS, mode sombre natif ; *HTMX 2.x* ; *Opal* réservé
-  aux écrans listés par ADR-001 D4, et seulement sur constat.
-* *Aucune chaîne de compilation JavaScript* : fichiers versionnés dans le dépôt,
-  servis par Marten.
+* *Bulma 1.x* — variables CSS, mode sombre natif ; *HTMX 2.x* ; *Opal*, qui
+  fait partie de la stack : chaque écran démarre en HTMX et passe en Opal dès
+  qu'un besoin d'ergonomie est constaté — en premier lieu les écrans listés par
+  ADR-001 D4 (saisie, lettrage, rapprochement).
+* *Une seule compilation côté client : celle d'Opal*, pilotée depuis le dépôt
+  (Ruby ou Crystal), sans npm ni Node. Le JavaScript produit est versionné dans
+  le dépôt et servi par Marten, comme HTMX et les autres fichiers statiques.
+  L'intégration d'Opal (compilation, service des fichiers, un exemple minimal
+  fonctionnel) est en place dès le lot P.
 * *Icônes* : un seul jeu, en SVG inclus dans le dépôt.
 * *Thème* : couleurs et typographie définies en variables CSS dans un seul
   fichier (`theme.css`) ; changer de charte ne touche aucun gabarit.
@@ -233,8 +240,11 @@ Sur téléphone, l'usage le plus fréquent est de *photographier un justificatif
   l'original (copie fiable au sens de l'article L102 B du LPF et de l'arrêté du
   22 mars 2017 — conditions à vérifier) est une option ultérieure, qui
   s'appuierait sur `pdf-a` et `pdf-signature`.
-* *Emplacement* : cette boîte appartient à l'extension `partiduo-document`
-  (ADR-003), dont `partiduo-einvoicing` dépend déjà.
+* *Emplacement* : le *stockage* des fichiers et leur rattachement à une
+  écriture, une fiche ou une facture appartiennent au socle (ADR-006 D1,
+  ADR-003 D6). La *boîte « Justificatifs à traiter »*, la prise de vue et le
+  traitement appartiennent à l'extension `partiduo-document` (ADR-003), dont
+  `partiduo-einvoicing` dépend déjà.
 * *Hors périmètre initial* : lecture automatique du contenu (OCR).
 
 === D9 — Consultation d'un compte ou d'un tiers

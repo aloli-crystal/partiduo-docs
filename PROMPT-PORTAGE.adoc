@@ -101,7 +101,8 @@ d'extensions, les événements et les champs de facturation française.
 }
 ----
 . _Fait_ — ADR-001 à ADR-006 au statut « Accepté », maquette validée.
-. Relire la section « Arbitrages » du prompt : ce sont vos décisions.
+. _Fait_ — questions ouvertes des ADR tranchées dans les ADR ; section
+  « Arbitrages » du prompt réduite aux points absents des ADR.
 . Facultatif : lever la limite de taille des workflows (« Dynamic workflow size »
   dans `/config`, depuis un terminal `claude` interactif).
 
@@ -135,25 +136,28 @@ Les extensions amont (`prod-github/noalyss/<projet>`) peuvent être lues pour co
 - PostgreSQL est joignable uniquement par socket Unix (`/tmp/.s.PGSQL.5432`), pas en TCP : utilisez `psql` sans `-h`, et des URL de connexion de la forme `postgres:///partiduo_dev?host=/tmp`.
 - Si PostgreSQL est injoignable, écrivez quand même le code et les specs, notez-le dans BLOCAGES, et continuez.
 
-## Arbitrages (questions ouvertes des ADR)
+## Arbitrages
 
-1. Version amont : figée sur `rel10200-7-g4bd46a13f`.
-2. Nom : `partiduo-app` ; licence AGPL-3.0-or-later (œuvre dérivée de NOALYSS, GPL-2.0-or-later). Chaque dépôt `partiduo-*` contient le texte intégral de l'AGPL v3 dans `LICENSE`, `license: AGPL-3.0-or-later` dans `shard.yml`, et un README qui cite NOALYSS et son auteur ; chaque fichier source commence par l'en-tête SPDX `# SPDX-License-Identifier: AGPL-3.0-or-later`.
-3. Factur-X, CII et connexion à une Plateforme Agréée : traités par l'extension `partiduo-einvoicing` (ADR-004), portée dans une exécution ultérieure. Hors périmètre ici, sauf les champs et l'événement cités plus haut.
-4. CAPTCHA : abandonné. En contrepartie, le lot 0 *doit* limiter les attaques en ligne (temporisation croissante après échecs, et blocage du compte après 10 échecs avec mécanisme de déblocage) : c'est la condition du palier CNIL à 50 bits (délibération 2022-100) appliqué par `prod-crystal/password-policy` ; sans ce mécanisme, il faudrait 80 bits.
-5. Lot 6 (stocks, prévisions, suivi) : reporté, après tout le reste. La GED devient l'extension `partiduo-document` (ADR-003).
-6. Auth : passkey + TOTP + mot de passe local ; SAML intégré via `prod-crystal/saml` ; OIDC en interface pluggable (implémentation après le noyau). Codes de récupération par défaut. Comptes comptables nominatifs. Instances en sous-domaines `<dossier>.partiduo.local`, `rp.id` = `partiduo.local`. Jetons machine : hors périmètre. TOTP : compatible avec n'importe quelle application d'authentification, sans en recommander ni en nommer aucune ; paramètres par défaut de la RFC 6238 uniquement (SHA-1, 6 chiffres, 30 s), QR code et secret base32 affichés. Aucun utilisateur n'est jamais repris : `partiduo-migrate` ne migre ni les utilisateurs ni leurs secrets TOTP. `TOTP::Authenticator#verify` renvoie un compteur : le stocker (`last_otp_counter`) et le repasser en `after:`, sinon un code reste rejouable.
+Les questions ouvertes des ADR sont toutes tranchées *dans les ADR eux-mêmes* (sections « Questions ouvertes », barrées et marquées « tranché ») : version amont figée, CAPTCHA abandonné et limitation des tentatives, lot 6 reporté (ADR-001) ; SAML + OIDC pluggable, plan d'adressage, codes de récupération, comptes nominatifs, jetons machine (ADR-002). Lisez-les là. Ne sont repris ici que les points absents des ADR ou à ne pas manquer :
+
+1. Licence : chaque dépôt `partiduo-*` contient le texte intégral de l'AGPL v3 dans `LICENSE`, `license: AGPL-3.0-or-later` dans `shard.yml`, et un README qui cite NOALYSS et son auteur ; chaque fichier source commence par l'en-tête SPDX `# SPDX-License-Identifier: AGPL-3.0-or-later`.
+2. Factur-X : le module Facturation *produit* le PDF/A-3 Factur-X (XML CII EN16931 embarqué, `prod-crystal/pdf-a`, contrôlé par `pdf-validate`) — c'est dans le périmètre (jalon F). *Hors périmètre* : l'extension `partiduo-einvoicing` (ADR-004), c'est-à-dire la connexion à une Plateforme Agréée, les variantes UBL et CII autonomes, la réception, les statuts et le e-reporting.
+3. Domaine de développement : instances en `<dossier>.partiduo.localhost`, `rp.id` = `partiduo.localhost` (ADR-002 D5). Le domaine est un paramètre de configuration, jamais écrit en dur.
+4. TOTP : compatible avec n'importe quelle application d'authentification, sans en recommander ni en nommer aucune ; paramètres par défaut de la RFC 6238 uniquement (SHA-1, 6 chiffres, 30 s), QR code et secret base32 affichés. `TOTP::Authenticator#verify` renvoie un compteur : le stocker (`last_otp_counter`) et le repasser en `after:`, sinon un code reste rejouable. Aucun utilisateur n'est jamais repris : `partiduo-migrate` ne migre ni les utilisateurs ni leurs secrets TOTP.
+5. Numérotation des factures (ADR-006 D5) : table de compteurs verrouillée par `SELECT … FOR UPDATE`, *jamais* une séquence PostgreSQL ; specs d'absence de trou (validation annulée) et de doublon (validations concurrentes).
+6. Pièces jointes : le *stockage* est au socle (ADR-006 D1) ; la boîte « Justificatifs à traiter » est l'extension `partiduo-document`, hors périmètre.
 7. TVA : BE et FR, isolées dans `vat/be/` et `vat/fr/`.
 
 ## Stack imposée
 
-Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma, Opal uniquement pour la saisie d'écritures. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `totp`, `password-policy`, `saml`, `pdf-a`, `pdf-validate`, `pdf-signature`). Pour les traductions, utilisez l'i18n intégré de Marten (règles de pluriel des 24 langues de l'UE, ADR-005 D7), pas le shard maison `i18n` ; livrez fr, en et nl avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
+Crystal 1.19.1, Marten ≥ 0.7 (source locale `/Users/philippe/prod-crystal/marten`, doc FR `/Users/philippe/prod-crystal/marten-docs-fr`), PostgreSQL 18, HTMX + Bulma + Opal. Chaque écran démarre en HTMX ; Opal fait partie de la stack et prend le relais dès qu'un besoin d'ergonomie est constaté (saisie, lettrage, rapprochement — ADR-001 D4, ADR-005 D5) : consignez chaque passage en Opal dans DECISIONS. Réutilisez en priorité les shards maison de `/Users/philippe/prod-crystal/` (`jose`, `webauthn`, `totp`, `password-policy`, `saml`, `pdf-a`, `pdf-validate`, `pdf-signature`). Pour les traductions, utilisez l'i18n intégré de Marten (règles de pluriel des 24 langues de l'UE, ADR-005 D7), pas le shard maison `i18n` ; livrez fr, en et nl avant d'en écrire ou d'en importer un. Montants toujours en `decimal`, jamais en `Float`. Déploiement sur le modèle de `/Users/philippe/prod-quimeo/capistrano-quimeo`.
 
 ## Lot P — prérequis à terminer en premier
 
 - `prod-crystal/webauthn`, `totp`, `password-policy` et `authn` sont livrés : utilisez-les en dépendance `path:` tant qu'ils ne sont pas publiés sur GitHub, sans les réécrire.
 - Règles de mot de passe : utilisez `prod-crystal/password-policy` (préréglage « 14 caractères sans caractère spécial obligatoire » par défaut, `satisfies_use_case?` affirmé dans les specs ; motifs de refus en clés i18n). Limite de 71 octets (BCrypt de Crystal). `prod-crystal/authn` v0.3 (ex-`kemal-auth`) fournit hachage BCrypt, jetons JWT, sessions par cookie, invitations et réinitialisation de mot de passe ; `Authn::Password.hash(policy:)` lève `PolicyError`. La validation des champs propres d'un utilisateur (adresse, nom, rôle — dont `comptable`, ADR-002 D4) est de la responsabilité du cœur, avec des messages en clés i18n.
-- Squelette `partiduo-app` : projet Marten, applications de l'ADR-001 § Organisation du code, plus `extensions/` (registre, manifeste, permissions, événements — ADR-003), CI (GitHub Actions : format, ameba, specs avec service PostgreSQL), README.adoc.
+- Squelette `partiduo-app` : projet Marten, applications de l'ADR-001 § Organisation du code — dont `src/modules/` : registre `Partiduo::Modules`, manifeste avec `depends_on` et `depends_on_any`, permissions, événements (ADR-003 D2, ADR-006) —, CI (GitHub Actions : format, ameba, specs avec service PostgreSQL), README.adoc.
+- Squelette `partiduo-ui-bulma` : intégration d'Opal en place dès ce lot — compilation sans npm ni Node, JavaScript produit versionné et servi par Marten, un exemple minimal fonctionnel couvert par une spec — pour que le passage d'un écran en Opal ne soit jamais un chantier d'infrastructure (ADR-005 D5).
 
 ## Ordre et parallélisation
 

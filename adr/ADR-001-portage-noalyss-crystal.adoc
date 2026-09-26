@@ -652,16 +652,24 @@ déplace vers l'exploitation — un terrain déjà maîtrisé avec QUIMEO.
 . [line-through]#*Comment sert-on un comptable multi-sociétés ?*# — *tranché* :
   SSO, plus un rôle `comptable` doté de méthodes d'authentification
   pluggables. Voir `ADR-002-authentification.adoc`.
-. *Suivre l'amont ou figer une version de référence ?* Le dépôt NOALYSS est
-  actif. À décider avant le lot 1.
+. [line-through]#*Suivre l'amont ou figer une version de référence ?*# —
+  *tranché* le 26 septembre 2026 : version de référence *figée* sur
+  `rel10200-7-g4bd46a13f`. Les corrections amont ultérieures sont examinées
+  au cas par cas, pas suivies au fil de l'eau.
 . [line-through]#*Nom et licence* du projet# — *tranché* : Partiduo, AGPL-3.0-or-later. Voir « Neutres ».
-. [line-through]#*ZUGFeRD / Factur-X*# — *tranché* : une extension
-  `partiduo-einvoicing`, dont la génération Factur-X s'appuie sur
-  `prod-crystal/pdf-a` sans dépendre d'un équivalent de `horstoeko/zugferd`.
-  Voir `ADR-004-facturation-electronique.adoc` (D1, D3).
-. *CAPTCHA* (`html/securimage`, 1 606 lignes) : à reconduire ou à abandonner ?
-. *Périmètre du lot 6* (stocks, prévisions, GED) : réellement nécessaire, ou
-  reportable après une première mise en production du noyau comptable ?
+. [line-through]#*ZUGFeRD / Factur-X*# — *tranché* : le PDF/A-3 Factur-X est
+  *produit par le module Facturation* (ADR-006 D5) et *transmis* par
+  l'extension `partiduo-einvoicing` (ADR-004 D1, D3). La génération s'appuie
+  sur `prod-crystal/pdf-a` sans dépendre d'un équivalent de `horstoeko/zugferd`.
+. [line-through]#*CAPTCHA* (`html/securimage`, 1 606 lignes)# — *tranché* le
+  26 septembre 2026 : *abandonné*. En contrepartie, le lot 0 limite les attaques
+  en ligne : temporisation croissante après chaque échec, et blocage du compte
+  après 10 échecs avec mécanisme de déblocage. C'est la condition du palier à
+  50 bits de la délibération CNIL 2022-100, appliqué par
+  `prod-crystal/password-policy` ; sans elle, il faudrait 80 bits.
+. [line-through]#*Périmètre du lot 6* (stocks, prévisions, GED)# — *tranché* le
+  26 septembre 2026 : *reporté* après tous les autres lots. La GED devient
+  l'extension `partiduo-document` (ADR-003).
 
 == Références
 

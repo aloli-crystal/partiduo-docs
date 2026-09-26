@@ -5,6 +5,8 @@
 
 *Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
+*Révision.* 26 septembre 2026 — technique de numérotation imposée (D5),
+pièces jointes au socle et dépendance alternative du Stock précisées (D1). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Modifie.* ADR-001 (organisation du code, plan de lots), ADR-003 (modules
 officiels et extensions), ADR-004 (qui produit la Factur-X), ADR-005 (menus et
@@ -66,7 +68,9 @@ Analyse de `noalyss-app` et de l'extension INVOICING :
 |*Socle* (toujours actif)
 |Dossier et société, utilisateurs et profils (ADR-002), *tiers* (clients,
 fournisseurs), *articles et services*, taux de TVA, devises, exercices et
-périodes, pièces jointes, paramètres, registre des modules et extensions,
+périodes, *stockage des pièces jointes* (la boîte « Justificatifs à traiter »
+relève de l'extension `partiduo-document`, ADR-005 D8), paramètres, registre
+des modules et extensions,
 événements
 |—
 
@@ -86,7 +90,7 @@ relances, modèles de documents, envoi
 
 |*Stock* (lot 6)
 |Dépôts, mouvements, inventaire
-|Facturation *ou* Comptabilité
+|Facturation *ou* Comptabilité (`depends_on_any`, ADR-003 D2)
 |===
 
 Les modules officiels vivent dans `partiduo-app`, chacun dans son application
@@ -177,6 +181,14 @@ Devis ──► Commande ──► Bon de livraison ──► Facture ──► 
   par une séquence chronologique et continue *par série* (factures, avoirs,
   acomptes), gérée en base dans la transaction de validation : ni trou, ni
   doublon, ni modification possible.
+* *Technique imposée* : une *table de compteurs*, une ligne par série (et par
+  année si le format du numéro la contient), verrouillée par
+  `SELECT … FOR UPDATE` dans la transaction de validation, puis incrémentée.
+  Une *séquence PostgreSQL est interdite* pour cet usage : elle n'est pas
+  transactionnelle, et une validation annulée y laisserait un trou. Une
+  contrainte d'unicité `(série, numéro)` en base complète le dispositif. Les
+  specs prouvent l'absence de trou après une validation annulée et l'absence de
+  doublon sous validations concurrentes.
 * Une facture validée est *intangible* : ni modification, ni suppression. Une
   erreur se corrige par un *avoir* qui référence la facture d'origine (type
   Factur-X 381).
