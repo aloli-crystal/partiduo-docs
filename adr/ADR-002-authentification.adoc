@@ -342,9 +342,15 @@ des drapeaux `UP` et `UV`, gestion du compteur.
   (`include/lib/otp.class.php`) tout en renvoyant vers freeOTP et Google
   Authenticator (`include/class/noalyss_user.class.php:2133`) ; or Google
   Authenticator et la plupart de ses clones ignorent le paramètre `algorithm`
-  de l'URI et calculent toujours en SHA-1. Partiduo stocke donc l'algorithme par
-  utilisateur : SHA-1 pour tout nouvel enrôlement, SHA-512 conservé pour les
-  secrets migrés, faute de quoi ils ne produiraient plus les mêmes codes.
+  de l'URI et calculent toujours en SHA-1. Partiduo *ne dépend d'aucune
+  application* : il émet des secrets aux paramètres par défaut de la RFC 6238 —
+  SHA-1, 6 chiffres, période de 30 s —, les seuls que toutes les applications
+  d'authentification calculent (Aegis, FreeOTP, 2FAS, Bitwarden, KeePassXC,
+  1Password, Microsoft ou Google Authenticator…). L'interface parle
+  d'« application d'authentification », sans en recommander aucune, et affiche
+  le QR code *et* le secret en base32 pour une saisie manuelle. Aucun compte
+  utilisateur n'est repris de NOALYSS : chacun enrôle de nouveau son
+  application, il n'y a donc pas de secret SHA-512 à conserver.
 * *TOTP : anti-rejeu.* `TOTP::Authenticator#verify` renvoie le compteur
   accepté ; il est stocké et repassé en `after:` à la vérification suivante,
   sinon un code reste valable pendant toute la fenêtre de dérive.
