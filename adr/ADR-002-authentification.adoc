@@ -11,6 +11,8 @@
 tardive. Voir <<d6>>. +
 *Révision.* v3, 26 septembre 2026 — plan d'adressage fixé pour le
 développement (D5), questions ouvertes tranchées. +
+*Révision.* v4, 27 septembre 2026 — domaine de production fixé :
+`partiduo.app`, `rp.id = partiduo.app` (D5). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Contexte.* Répond à la question ouverte n°1 d'`ADR-001-portage-noalyss-crystal.adoc`.
 
@@ -223,10 +225,41 @@ d'un domaine commun*, `<dossier>.<domaine>`, avec `rp.id = <domaine>`.
   `/etc/hosts`, et le traitent comme un contexte sécurisé : les passkeys y
   fonctionnent sans HTTPS. `.local` est écarté (résolution mDNS lente sous
   macOS, HTTPS obligatoire pour WebAuthn).
-* *Production* : le domaine reste à choisir. *Décision bloquante pour la mise
-  en service* : il doit être fixé avant le premier enrôlement réel, puisque le
-  changer invalide toutes les passkeys enrôlées. Le domaine est un paramètre de
-  configuration, jamais écrit en dur.
+* *Production* : `<dossier>.partiduo.app`, avec *`rp.id = partiduo.app`*.
+  *Tranché le 27 septembre 2026*, le domaine étant enregistré. Il reste un
+  paramètre de configuration, jamais écrit en dur — mais sa valeur est désormais
+  arrêtée, et le changer invaliderait toutes les passkeys enrôlées.
+
+`.app` est retenu pour une propriété qui sert directement cette architecture :
+*le TLD entier est préchargé HSTS*. Le navigateur refuse tout HTTP avant même
+d'émettre la requête, ce qui rend impossible de servir un formulaire de
+connexion en clair par erreur de configuration sur un parc provisionné par
+script — et les passkeys exigent de toute façon un contexte sécurisé. Statut
+vérifié sur `hstspreload.org` : `.app` et `.dev` sont préchargés, `.eu`, `.fr`
+et `.com` ne le sont pas.
+
+Le même effet s'obtient sur n'importe quel domaine en le soumettant soi-même au
+préchargement avec `includeSubDomains`, au prix d'un engagement durable et de
+l'interdiction de tout service en clair sous le domaine, sous-domaines internes
+compris. `.app` le fournit sans cette discipline.
+
+==== `partiduo.eu` — réserve défensive, et ce qu'elle n'est pas
+
+`partiduo.eu` est également enregistré. Son rôle est de protéger le nom et de
+rattraper les fautes de frappe.
+
+*Ce n'est pas un filet pour les passkeys, et il ne faut pas le croire.* Le
+`rp.id` est une chaîne unique : une seule valeur identifie les clés. Des
+passkeys enrôlées sous `partiduo.app` sont inutilisables sous `partiduo.eu`, et
+l'inverse est vrai aussi. Ce qui rend une perte de domaine survivable, c'est le
+filet de récupération de <<d7>> — codes de récupération, seconde passkey —, pas
+un second domaine.
+
+*Règle qui en découle : `partiduo.eu` ne sert jamais l'application.* Redirection
+seule. Une instance servie sous les deux domaines créerait deux espaces
+d'identifiants distincts, et un utilisateur qui enrôle sa clé depuis la
+mauvaise adresse se retrouverait avec une passkey muette sur l'autre — sans
+message d'erreur qui l'explique.
 
 [NOTE]
 ====
@@ -234,12 +267,6 @@ Le domaine commun a une conséquence d'exploitation hors du champ de cet ADR :
 les instances partageant un domaine enregistré partagent aussi son quota de
 certificats Let's Encrypt — 50 par domaine tous les 7 jours. Voir
 `ADR-001-portage-noalyss-crystal.adoc`, D2, « Ce que cette décision coûte ».
-
-Un TLD préchargé HSTS, tel que `.app`, ajoute une garantie utile ici : le
-navigateur refuse tout HTTP avant même d'émettre la requête. Sur un parc
-d'instances provisionnées par script, cela rend impossible de servir un
-formulaire de connexion en clair par erreur de configuration — et les passkeys
-exigent de toute façon un contexte sécurisé.
 ====
 
 [[d6]]
@@ -465,7 +492,9 @@ Toutes tranchées le 26 septembre 2026.
   pluggable, implémentée après le noyau.
 . [line-through]#*Plan d'adressage des instances*# — *tranché* : sous-domaines
   d'un domaine commun. `partiduo.localhost` en développement ; domaine de
-  production à fixer avant le premier enrôlement réel. Voir D5.
+  production fixé le 27 septembre 2026 : `partiduo.app`, `rp.id = partiduo.app`.
+  `partiduo.eu` est enregistré en réserve défensive, en redirection seule. Voir
+  D5.
 . [line-through]#*Codes de récupération ou seconde passkey obligatoire ?*# —
   *tranché* : *codes de récupération* par défaut (D7) ; la seconde passkey reste
   recommandée au comptable.
