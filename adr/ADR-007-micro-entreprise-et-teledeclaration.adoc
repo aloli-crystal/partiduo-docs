@@ -5,7 +5,8 @@
 
 *Statut.* Accepté — 27 septembre 2026. +
 *Date.* 27 septembre 2026. +
-*Révision.* 27 septembre 2026 — ajout du module `liberal` (2035, D6). +
+*Révision.* 27 septembre 2026 — ajout du module `liberal` (2035, D6) et de
+l'extension `partiduo-urssaf` (tierce déclaration, D7). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-006 (modules activables), ADR-003 (extensions), ADR-005
 (interface).
@@ -170,6 +171,35 @@ libéral qui l'exerce utilise la Comptabilité complète.
 L'amortissement se limite ici au linéaire ; les cas plus riches relèvent de
 l'extension `partiduo-amortis` (ADR-003).
 
+[[d7]]
+=== D7 — Une extension `partiduo-urssaf` : tierce déclaration des micro-entrepreneurs
+
+L'URSSAF publie l'*API Tierce Déclaration auto-entrepreneur* (REST, OAuth2
+_client credentials_, accès restreint sur souscription à
+https://portailapi.urssaf.fr, bac à sable puis production). Elle permet, avec
+le mandat du micro-entrepreneur : vérifier l'éligibilité du compte et sa
+périodicité, notifier le mandat, estimer les cotisations, *déclarer le chiffre
+d'affaires* et recevoir les cotisations dues, initier le télépaiement SEPA et
+gérer les mandats SEPA.
+
+* Extension au sens de l'ADR-003, `depends_on "MICRO"` : elle déclare le
+  chiffre d'affaires *calculé par le module `micro`* (D1), par catégorie et par
+  période, sans ressaisie.
+* *Mandat* recueilli dans Partiduo, notifié à l'URSSAF, révocable ; le
+  micro-entrepreneur garde la maîtrise de ses déclarations dans son espace
+  URSSAF, où il ajoute le chiffre d'affaires d'autres activités.
+* *Suivi* : échéances, déclarations transmises, cotisations dues, paiements,
+  anomalies ; accusés conservés.
+* *Connecteur abstrait* et URSSAF simulée pour les specs, comme `partiduo-teledec`
+  (D4) ; le branchement réel suit la souscription.
+* *Responsabilité* : utiliser l'API fait de l'opérateur de Partiduo un *tiers
+  déclarant* (Code de la sécurité sociale, art. L133-11, R133-43, R133-44).
+  La souscription est une démarche de l'opérateur.
+
+L'*avance immédiate du crédit d'impôt* (API Tiers de prestation, services à la
+personne) est une évolution ultérieure de la même extension, soumise à une
+habilitation distincte.
+
 == Conséquences
 
 === Positives
@@ -192,8 +222,11 @@ l'extension `partiduo-amortis` (ADR-003).
 
 . Documentation et environnement de test de l'API TELEDEC : partenariat
   *demandé le 27 septembre 2026*, réponse attendue.
-. Télétransmission de la déclaration URSSAF : l'URSSAF n'offre pas d'API
-  ouverte aux éditeurs pour les micro-entrepreneurs ; à réexaminer.
+. [line-through]#Télétransmission de la déclaration URSSAF# — *tranché* le
+  27 septembre 2026 : API Tierce Déclaration, extension `partiduo-urssaf` (D7) ;
+  souscription à déposer par l'opérateur.
+. Avance immédiate du crédit d'impôt (services à la personne) : évolution de
+  `partiduo-urssaf`, plus tard.
 
 == Références
 
