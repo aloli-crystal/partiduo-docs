@@ -1,0 +1,163 @@
+= ADR-008 — Administration du parc : `partiduo-admin`
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Accepté — 27 septembre 2026. +
+*Date.* 27 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Modifie.* ADR-001 D2 (l'inventaire des instances devient une application). +
+*Complète.* ADR-002 (authentification), ADR-006 D2 (activation des modules).
+
+== Résumé
+
+L'ADR-001 D2 fait d'un dossier comptable une instance autonome et renvoie
+l'inventaire des instances « hors application ». À l'usage, les cabinets
+comptables et les responsables de dossiers doivent pouvoir créer, suivre,
+sauvegarder, mettre à jour et archiver leurs dossiers eux-mêmes, sans ligne de
+commande.
+
+Cet ADR crée une application séparée, `partiduo-admin`, qui administre *le
+cycle de vie* des dossiers sans jamais entrer dans leurs données. Chaque dossier
+garde sa base, son URL et ses utilisateurs : l'isolation de l'ADR-001 D2 est
+intacte.
+
+== Contexte
+
+* `partiduo-provision` (lot 0) crée une instance en ligne de commande : base,
+  migrations, jeu de données initial, vhost, certificat TLS, unité de service,
+  invitation de l'administrateur.
+* L'ADR-002 D3 pose que *l'autorisation est locale* : une société ouvre et ferme
+  seule l'accès à son dossier.
+* Les documents comptables se conservent *dix ans* (Code de commerce,
+  art. L123-22) ; le droit de reprise de l'administration fiscale court six ans
+  (LPF, art. L102 B).
+* Les instances partagent un domaine, donc un quota de certificats
+  Let's Encrypt (ADR-001 D2).
+
+== Décision
+
+=== D1 — Une application séparée
+
+Dépôt `aloli-crystal/partiduo-admin`, application Marten avec *sa propre base*
+(`partiduo_admin`) : cabinets, utilisateurs d'administration, dossiers
+(inventaire), serveurs, tâches, sauvegardes, versions, journal d'audit.
+
+* Elle est servie sur son propre sous-domaine (`admin.<domaine>`).
+* Elle ne dépend de `partiduo-app` que pour son interface en ligne de
+  commande d'instance (D4), jamais pour ses modèles.
+* Même stack que l'interface des dossiers : HTMX, Bulma, `theme.css` de la
+  maquette, i18n fr/en/nl.
+
+=== D2 — Trois niveaux de rôles
+
+[cols="1,3",options="header"]
+|===
+|Rôle |Portée
+
+|*Super-admin*
+|Tout le parc : cabinets, serveurs, versions, quotas, tous les dossiers. Niveau
+d'authentification 3 exigé (passkey, ADR-002 D2).
+
+|*Admin de cabinet*
+|Les utilisateurs de son cabinet et *tous* les dossiers de son cabinet.
+
+|*Gestionnaire de dossiers*
+|Seulement les dossiers qui lui sont confiés.
+|===
+
+Chaque dossier appartient à *un* cabinet. Authentification selon l'ADR-002
+(passkey, mot de passe + TOTP, limitation des tentatives, codes de
+récupération) ; niveau 2 minimum pour les rôles autres que super-admin.
+Toute action est tracée nominativement dans un journal d'audit en ajout seul.
+
+=== D3 — Le cycle de vie, jamais les données
+
+`partiduo-admin` *ne lit ni n'écrit* les données comptables d'un dossier et ne
+possède aucun compte dans les instances. Il gère :
+
+* la *création* : régime FR ou BE, modules (ADR-006), extensions (ADR-003),
+  sous-domaine, puis envoi de l'invitation de l'administrateur du dossier ;
+* la *modification* des modules et extensions actifs (ADR-006 D2 : désactiver
+  conserve les données en lecture seule) ;
+* le *recours d'accès* : si la société a perdu tout accès administrateur,
+  réémission de l'invitation d'administrateur, *avec double validation* (deux
+  personnes habilitées, dont un admin de cabinet ou le super-admin) et trace
+  dans le journal d'audit de l'admin *et* dans celui de l'instance.
+
+Aucun accès « de support » n'entre dans un dossier sans y avoir été invité par
+la société (ADR-002 D3).
+
+=== D4 — File de tâches et exécutant
+
+L'application web n'a *aucun privilège système*.
+
+* Chaque action sur un serveur est une *tâche* enregistrée en base : type, dossier,
+  paramètres, demandeur, état (en attente, en cours, réussie, échouée), journal.
+* Un *exécutant* (`partiduo-agent`, binaire du même dépôt) tourne sur chaque
+  serveur d'hébergement, sous un utilisateur système dédié. Il *tire* ses tâches
+  de l'API de l'admin en HTTPS, authentifié par un jeton propre au serveur, et
+  rend compte. L'admin n'ouvre aucune connexion vers les serveurs.
+* L'exécutant n'accepte qu'une *liste fermée* de types de tâches, chacune
+  traduite en appels à `partiduo-provision` et à l'interface en ligne de
+  commande de l'instance ; jamais de commande arbitraire.
+* Les tâches sont *idempotentes* et reprises sans dommage après une coupure.
+* Un seul serveur au départ ; le modèle en accepte plusieurs (chaque dossier est
+  rattaché à un serveur).
+
+L'interface en ligne de commande d'instance (dans `partiduo-app`) expose ce dont
+l'exécutant a besoin : état et version, activation de modules et d'extensions,
+migrations, réémission de l'invitation d'administrateur, mise en lecture seule.
+
+=== D5 — Actions de la première version
+
+*Cycle de vie*::
+Créer, suspendre (service arrêté, données intactes), réactiver, *archiver*
+(sauvegarde figée et vérifiée, instance arrêtée, archive conservée *dix ans*),
+restaurer une archive en instance active, *supprimer définitivement* seulement
+après la durée légale, avec double validation.
+
+*Sauvegardes*::
+Sauvegardes planifiées par dossier (`pg_dump` et fichiers joints), rétention
+paramétrable, restauration à une date dans une instance neuve ou en
+remplacement, et *restauration test* périodique qui prouve qu'une sauvegarde se
+relit.
+
+*Mises à jour du parc*::
+Version de chaque dossier, montée de version par dossier ou par vagues,
+migrations appliquées par l'exécutant, sauvegarde préalable automatique et
+*retour arrière* si la migration échoue.
+
+*Supervision*::
+État de chaque dossier : service, base, certificat TLS et échéance, *quota
+Let's Encrypt* du domaine (50 certificats par semaine, ADR-001 D2), espace
+disque, dernière sauvegarde réussie. Alertes dans l'interface et par courriel.
+
+== Conséquences
+
+=== Positives
+
+* Les cabinets gèrent leurs dossiers sans ligne de commande ni intervention
+  d'Aloli.
+* Une faille de l'interface d'administration ne donne ni la main sur les
+  serveurs (D4) ni l'accès aux comptabilités (D3).
+* Les obligations de conservation sont outillées (archive dix ans, suppression
+  différée).
+
+=== Négatives et coûts
+
+* Une application, une base, un exécutant de plus à exploiter et à sécuriser.
+* L'interface en ligne de commande d'instance devient un contrat, versionné
+  comme `Partiduo::Api`.
+* La double validation ralentit les recours d'accès, volontairement.
+
+== Questions ouvertes
+
+. Facturation des cabinets (abonnement par dossier) : hors périmètre de la
+  première version.
+. Portail de souscription en libre-service pour les sociétés sans cabinet.
+
+== Références
+
+* ADR-001 D2, ADR-002 D3, ADR-003, ADR-006 D2
+* Modèle de déploiement : `prod-quimeo/capistrano-quimeo`

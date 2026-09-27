@@ -18,6 +18,7 @@ chaque projet PHP porté a son équivalent Crystal.
 |Amont — `prod-github/noalyss/` (lecture seule) |Crystal — `prod-crystal/partiduo/` |Remarque
 
 |`noalyss-app` (gitlab `noalyss/noalyss`) |`partiduo-app` |Socle et modules activables (Comptabilité, Facturation…), sans interface
+|— |`partiduo-admin` |Administration du parc : cabinets, dossiers, sauvegardes, mises à jour, supervision — voir ADR-008
 |— |`partiduo-ui-bulma` |Interface HTMX + Bulma, interchangeable — voir ADR-005
 |`peppol-connect` |`partiduo-einvoicing` |Facturation électronique : connecteur de PA abstrait, adaptateurs XP Z12-013 et NOALYSS-PEPPOL — voir ADR-004
 |— |`partiduo-teledec` |Télédéclaration (liasse, TVA, DAS2, IS, greffe) par l'API de TELEDEC — voir ADR-007
@@ -49,6 +50,7 @@ nom commence par `partiduo-`. Chaque dépôt Crystal a deux branches longues : `
 * `adr/ADR-005-interface.adoc` — interface séparée et interchangeable, ergonomie.
 * `adr/ADR-006-modules-et-facturation.adoc` — modules activables (comptabilité, facturation…) et facturation conforme.
 * `adr/ADR-007-micro-entreprise-et-teledeclaration.adoc` — modules micro-entreprise et professions libérales (2035), télédéclaration par TELEDEC.
+* `adr/ADR-008-administration-du-parc.adoc` — application `partiduo-admin` et exécutant des tâches du parc.
 * `maquette/` — maquette de référence de l'interface (ADR-005 D6).
 * `PROMPT-PORTAGE.adoc` — prompt de lancement du portage du cœur.
 
