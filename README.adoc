@@ -48,7 +48,7 @@ nom commence par `partiduo-`. Chaque dépôt Crystal a deux branches longues : `
 * `adr/ADR-004-facturation-electronique.adoc` — conformité à la réforme française.
 * `adr/ADR-005-interface.adoc` — interface séparée et interchangeable, ergonomie.
 * `adr/ADR-006-modules-et-facturation.adoc` — modules activables (comptabilité, facturation…) et facturation conforme.
-* `adr/ADR-007-micro-entreprise-et-teledeclaration.adoc` — module micro-entreprise et télédéclaration par TELEDEC.
+* `adr/ADR-007-micro-entreprise-et-teledeclaration.adoc` — modules micro-entreprise et professions libérales (2035), télédéclaration par TELEDEC.
 * `maquette/` — maquette de référence de l'interface (ADR-005 D6).
 * `PROMPT-PORTAGE.adoc` — prompt de lancement du portage du cœur.
 

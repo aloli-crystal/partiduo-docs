@@ -5,23 +5,27 @@
 
 *Statut.* Accepté — 27 septembre 2026. +
 *Date.* 27 septembre 2026. +
+*Révision.* 27 septembre 2026 — ajout du module `liberal` (2035, D6). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-006 (modules activables), ADR-003 (extensions), ADR-005
 (interface).
 
 == Résumé
 
-Deux publics absents de NOALYSS sont ajoutés :
+Trois publics mal servis par NOALYSS sont ajoutés :
 
 . *Les micro-entrepreneurs*, qui n'ont pas de comptabilité en partie double à
   tenir mais des registres obligatoires. Un module officiel `micro` leur offre
   une interface simplifiée, tient les registres et, si la Comptabilité est
   active, génère les écritures sans qu'ils les voient.
+. *Les professions libérales en déclaration contrôlée*, qui tiennent une
+  comptabilité de trésorerie et déposent une 2035 : un module officiel
+  `liberal`, sur le même modèle (voir <<d6>>).
 . *Les entreprises au régime réel*, qui doivent télétransmettre leur liasse
   fiscale et d'autres déclarations. Une extension `partiduo-teledec` les dépose
   par l'API de TELEDEC, partenaire EDI habilité par la DGFiP.
 
-Ces deux publics ne se recouvrent pas : un micro-entrepreneur ne dépose pas de
+Micro-entrepreneurs et entreprises au réel ne se recouvrent pas : un micro-entrepreneur ne dépose pas de
 liasse ; il reporte son chiffre d'affaires sur sa déclaration de revenus
 (2042-C-PRO).
 
@@ -102,6 +106,44 @@ module Facturation (numérotation, intangibilité et mentions obligatoires
 restent celles d'ADR-006 D5), présentées avec moins de champs. Le mode complet
 reste accessible au comptable (rôle `comptable`, ADR-002 D4).
 
+[[d6]]
+=== D6 — Un module officiel `liberal` : professions libérales au régime de la déclaration contrôlée
+
+Les professions libérales imposées en BNC au régime de la déclaration contrôlée
+déposent une *2035* (avec ses annexes 2035-A et 2035-B). Leurs obligations
+diffèrent à la fois de la micro-entreprise et de la comptabilité commerciale :
+
+* *comptabilité de trésorerie* par défaut : recettes encaissées et dépenses
+  payées, pas de créances ni de dettes ;
+* *livre-journal* des recettes et des dépenses professionnelles, avec le détail
+  des recettes (identité du client si la profession l'exige, mode de règlement,
+  pièce) ;
+* *registre des immobilisations et des amortissements* ;
+* ventilation des dépenses selon les *rubriques de la 2035-A* (achats, loyers,
+  honoraires rétrocédés, cotisations sociales personnelles, frais de véhicule,
+  etc.), avec les réintégrations et déductions diverses.
+
+Le module suit le même modèle que `micro` :
+
+* *registres natifs* (livre-journal, immobilisations), intangibles après
+  clôture, saisie simple pensée pour le téléphone, alimentés aussi par la
+  Facturation quand elle est active ;
+* *partie double automatique* quand la Comptabilité est active (événements
+  `liberal.receipt.recorded`, `liberal.expense.recorded`,
+  `liberal.asset.recorded`), sans appel direct entre modules (ADR-006 D3) ;
+* *mode simplifié* de l'interface (ADR-007 D3), avec un vocabulaire adapté
+  (« recettes », « dépenses », « immobilisations ») ;
+* *préparation de la 2035* : 2035-A (compte de résultat fiscal) et 2035-B
+  (immobilisations et amortissements) calculées depuis la ventilation par
+  rubrique ; table de correspondance rubrique → ligne *datée par millésime* et
+  paramétrable, jamais écrite en dur ; contrôle de cohérence avant dépôt ;
+* *télétransmission* de la 2035 par `partiduo-teledec` (D4).
+
+L'option pour les *créances et dettes* n'est pas couverte par ce module : un
+libéral qui l'exerce utilise la Comptabilité complète.
+L'amortissement se limite ici au linéaire ; les cas plus riches relèvent de
+l'extension `partiduo-amortis` (ADR-003).
+
 === D4 — Une extension `partiduo-teledec`
 
 Extension au sens de l'ADR-003, `depends_on "ACCOUNTING"`.
@@ -139,9 +181,10 @@ repli l'export de la balance dans un format que TELEDEC sait importer.
 
 === Négatives et coûts
 
-* Un module et une extension de plus ; une configuration de specs de plus
-  (`micro` seul, `micro` + `accounting`).
-* Les taux URSSAF et les seuils changent chaque année : ce sont des données
+* Deux modules et une extension de plus ; des configurations de specs de plus
+  (`micro` et `liberal`, seuls ou avec `accounting`).
+* Les taux URSSAF, les seuils et la correspondance des rubriques de la 2035
+  changent chaque année : ce sont des données
   datées, à mettre à jour.
 * Dépendance commerciale à TELEDEC pour la télétransmission.
 
