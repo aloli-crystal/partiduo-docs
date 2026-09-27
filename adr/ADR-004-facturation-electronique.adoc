@@ -5,6 +5,9 @@
 
 *Statut.* Accepté — 26 septembre 2026. +
 *Date.* 26 septembre 2026. +
+*Révision.* 27 septembre 2026 — premier adaptateur de PA : SuperPDP, dans le
+dépôt `partiduo-superpdp` (D2, D8) ; synchronisation par curseur (D2) ;
+factures non électroniques (D9). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Contexte.* Prochaine extension à porter après le cœur. Remplace le portage à
 l'identique de `prod-github/noalyss/peppol-connect`.
@@ -77,21 +80,32 @@ contrat d'extension de l'ADR-003.
 ----
 abstract class Einvoicing::Connector
   abstract def submit(invoice : OutgoingInvoice) : Submission
-  abstract def fetch_incoming : Array(IncomingInvoice)
+  abstract def fetch_incoming(after : Cursor?) : Page(IncomingInvoice)
   abstract def send_status(event : LifecycleEvent) : Nil
-  abstract def fetch_statuses(since : Time) : Array(LifecycleEvent)
+  abstract def fetch_statuses(after : Cursor?) : Page(LifecycleEvent)
   abstract def send_ereporting(batch : EReportingBatch) : Nil
 end
 ----
 
-Adaptateurs prévus, dans cet ordre :
+*Synchronisation par curseur, jamais par date.* La réception et les statuts se
+récupèrent à partir du dernier identifiant reçu (curseur opaque propre à
+l'adaptateur, conservé en base), page après page tant que la PA en annonce
+d'autres. Une synchronisation par date de création laisse passer des objets
+créés dans une transaction encore ouverte : c'est la façon dont une facture
+reçue se perd.
 
-. *XP Z12-013* — l'API normalisée ; couvre toute PA qui l'implémente.
-. *Adaptateur spécifique* à la PA retenue, si elle s'écarte de la norme.
+Adaptateurs prévus :
+
+. *SuperPDP* — premier adaptateur, dans son propre dépôt `partiduo-superpdp`
+  (voir <<d8>>).
+. *XP Z12-013* — l'API normalisée, dans `partiduo-einvoicing` ; couvre toute PA
+  qui l'implémente, SuperPDP compris.
 . *NOALYSS-PEPPOL* — reprise de `peppol-connect`, réservée aux dossiers belges
-  (régime `be` de l'ADR-001), TLS vérifié.
+  (régime `be` de l'ADR-001), TLS vérifié. Conservé à côté de SuperPDP, qui
+  couvre aussi la Belgique : le dossier choisit son adaptateur.
 
-Les jetons d'accès sont chiffrés en base.
+Un dossier n'a qu'un adaptateur actif à la fois, choisi dans sa configuration.
+Les jetons d'accès, secrets et jetons de rafraîchissement sont chiffrés en base.
 
 === D3 — Formats produits et lus
 
@@ -127,6 +141,69 @@ Le schéma d'identifiant du SIREN est `0002`.
 Choisir une PA est une décision commerciale. Le code ne dépend d'aucune PA
 particulière ; les tests tournent contre une PA simulée.
 
+Le premier adaptateur livré est SuperPDP (<<d8>>) ; `partiduo-einvoicing` n'en
+dépend pas, et une autre PA s'ajoute par un autre dépôt `partiduo-<pa>` ou par
+l'adaptateur XP Z12-013.
+
+[[d8]]
+=== D8 — L'adaptateur SuperPDP : `partiduo-superpdp`
+
+Extension au sens de l'ADR-003, qui dépend de `partiduo-einvoicing`
+(`depends_on "EINV"`) et n'apporte qu'une implémentation d'`Einvoicing::Connector`,
+plus son paramétrage et ses écrans de raccordement.
+
+* *API* : l'API JSON propriétaire (`https://api.superpdp.tech/v1.beta/`), plus
+  simple pour les statuts et le e-reporting. SuperPDP expose aussi l'API AFNOR,
+  couverte par l'adaptateur XP Z12-013 d'`einvoicing` ; les deux partagent les
+  mêmes données côté SuperPDP.
+* *Authentification OAuth 2.1*, deux modes :
+** _client credentials_ — la société crée une application dans SuperPDP et
+   saisit `client_id` et `client_secret` dans Partiduo ;
+** _authorization code_ — l'opérateur de Partiduo déclare une application OAuth
+   SuperPDP ; la société est redirigée vers le parcours d'inscription SuperPDP
+   (vérification d'identité et d'entreprise), avec `login_hint`, SIREN ou numéro
+   d'entreprise belge pré-remplis, puis revient sur son instance.
++
+Jeton d'accès de 30 minutes, renouvelé automatiquement ; jeton de
+rafraîchissement *renouvelé à chaque usage* (rotation), stocké chiffré ;
+révocation (RFC 7009) à la déconnexion.
+* *Bac à sable et production* : déterminés par les identifiants ; le mode est
+  affiché en permanence dans l'écran de raccordement.
+* *Réception et statuts* : `GET /invoices` et `GET /invoice_events` avec
+  `starting_after_id`, jusqu'à `has_after = false` (curseur de D2).
+* *Annuaire* : adresse de facturation électronique (SIREN par défaut,
+  `SIREN_SIRET`, `SIREN_SUFFIXE`, `SIREN_SIRET_CODEROUTAGE`) ; schémas Peppol
+  `0225` (France) et `0208` (Belgique).
+* *E-reporting* : B2B fait par SuperPDP à l'émission ; B2C par note `BAR` = `B2C`
+  et statut « Encaissée (212) » à l'encaissement ; ventes et achats
+  internationaux par l'API dédiée.
+* *Tests* : contre une PA simulée qui reproduit les réponses documentées ; une
+  suite d'intégration optionnelle tourne contre le bac à sable SuperPDP quand
+  des identifiants de bac à sable sont fournis par variables d'environnement.
+
+[[d9]]
+=== D9 — Les factures non électroniques restent saisissables
+
+La facture électronique ne remplace pas toutes les factures. Restent hors PA :
+les factures d'achat reçues sur papier ou en PDF simple (fournisseurs étrangers,
+période de transition, particuliers), les ventes à des particuliers ou à
+l'étranger, et tout dossier qui n'active pas `einvoicing`.
+
+* *Réception* : une facture d'achat non électronique se saisit à la main dans le
+  journal d'achats — ou depuis un justificatif (ADR-005 D8) — avec sa pièce
+  jointe. Elle est marquée « reçue hors plateforme » et entre dans la même
+  détection de doublons que les factures reçues par la PA.
+* *Émission* : chaque facture de vente porte un *canal d'émission* — plateforme
+  agréée, courriel, papier. Le canal est proposé selon le client (professionnel
+  français assujetti → plateforme ; particulier ou étranger → courriel ou
+  papier, avec e-reporting si nécessaire), et reste modifiable jusqu'à l'envoi.
+  Le canal et le marquage « reçue hors plateforme » appartiennent au cœur
+  (module Facturation et module Comptabilité), comme les champs de D5 : ils
+  existent même quand `einvoicing` n'est pas actif.
+* Rien dans `einvoicing` ne bloque une facture parce qu'elle n'est pas
+  électronique ; l'extension signale seulement les cas où la réforme impose la
+  plateforme.
+
 == Conséquences
 
 === Positives
@@ -145,8 +222,8 @@ particulière ; les tests tournent contre une PA simulée.
 
 == Questions ouvertes
 
-. *Quelle PA ?* À choisir avant la mise en production ; conditionne l'éventuel
-  adaptateur spécifique.
+. [line-through]#*Quelle PA ?*# — *tranché* le 27 septembre 2026 : SuperPDP,
+  premier adaptateur (D8). Le code reste indépendant de la PA (D6).
 . *Format et fréquence du e-reporting* : à confirmer dans les spécifications
   externes v3.2 et auprès de la PA retenue.
 . *Remonter le correctif SIREN `0002` à l'amont ?*

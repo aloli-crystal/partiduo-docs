@@ -19,7 +19,8 @@ chaque projet PHP porté a son équivalent Crystal.
 
 |`noalyss-app` (gitlab `noalyss/noalyss`) |`partiduo-app` |Socle et modules activables (Comptabilité, Facturation…), sans interface
 |— |`partiduo-ui-bulma` |Interface HTMX + Bulma, interchangeable — voir ADR-005
-|`peppol-connect` |`partiduo-einvoicing` |Prochaine extension portée — voir ADR-004
+|`peppol-connect` |`partiduo-einvoicing` |Facturation électronique : connecteur de PA abstrait, adaptateurs XP Z12-013 et NOALYSS-PEPPOL — voir ADR-004
+|— |`partiduo-superpdp` |Adaptateur de la plateforme agréée SuperPDP pour `partiduo-einvoicing` — voir ADR-004 D8
 |`noalyss-plugins` |découpé — voir ADR-003 |15 extensions
 |`noalyss_xmlpayment` |`partiduo-sepa` |Virements SEPA
 |`advancedimport` |`partiduo-import` |Import avancé
