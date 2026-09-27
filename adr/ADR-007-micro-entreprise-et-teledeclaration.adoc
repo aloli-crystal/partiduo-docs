@@ -1,0 +1,159 @@
+= ADR-007 — Micro-entreprise et télédéclaration par TELEDEC
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Accepté — 27 septembre 2026. +
+*Date.* 27 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Complète.* ADR-006 (modules activables), ADR-003 (extensions), ADR-005
+(interface).
+
+== Résumé
+
+Deux publics absents de NOALYSS sont ajoutés :
+
+. *Les micro-entrepreneurs*, qui n'ont pas de comptabilité en partie double à
+  tenir mais des registres obligatoires. Un module officiel `micro` leur offre
+  une interface simplifiée, tient les registres et, si la Comptabilité est
+  active, génère les écritures sans qu'ils les voient.
+. *Les entreprises au régime réel*, qui doivent télétransmettre leur liasse
+  fiscale et d'autres déclarations. Une extension `partiduo-teledec` les dépose
+  par l'API de TELEDEC, partenaire EDI habilité par la DGFiP.
+
+Ces deux publics ne se recouvrent pas : un micro-entrepreneur ne dépose pas de
+liasse ; il reporte son chiffre d'affaires sur sa déclaration de revenus
+(2042-C-PRO).
+
+== Contexte
+
+=== Obligations d'un micro-entrepreneur
+
+* *Livre des recettes* chronologique : date d'encaissement, identité du client,
+  nature de la prestation ou de la vente, montant, mode de règlement,
+  référence de la pièce justificative.
+* *Registre des achats* récapitulé par année, pour les activités de vente de
+  marchandises, de fourniture de denrées à emporter ou à consommer sur place,
+  ou d'hébergement.
+* *Déclaration du chiffre d'affaires à l'URSSAF*, mensuelle ou trimestrielle,
+  ventilée par catégorie (ventes BIC, prestations BIC, prestations BNC), avec
+  versement libératoire éventuel.
+* *Seuils* de chiffre d'affaires : franchise en base de TVA et régime micro.
+* *Facturation* : mention « TVA non applicable, art. 293 B du CGI » en
+  franchise ; mêmes obligations de facturation électronique que les autres
+  entreprises (ADR-004).
+
+=== TELEDEC
+
+TELEDEC (https://www.teledec.fr) est partenaire EDI habilité : il télétransmet à
+la DGFiP les liasses fiscales (2033, 2050, 2035, 2031, 2065, 2072…), la TVA
+(CA3, CA12), la DAS2, les relevés d'IS et propose le dépôt des comptes au
+greffe. Son API n'est pas publique : elle est ouverte aux éditeurs partenaires
+(formulaire « Devenir partenaire »), en deux formules — *API Balance* (le
+logiciel envoie la balance, TELEDEC remplit les formulaires) et *API Marque
+Blanche* (le logiciel produit lui-même les formulaires).
+
+== Décision
+
+=== D1 — Un module officiel `micro`
+
+Module de `partiduo-app` (ADR-006 D1), qui ne dépend que du socle.
+
+* *Registres* : livre des recettes et registre des achats, tenus nativement,
+  chronologiques, *intangibles une fois la période close* (correction par
+  contre-passation datée, jamais par modification), édités en PDF et CSV.
+* *Alimentation* : saisie directe très simple (date, client ou fournisseur,
+  nature, montant, mode de règlement, pièce jointe), et, quand la Facturation
+  est active, par abonnement à ses événements (`invoice.issued`,
+  `payment.recorded`, `payment.matched`) : une facture encaissée devient une
+  recette sans ressaisie.
+* *Aide à la déclaration URSSAF* : chiffre d'affaires de la période par
+  catégorie, périodicité mensuelle ou trimestrielle, échéances rappelées dans
+  « À traiter », cotisations et versement libératoire *estimés* d'après des taux
+  paramétrables (les taux ne sont pas écrits en dur). Pas de télétransmission :
+  l'utilisateur reporte les montants sur le site de l'URSSAF.
+* *Montants de la 2042-C-PRO* : chiffre d'affaires annuel par catégorie.
+* *Suivi des seuils* : alertes à l'approche des seuils de franchise de TVA et du
+  régime micro (seuils paramétrables, datés) ; bascule guidée — vers la TVA
+  (le module Facturation cesse d'apposer la mention 293 B) ou vers le régime
+  réel (activation de la Comptabilité).
+
+=== D2 — Partie double automatique, sans la montrer
+
+Quand `micro` et `accounting` sont tous deux actifs, chaque recette ou achat du
+registre publie un événement (`micro.receipt.recorded`,
+`micro.purchase.recorded`) auquel la Comptabilité s'abonne pour passer
+l'écriture correspondante (ventes ou achats, trésorerie, tiers), selon un
+paramétrage par nature. Le micro-entrepreneur ne voit que son registre ; le
+comptable voit une comptabilité complète.
+
+Conformément à l'ADR-006 D3, `micro` n'appelle jamais `accounting` : ils ne se
+parlent que par événements. Le passage au régime réel se fait donc sans
+ressaisie : la comptabilité existe déjà.
+
+=== D3 — Interface simplifiée
+
+Quand `micro` est actif, `partiduo-ui-bulma` présente un *mode simplifié* :
+menu réduit (Tableau de bord, Recettes, Achats, Factures, URSSAF, Justificatifs),
+vocabulaire courant (« encaissé », « dépensé », jamais « débit » ou « crédit »),
+tableau de bord centré sur le chiffre d'affaires, les seuils et la prochaine
+échéance. La facturation y est *allégée* : ce sont les commandes et requêtes du
+module Facturation (numérotation, intangibilité et mentions obligatoires
+restent celles d'ADR-006 D5), présentées avec moins de champs. Le mode complet
+reste accessible au comptable (rôle `comptable`, ADR-002 D4).
+
+=== D4 — Une extension `partiduo-teledec`
+
+Extension au sens de l'ADR-003, `depends_on "ACCOUNTING"`.
+
+* *Formule : API Balance.* Partiduo transmet la balance de l'exercice et
+  l'identité de l'entreprise ; TELEDEC remplit les formulaires ; l'utilisateur
+  les vérifie sur TELEDEC puis les dépose. Partiduo ne maintient pas les tables
+  de correspondance comptes → cases des formulaires.
+* *Déclarations* : liasse fiscale (selon le régime : 2033, 2050, 2035, 2031,
+  2065, 2072), TVA CA3 et CA12 (préparées par le lot 4), DAS2 (honoraires,
+  calculée depuis les fiches fournisseurs et les écritures), relevés d'acompte
+  et de solde d'IS (2571, 2572), dépôt des comptes au greffe en option.
+* *Suivi* : statut de chaque dépôt (préparé, transmis, accusé de réception,
+  rejeté avec motif), accusés conservés en pièce jointe.
+* *Secrets* : identifiants de l'API chiffrés en base.
+* *Connecteur abstrait* : l'extension est écrite contre une interface
+  `Teledec::Transport`, testée contre un TELEDEC simulé. L'adaptateur réel se
+  branche quand la documentation de l'API partenaire est disponible.
+
+=== D5 — Prérequis hors code
+
+L'accès à l'API TELEDEC suppose un partenariat, demandé par l'opérateur de
+Partiduo sur https://www.teledec.fr/presentation/devenir-partenaire. Tant qu'il
+n'est pas obtenu, l'extension fonctionne contre le simulateur et propose en
+repli l'export de la balance dans un format que TELEDEC sait importer.
+
+== Conséquences
+
+=== Positives
+
+* Partiduo sert les micro-entrepreneurs sans leur imposer la partie double, et
+  leur évolue vers le réel sans ressaisie.
+* Le cycle comptable d'une entreprise au réel se termine dans Partiduo, jusqu'au
+  dépôt de la liasse.
+
+=== Négatives et coûts
+
+* Un module et une extension de plus ; une configuration de specs de plus
+  (`micro` seul, `micro` + `accounting`).
+* Les taux URSSAF et les seuils changent chaque année : ce sont des données
+  datées, à mettre à jour.
+* Dépendance commerciale à TELEDEC pour la télétransmission.
+
+== Questions ouvertes
+
+. Documentation et environnement de test de l'API TELEDEC : à obtenir par le
+  partenariat.
+. Télétransmission de la déclaration URSSAF : l'URSSAF n'offre pas d'API
+  ouverte aux éditeurs pour les micro-entrepreneurs ; à réexaminer.
+
+== Références
+
+* ADR-003, ADR-004, ADR-005, ADR-006
+* https://www.teledec.fr/presentation/api-teletransmission-tel%C3%A9d%C3%A9clarations-fiscales
+* Code de commerce, art. L123-28 ; CGI, art. 50-0 et 102 ter, 293 B
