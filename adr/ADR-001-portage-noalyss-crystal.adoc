@@ -322,6 +322,7 @@ Un script `partiduo-provision` crée une instance :
 . chargement du jeu de données initial — plan comptable (BE ou FR), journaux
    par défaut, catégories de fiches, taux de TVA, profil administrateur ;
 . génération du vhost depuis un gabarit et rechargement du serveur web ;
+. obtention du certificat TLS auprès de Let's Encrypt, un par instance ;
 . création de l'unité de service et démarrage.
 
 La configuration d'une instance tient dans son environnement : URL, chaîne de
@@ -342,6 +343,33 @@ personnes.
 N+1 suppose un outillage de déploiement et une stratégie de migration
 progressive. C'est un problème d'exploitation connu et maîtrisé, mais il est
 réel et doit être outillé dès le lot 0.
+
+*Les certificats TLS sont plafonnés par domaine, pas par instance.* Les
+instances étant des sous-domaines d'un domaine commun — `ADR-002` D5 —, elles
+partagent le même quota Let's Encrypt : *50 certificats par domaine enregistré
+tous les 7 jours*, limite globale tous comptes confondus, avec un
+réapprovisionnement d'un certificat toutes les 202 minutes.
+
+Deux conséquences, de gravité inégale :
+
+* *à la création*, on ne peut ouvrir que 50 dossiers par semaine. La reprise des
+  dossiers NOALYSS se faisant *au cas par cas* et non en masse, le plafond n'est
+  pas atteint en pratique ;
+* *au renouvellement*, les renouvellements à jeu d'identifiants identique
+  échappent à ce quota : un parc stable ne le sature pas. Le risque se situe à
+  la création, et lors d'une reconstruction de parc — un incident qui
+  obligerait à réémettre tous les certificats heurterait le mur.
+
+*Mesure à prendre tôt :* Let's Encrypt prévoit un relèvement sur demande, pour
+un domaine enregistré donné. À demander dès l'enregistrement du domaine, avant
+d'avoir un seul client — c'est gratuit, et cela évite de découvrir le plafond le
+jour d'une remise en service.
+
+L'alternative serait un certificat *wildcard* unique pour tout le parc, qui
+supprime le plafond mais impose une validation ACME par DNS-01 et concentre le
+parc sur un certificat unique à renouveler. *Retenu : un certificat par
+instance*, plus simple à câbler dans `partiduo-provision` et sans point de
+défaillance commun.
 
 === D3 — Les fiches sortent de l'EAV
 
