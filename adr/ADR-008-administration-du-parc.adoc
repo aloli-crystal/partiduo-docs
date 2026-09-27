@@ -6,21 +6,23 @@
 *Statut.* Accepté — 27 septembre 2026. +
 *Date.* 27 septembre 2026. +
 *Auteur.* Philippe Nénert (Aloli). +
-*Modifie.* ADR-001 D2 (l'inventaire des instances devient une application). +
-*Complète.* ADR-002 (authentification), ADR-006 D2 (activation des modules).
+*Complète.* ADR-001 D2 (l'inventaire des instances, « hors application »),
+ADR-002 (authentification), ADR-006 D2 (activation des modules).
 
 == Résumé
 
-L'ADR-001 D2 fait d'un dossier comptable une instance autonome et renvoie
-l'inventaire des instances « hors application ». À l'usage, les cabinets
-comptables et les responsables de dossiers doivent pouvoir créer, suivre,
-sauvegarder, mettre à jour et archiver leurs dossiers eux-mêmes, sans ligne de
-commande.
+L'ADR-001 D2 fait d'un dossier comptable une instance autonome — une
+application, une base PostgreSQL, une URL — et place l'inventaire des instances
+*hors de l'application*. Cet ADR ne change rien à ce choix : il fournit l'outil
+qu'il supposait.
 
-Cet ADR crée une application séparée, `partiduo-admin`, qui administre *le
-cycle de vie* des dossiers sans jamais entrer dans leurs données. Chaque dossier
-garde sa base, son URL et ses utilisateurs : l'isolation de l'ADR-001 D2 est
-intacte.
+Gérer des dossiers à la main — créer une base, la migrer, générer un vhost, un
+certificat, un service, sauvegarder, mettre à jour, archiver — est fastidieux et
+source d'erreurs. `partiduo-admin` est l'application séparée qui fait ces
+gestes *par une interface*, pour le super-admin, les cabinets comptables et les
+responsables de dossiers. Elle administre le *cycle de vie* des dossiers sans
+jamais entrer dans leurs données : chaque dossier garde sa base, son URL et ses
+utilisateurs.
 
 == Contexte
 
