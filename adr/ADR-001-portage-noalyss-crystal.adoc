@@ -361,9 +361,20 @@ Deux conséquences, de gravité inégale :
   obligerait à réémettre tous les certificats heurterait le mur.
 
 *Mesure à prendre tôt :* Let's Encrypt prévoit un relèvement sur demande, pour
-un domaine enregistré donné. À demander dès l'enregistrement du domaine, avant
-d'avoir un seul client — c'est gratuit, et cela évite de découvrir le plafond le
-jour d'une remise en service.
+un domaine enregistré donné, via le formulaire
+https://isrg.formstack.com/forms/rate_limit_adjustment_request[Rate Limit
+Adjustment Request] lié depuis sa page des limites.
+
+*Le bon moment est juste après le provisionnement de la première instance*, et
+non dès l'enregistrement du domaine : la demande porte sur un compte ACME, et
+ce compte n'existe qu'à partir du premier certificat émis. On est alors encore
+très loin du plafond, et on ne le découvre pas le jour d'une remise en service.
+
+La demande doit désigner le domaine enregistré — `partiduo.app` —, la limite
+concernée (*New Certificates per Registered Domain*), le compte ACME, ainsi que
+le volume d'instances visé et son rythme. Le motif est celui que la
+documentation cite elle-même : une organisation émettant des certificats pour
+de nombreux noms d'hôte.
 
 L'alternative serait un certificat *wildcard* unique pour tout le parc, qui
 supprime le plafond mais impose une validation ACME par DNS-01 et concentre le
