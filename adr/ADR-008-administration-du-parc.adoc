@@ -68,7 +68,9 @@ d'authentification 3 exigé (passkey, ADR-002 D2).
 |Seulement les dossiers qui lui sont confiés.
 |===
 
-Chaque dossier appartient à *un* cabinet. Authentification selon l'ADR-002
+Chaque dossier appartient à *un* cabinet, et porte un *donneur d'ordre* : celui
+qui commande et paie le dossier (le cabinet, la société ou un autre payeur),
+base de la facturation future. Authentification selon l'ADR-002
 (passkey, mot de passe + TOTP, limitation des tentatives, codes de
 récupération) ; niveau 2 minimum pour les rôles autres que super-admin.
 Toute action est tracée nominativement dans un journal d'audit en ajout seul.
@@ -155,8 +157,11 @@ disque, dernière sauvegarde réussie. Alertes dans l'interface et par courriel.
 
 == Questions ouvertes
 
-. Facturation des cabinets (abonnement par dossier) : hors périmètre de la
-  première version.
+. *Facturation des dossiers par donneur d'ordre* : elle vivra dans
+  `partiduo-admin`, pas dans les dossiers. Chaque dossier porte dès la première
+  version son *donneur d'ordre* — le cabinet, la société elle-même ou un autre
+  payeur —, distinct du cabinet qui l'administre ; tarifs, périodes et
+  factures viendront dans une version ultérieure, sans changer ce modèle.
 . Portail de souscription en libre-service pour les sociétés sans cabinet.
 
 == Références
