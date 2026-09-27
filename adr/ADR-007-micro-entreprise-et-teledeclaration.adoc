@@ -190,8 +190,8 @@ l'extension `partiduo-amortis` (ADR-003).
 
 == Questions ouvertes
 
-. Documentation et environnement de test de l'API TELEDEC : à obtenir par le
-  partenariat.
+. Documentation et environnement de test de l'API TELEDEC : partenariat
+  *demandé le 27 septembre 2026*, réponse attendue.
 . Télétransmission de la déclaration URSSAF : l'URSSAF n'offre pas d'API
   ouverte aux éditeurs pour les micro-entrepreneurs ; à réexaminer.
 
