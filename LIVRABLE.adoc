@@ -26,7 +26,7 @@ dans `partiduo-app/DECISIONS.adoc`, les obstacles dans
   facture, saisie d'achat au clavier, vue téléphone, thèmes clair et sombre,
   aucune erreur JavaScript.
 * *Ce qui reste* dépend surtout d'accès extérieurs (EsaLink, Chorus Pro,
-  URSSAF, stage TELEDEC depuis votre poste) et de vérifications qu'un humain
+  URSSAF, valeur `#SOURCE` de TELEDEC) et de vérifications qu'un humain
   doit faire (appareil réel, serveur de production, valeurs officielles).
 
 == Dépôts
@@ -132,9 +132,12 @@ createdb --encoding=UTF8 partiduo_test_relecture
 DATABASE_URL='postgres:///partiduo_test_relecture?host=/tmp' crystal spec --order random
 ----
 
-Suite d'intégration TELEDEC contre le stage. Elle n'a pas pu tourner depuis
-le bac à sable, qui n'a pas d'accès réseau ; elle lit les identifiants dans
-`~/.config/partiduo/teledec-sandbox.env` sans jamais les afficher :
+Suite d'intégration TELEDEC contre le stage, qui lit les identifiants dans
+`~/.config/partiduo/teledec-sandbox.env` sans jamais les afficher. Lancée
+depuis votre poste le 28 septembre 2026 : 5 exemples verts (jeton OAuth2,
+création de l'entreprise de test, dépôt d'une CA3 en marque blanche et
+relevé de son état) ; la liasse est refusée tant que TELEDEC n'a pas
+communiqué la valeur de `#SOURCE` (B-TDC-004).
 
 [source,sh]
 ----
@@ -151,7 +154,7 @@ DATABASE_URL='postgres:///partiduo_test_teledec_stage?host=/tmp' crystal spec sp
 |===
 |Sujet |Ce qu'il faut
 
-|TELEDEC |Lancer la suite du stage (ci-dessus) ; obtenir de TELEDEC la valeur de `SOURCE` et confirmer les codes de la CA3 et de la DAS2, l'authentification des rappels et les types de rappel (B-TDC-004)
+|TELEDEC |Adaptateur réel essayé sur le stage (jeton, entreprise, CA3). Obtenir de TELEDEC la valeur de `#SOURCE`, sans laquelle la liasse est refusée, et confirmer les codes de la CA3 et de la DAS2, l'authentification des rappels et les types de rappel (B-TDC-004)
 |EsaLink |Identifiants de préproduction dans `~/.config/partiduo/esalink-sandbox.env` ; confirmer les adresses de production et d'authentification (B-ESL-001)
 |Chorus Pro |Accès PISTE en qualification : l'adaptateur est écrit mais n'a pas été essayé (B-FIN-002)
 |URSSAF |Souscription à l'API Tierce Déclaration, reportée tant que l'inscription au portail ne fonctionne pas : l'adaptateur réel reste à écrire, la simulation est livrée (B-FIN-003, B-URS-001)
