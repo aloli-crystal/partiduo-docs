@@ -225,7 +225,7 @@ l'étranger, et tout dossier qui n'active pas `einvoicing`.
   directement depuis la facture (saisie express).
 * *Clients publics : Chorus Pro.* Les factures aux administrations publiques
   passent par Chorus Pro, pas par une plateforme agréée : extension
-  `partiduo-choruspro` (API Chorus Pro par le portail PISTE, compte technique,
+  `partiduo-chorus-pro` (API Chorus Pro par le portail PISTE, compte technique,
   numéro d'engagement et code service), écrite contre une interface abstraite
   et une simulation, branchée sur le bac à sable de qualification quand les
   accès sont obtenus.
