@@ -23,6 +23,7 @@ chaque projet PHP porté a son équivalent Crystal.
 |`peppol-connect` |`partiduo-einvoicing` |Facturation électronique : connecteur de PA abstrait, adaptateurs XP Z12-013 et NOALYSS-PEPPOL — voir ADR-004
 |— |`partiduo-teledec` |Télédéclaration (liasse, TVA, DAS2, IS, greffe) par l'API de TELEDEC — voir ADR-007
 |— |`partiduo-urssaf` |Tierce déclaration URSSAF des micro-entrepreneurs — voir ADR-007 D7
+|— |`partiduo-choruspro` |Factures aux clients publics par Chorus Pro — voir ADR-004 D9
 |— |`partiduo-superpdp` |Adaptateur de la plateforme agréée SuperPDP pour `partiduo-einvoicing` — voir ADR-004 D8
 |`noalyss-plugins` |découpé — voir ADR-003 |15 extensions
 |`noalyss_xmlpayment` |`partiduo-sepa` |Virements SEPA

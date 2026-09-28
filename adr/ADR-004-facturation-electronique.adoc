@@ -8,7 +8,8 @@
 *Révision.* 27 septembre 2026 — premier adaptateur de PA : SuperPDP, dans le
 dépôt `partiduo-superpdp` (D2, D8) ; synchronisation par curseur (D2) ;
 factures non électroniques (D9) ; PDF pour tous et copie PDF doublant
-l'envoi par la plateforme (D9, 28 septembre 2026). +
+l'envoi par la plateforme, nature du client, Chorus Pro (D9, 28 septembre
+2026). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Contexte.* Prochaine extension à porter après le cœur. Remplace le portage à
 l'identique de `prod-github/noalyss/peppol-connect`.
@@ -214,6 +215,20 @@ l'étranger, et tout dossier qui n'active pas `einvoicing`.
   passer pour un second original (risque de double facturation et de TVA
   due deux fois, CGI art. 283-3). L'envoi de la copie est tracé comme les
   autres.
+* *Nature du client explicite.* La fiche d'un client porte sa nature —
+  particulier, professionnel, administration publique —, proposée d'après le
+  SIREN et le numéro de TVA mais choisie, jamais déduite en silence de
+  l'absence d'un numéro. Elle commande le canal proposé, le marquage B2C, les
+  mentions (SIREN du client, indemnité forfaitaire de 40 € entre
+  professionnels) et l'e-reporting. Une facture à un professionnel établi en
+  France sans SIREN est refusée à la validation. Un particulier se crée
+  directement depuis la facture (saisie express).
+* *Clients publics : Chorus Pro.* Les factures aux administrations publiques
+  passent par Chorus Pro, pas par une plateforme agréée : extension
+  `partiduo-choruspro` (API Chorus Pro par le portail PISTE, compte technique,
+  numéro d'engagement et code service), écrite contre une interface abstraite
+  et une simulation, branchée sur le bac à sable de qualification quand les
+  accès sont obtenus.
 * Rien dans `einvoicing` ne bloque une facture parce qu'elle n'est pas
   électronique ; l'extension signale seulement les cas où la réforme impose la
   plateforme.
