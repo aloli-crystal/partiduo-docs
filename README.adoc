@@ -56,6 +56,7 @@ nom commence par `partiduo-`. Chaque dépôt Crystal a deux branches longues : `
 * `adr/ADR-008-administration-du-parc.adoc` — application `partiduo-admin` et exécutant des tâches du parc.
 * `maquette/` — maquette de référence de l'interface (ADR-005 D6).
 * `PROMPT-PORTAGE.adoc` — prompt de lancement du portage du cœur.
+* `LIVRABLE.adoc` — livrable du portage : ce qui est fait, comment le lancer, ce qui reste.
 
 == Licence
 

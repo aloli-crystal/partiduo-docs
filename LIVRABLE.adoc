@@ -1,0 +1,217 @@
+= Partiduo — livrable du portage
+:icons: font
+:toc: left
+:toc-title: Sommaire
+:revdate: 28 septembre 2026
+
+Portage en Crystal de NOALYSS, mené selon `PROMPT-PORTAGE.adoc` et les ADR
+001 à 008. Ce document est la porte d'entrée de la relecture : il dit ce qui
+est livré, comment le lancer, et ce qui reste à faire. Le détail lot par lot
+est dans `partiduo-app/ETAT-PORTAGE.adoc`, les choix faits en cours de route
+dans `partiduo-app/DECISIONS.adoc`, les obstacles dans
+`partiduo-app/BLOCAGES.adoc`.
+
+== En bref
+
+* *Tous les lots du plan sont terminés* : P, 0 à 6, M, puis les lots ajoutés
+  en cours de route (E, G, L, T, T2, C, K, H, U, A) et la critique de
+  complétude finale.
+* *13 dépôts* dans `aloli-crystal`, dont 12 dépôts de code ; *les 12 CI
+  GitHub sont vertes* sur leur dernier commit (format, Ameba, garde-fou
+  « aucune mention du logiciel d'origine dans le code », compilation, specs
+  sur PostgreSQL 18).
+* *Environ 2 400 exemples de specs*, tous verts.
+* *Vérification dans un navigateur* sur une instance « Comptabilité +
+  Facturation » : connexion, proposition de passkey, tableau de bord, fiche
+  facture, saisie d'achat au clavier, vue téléphone, thèmes clair et sombre,
+  aucune erreur JavaScript.
+* *Ce qui reste* dépend surtout d'accès extérieurs (EsaLink, Chorus Pro,
+  URSSAF, stage TELEDEC depuis votre poste) et de vérifications qu'un humain
+  doit faire (appareil réel, serveur de production, valeurs officielles).
+
+== Dépôts
+
+[cols="2,5,1",options="header"]
+|===
+|Dépôt |Rôle |Exemples
+
+|`partiduo-app` |Cœur : socle (société, authentification TOTP / WebAuthn / SAML / OIDC, i18n, pièces jointes, compteurs), modules Comptabilité, Facturation, Analytique, Stock, Suivi, `micro`, `liberal` ; éditions, TVA FR et BE, FEC ; contrat `Partiduo::Api` ; `partiduo-provision` ; interface d'instance en ligne de commande |≈ 1 240
+|`partiduo-ui-bulma` |Interface HTMX + Bulma + Opal, interchangeable (ADR-005) ; mode simplifié micro et libéral |≈ 350
+|`partiduo-admin` |Administration du parc (ADR-008) : cabinets, trois rôles, cycle de vie des dossiers, donneur d'ordre, sauvegardes, mises à jour, supervision ; exécutant `partiduo-agent` |139
+|`partiduo-migrate` |Reprise d'un dossier depuis un FEC ou une base d'origine NOALYSS, avec rapport de réconciliation |94
+|`partiduo-einvoicing` |Facturation électronique : connecteur de plateforme agréée abstrait, adaptateurs XP Z12-013 et Peppol Belgique (`PEPPOL_BE`) |103
+|`partiduo-superpdp` |Adaptateur SUPER PDP (API JSON et AFNOR, OAuth 2.1 dans les deux modes) |73
+|`partiduo-esalink` |Adaptateur EsaLink (Hubtimize), hérité de l'adaptateur XP Z12-013 |79
+|`partiduo-choruspro` |Factures aux clients publics par Chorus Pro (PISTE), réaction aux paiements |86
+|`partiduo-document` |Justificatifs : photos, fichiers, factures reçues à traiter |72
+|`partiduo-teledec` |Télédéclarations par TELEDEC : liasse (API Balance), TVA, DAS2, IS, greffe, 2035 |179
+|`partiduo-urssaf` |Micro-entrepreneurs : simulation des déclarations, suivi, télépaiement et mandats (API Tierce Déclaration simulée) |69
+|`partiduo-skel` |Extension de référence, exemple du contrat ADR-003 |25
+|`partiduo-docs` |ADR, cartographie de l'existant, prompt, maquette, ce livrable |—
+|===
+
+Chaque dépôt a les branches `development` et `production`, un `README.adoc`
+et sa CI. Les nombres d'exemples sont ceux des specs écrites au
+28 septembre 2026 ; certaines specs en génèrent d'autres par boucle
+(`partiduo-ui-bulma` : 349 à l'exécution). `partiduo-app` se vérifie en
+outre dans huit combinaisons de modules (`scripts/specs-modules.sh`).
+
+== Ce qui a été fait
+
+[cols="1,6",options="header"]
+|===
+|Lot |Contenu
+
+|P |Squelettes `partiduo-app`, `partiduo-ui-bulma` (avec Opal), `partiduo-skel` ; conventions, CI, garde-fous ADR-005 D3
+|0 |Socle : registre des modules, société, authentification et MFA, passkeys, i18n, `partiduo-provision`, écrans de connexion
+|1 |Référentiel : tiers, articles, TVA, devises, exercices, pièces jointes, plan comptable, journaux
+|2 et F |Écritures, consultation, lettrage ; module Facturation (devis, factures, avoirs, acomptes, règlements, relances, Factur-X PDF/A-3) ; intégration des deux
+|M |`partiduo-migrate` : FEC et base d'origine
+|3 |Éditions : balances, grand livre, journaux, bilan et compte de résultat FR / BE, rapports personnalisés, FEC, CSV, PDF
+|4 |TVA : CA3, CA12 ; grilles BE, listing, relevé intracommunautaire, Intervat ; liquidation
+|5 |Analytique : plans, postes, clés de répartition, ventilation, balances
+|6 |Stock, prévisions budgétaires, suivi
+|E |Justificatifs, facturation électronique, SUPER PDP, factures non électroniques (ADR-004 D9)
+|G |Module `micro` : registres, partie double automatique, aide URSSAF, seuils, 2042-C-PRO, facturation simplifiée, interface simplifiée
+|L |Module `liberal` : livre-journal, immobilisations, 2035, interface et mode simplifié
+|T, T2 |`partiduo-teledec` : simulateur puis adaptateur réel de l'API TELEDEC (OAuth2, API Balance, marque blanche, suivi, rappels)
+|C |Copie PDF de toute facture (doublement de l'envoi la première année), nature explicite du client, saisie express d'un particulier
+|K |`partiduo-choruspro`
+|H |`partiduo-esalink`
+|U |`partiduo-urssaf`
+|A |Interface d'instance en ligne de commande, `partiduo-admin`, `partiduo-agent`, certificat par instance
+|N |Plus aucune mention du logiciel d'origine dans le code ni dans les commentaires (base d'origine appelée « legacy »), vérifié par chaque CI
+|===
+
+Derniers correctifs du 28 septembre 2026 :
+
+* CI : éditeur de liens `lld` (l'éditeur par défaut produisait des binaires
+  inutilisables sous Linux), mémoire d'échange pour la compilation des specs,
+  horodatages ramenés à la microseconde de PostgreSQL (Linux mesure à la
+  nanoseconde), outils clients PostgreSQL 18 pour `pg_dump` dans
+  `partiduo-admin`.
+* Interface : bordure visible des champs des lignes d'écriture et de
+  facture, contrastée à 3:1 au moins dans les deux thèmes (WCAG 1.4.11).
+
+== Lancer
+
+Prérequis : Crystal 1.19.1, PostgreSQL 18 joignable par le socket `/tmp`,
+`SKIP_MARTEN_CLI_PRECOMPILATION=1` pour `shards install`. Les commandes
+complètes, dépôt par dépôt, sont à la fin d'`ETAT-PORTAGE.adoc` et dans
+chaque README.
+
+Créer une instance de dossier puis la servir avec l'interface :
+
+[source,sh]
+----
+cd partiduo-app
+SKIP_MARTEN_CLI_PRECOMPILATION=1 shards install
+bin/partiduo-provision --help      # crée base, société et fichiers de déploiement
+cd ../partiduo-ui-bulma
+SKIP_MARTEN_CLI_PRECOMPILATION=1 shards install
+crystal run manage.cr -- migrate
+crystal run src/server.cr        # http://demo.partiduo.localhost:8000/
+----
+
+Administration du parc :
+
+[source,sh]
+----
+cd partiduo-admin
+SKIP_MARTEN_CLI_PRECOMPILATION=1 shards install
+createdb --encoding=UTF8 partiduo_admin && crystal run manage.cr -- migrate
+crystal run manage.cr -- bootstrap --email=vous@exemple.fr
+MARTEN_ENV=development crystal run src/server.cr     # http://127.0.0.1:8200
+----
+
+Specs d'un dépôt (même forme partout) :
+
+[source,sh]
+----
+createdb --encoding=UTF8 partiduo_test_relecture
+DATABASE_URL='postgres:///partiduo_test_relecture?host=/tmp' crystal spec --order random
+----
+
+Suite d'intégration TELEDEC contre le stage. Elle n'a pas pu tourner depuis
+le bac à sable, qui n'a pas d'accès réseau ; elle lit les identifiants dans
+`~/.config/partiduo/teledec-sandbox.env` sans jamais les afficher :
+
+[source,sh]
+----
+cd partiduo-teledec
+createdb --encoding=UTF8 partiduo_test_teledec_stage
+DATABASE_URL='postgres:///partiduo_test_teledec_stage?host=/tmp' crystal spec spec/integration/sandbox_spec.cr
+----
+
+== Ce qui reste à faire
+
+=== En attente d'un accès extérieur
+
+[cols="2,5",options="header"]
+|===
+|Sujet |Ce qu'il faut
+
+|TELEDEC |Lancer la suite du stage (ci-dessus) ; obtenir de TELEDEC la valeur de `SOURCE` et confirmer les codes de la CA3 et de la DAS2, l'authentification des rappels et les types de rappel (B-TDC-004)
+|EsaLink |Identifiants de préproduction dans `~/.config/partiduo/esalink-sandbox.env` ; confirmer les adresses de production et d'authentification (B-ESL-001)
+|Chorus Pro |Accès PISTE en qualification : l'adaptateur est écrit mais n'a pas été essayé (B-FIN-002)
+|URSSAF |Souscription à l'API Tierce Déclaration, reportée tant que l'inscription au portail ne fonctionne pas : l'adaptateur réel reste à écrire, la simulation est livrée (B-FIN-003, B-URS-001)
+|SUPER PDP |Déclarer l'application OAuth de l'opérateur pour essayer le mode _authorization code_ (B-SPDP-004)
+|XP Z12-013 |Bac à sable d'une plateforme agréée et schémas CDAR / e-reporting (B-EINV-002, B-EINV-003)
+|===
+
+=== Vérifications humaines
+
+* Passkeys sur un appareil réel ; l'essai a été fait avec l'authentificateur
+  virtuel de Chromium (B-AUTH-003, B-ABE-001).
+* Mode simplifié micro et libéral, et capture photo des justificatifs, sur un
+  vrai téléphone (B-UI-009, B-UI-001).
+* Parcours complet au clavier et comparaison à la maquette aux trois tailles
+  d'écran : les écrans principaux ont été vus, pas tous (B-CRIT-004,
+  B-UI-007).
+* Premier serveur Linux de production : installation de l'exécutant,
+  création, montée de version et restauration réelles, remise des
+  invitations (B-ADM-002, B-AFN-001, B-CRA-003).
+
+=== Valeurs à vérifier aux sources officielles
+
+* Taux URSSAF, seuils et cases de la 2042-C-PRO (B-MIC-001).
+* Lignes et cases de la 2035-A et de la 2035-B (B-LIB-001).
+
+=== Décisions qui vous reviennent
+
+* Chiffrement des sauvegardes : le serveur d'hébergement voit les données,
+  par construction (B-CRA-001).
+* Signature des doubles validations de l'exécutant, aujourd'hui
+  déclaratives (B-CRA-002).
+* Amendements aux ADR proposés en cours de portage, à adopter ou refuser :
+  la liste est dans `ETAT-PORTAGE.adoc`, section « Prochaines étapes »,
+  rubrique « Amendements à faire adopter » (événements
+  `invoice.platform_deposited` et `payment.unmatched`, dépendance
+  optionnelle de TELEDEC envers `liberal`, droits du module `micro`,
+  comptes 120 / 129 au plan FR, etc.).
+
+=== Travaux reportés
+
+* Reprises par `partiduo-migrate` de l'analytique, du stock, des prévisions
+  et du suivi (B-MIG-001, B-CRIT-003), avec la dette de sécurité
+  associée (B-SEC-001).
+* Export PDF depuis chaque liste (B-CRIT-001) ; écrans des fournisseurs
+  d'identité et de la connexion fédérée (B-CRIT-002).
+* Adresse de livraison et conditions de paiement à l'édition d'une facture
+  (B-FIN-001).
+* TVA : exigibilité au prorata des encaissements partiels, annexe 3310-A,
+  EDI-TVA (D-TVA-004, D-TVA-006).
+* Anomalies à signaler en amont : Crystal (B-ED-001), Marten (B-REF-001),
+  `pdf-validate` (B-INV-001).
+
+== Suites proposées
+
+Deux chantiers notés pendant le portage, à ouvrir après ce livrable :
+
+. *Module CRM* : suivi des prospects et des clients, en extension branchée
+  sur le contrat ADR-003, à côté de la Facturation.
+. *Générateur de modèles de factures multiformats* : modèles de factures
+  papier en AsciiDoc, Markdown, OpenDocument (ODT), Microsoft Office (DOCX),
+  etc., à partir des données de la Facturation.
+
+Les deux demandent un ADR avant d'écrire du code.
