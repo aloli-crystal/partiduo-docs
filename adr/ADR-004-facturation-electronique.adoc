@@ -7,7 +7,8 @@
 *Date.* 26 septembre 2026. +
 *Révision.* 27 septembre 2026 — premier adaptateur de PA : SuperPDP, dans le
 dépôt `partiduo-superpdp` (D2, D8) ; synchronisation par curseur (D2) ;
-factures non électroniques (D9). +
+factures non électroniques (D9) ; PDF pour tous et copie PDF doublant
+l'envoi par la plateforme (D9, 28 septembre 2026). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Contexte.* Prochaine extension à porter après le cœur. Remplace le portage à
 l'identique de `prod-github/noalyss/peppol-connect`.
@@ -200,6 +201,19 @@ l'étranger, et tout dossier qui n'active pas `einvoicing`.
   Le canal et le marquage « reçue hors plateforme » appartiennent au cœur
   (module Facturation et module Comptabilité), comme les champs de D5 : ils
   existent même quand `einvoicing` n'est pas actif.
+* *PDF pour tous.* Toute facture validée produit son PDF (le PDF/A-3 Factur-X
+  d'ADR-006 D5, lisible par un humain), téléchargeable et envoyable par
+  courriel, quel que soit le canal. Pour un client particulier, c'est
+  l'original.
+* *Copie PDF en plus de la plateforme.* Une facture émise par la plateforme
+  agréée peut être *doublée* d'un envoi du PDF par courriel. Option par
+  dossier, *activée par défaut pendant la première année* de facturation
+  électronique (période datée et paramétrable, pas d'échéance écrite en dur),
+  désactivable par client. Ce PDF porte la mention « Copie — l'original est la
+  facture électronique transmise par la plateforme agréée » : il ne doit pas
+  passer pour un second original (risque de double facturation et de TVA
+  due deux fois, CGI art. 283-3). L'envoi de la copie est tracé comme les
+  autres.
 * Rien dans `einvoicing` ne bloque une facture parce qu'elle n'est pas
   électronique ; l'extension signale seulement les cas où la réforme impose la
   plateforme.
