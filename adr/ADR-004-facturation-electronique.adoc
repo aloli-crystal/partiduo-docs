@@ -102,6 +102,14 @@ Adaptateurs prévus :
   (voir <<d8>>).
 . *XP Z12-013* — l'API normalisée, dans `partiduo-einvoicing` ; couvre toute PA
   qui l'implémente, SuperPDP compris.
+. *EsaLink (Hubtimize e-Invoicing)* — PA retenue par l'association PDP Libre et
+  utilisée par le module libre PDPConnectFR de Dolibarr ; dépôt
+  `partiduo-esalink`. Son API d'orchestration (`/api/orchestrator/v1/flows`)
+  suit l'API Flux de la norme XP Z12-013 : l'extension *réutilise l'adaptateur
+  XP Z12-013* d'`einvoicing` et n'ajoute que ce qui est propre à EsaLink
+  (authentification par identifiant et mot de passe sur `/token`, adresses de
+  préproduction et de production, écarts constatés à la norme). L'accès passe
+  par EsaLink ou par un distributeur membre de PDP Libre.
 . *NOALYSS-PEPPOL* — reprise de `peppol-connect`, réservée aux dossiers belges
   (régime `be` de l'ADR-001), TLS vérifié. Conservé à côté de SuperPDP, qui
   couvre aussi la Belgique : le dossier choisit son adaptateur.
