@@ -25,6 +25,8 @@ chaque projet PHP porté a son équivalent Crystal.
 |— |`partiduo-urssaf` |Tierce déclaration URSSAF des micro-entrepreneurs — voir ADR-007 D7
 |— |`partiduo-choruspro` |Factures aux clients publics par Chorus Pro — voir ADR-004 D9
 |— |`partiduo-esalink` |Adaptateur de la plateforme agréée EsaLink (Hubtimize), sur la base de l'API XP Z12-013 — voir ADR-004 D2
+|— |`partiduo-crm` |Relation client : prospects, contacts, opportunités, activités, passage au devis — voir ADR-009
+|— |`partiduo-modeles` |Modèles de factures AsciiDoc, Markdown, ODT, DOCX avec champs de fusion — voir ADR-010
 |— |`partiduo-superpdp` |Adaptateur de la plateforme agréée SuperPDP pour `partiduo-einvoicing` — voir ADR-004 D8
 |`noalyss-plugins` |découpé — voir ADR-003 |15 extensions
 |`noalyss_xmlpayment` |`partiduo-sepa` |Virements SEPA
@@ -54,6 +56,8 @@ nom commence par `partiduo-`. Chaque dépôt Crystal a deux branches longues : `
 * `adr/ADR-006-modules-et-facturation.adoc` — modules activables (comptabilité, facturation…) et facturation conforme.
 * `adr/ADR-007-micro-entreprise-et-teledeclaration.adoc` — modules micro-entreprise et professions libérales (2035), télédéclaration par TELEDEC.
 * `adr/ADR-008-administration-du-parc.adoc` — application `partiduo-admin` et exécutant des tâches du parc.
+* `adr/ADR-009-crm.adoc` — extension de relation client `partiduo-crm`.
+* `adr/ADR-010-modeles-de-factures.adoc` — extension de modèles de factures multiformats `partiduo-modeles`.
 * `maquette/` — maquette de référence de l'interface (ADR-005 D6).
 * `PROMPT-PORTAGE.adoc` — prompt de lancement du portage du cœur.
 * `LIVRABLE.adoc` — livrable du portage : ce qui est fait, comment le lancer, ce qui reste.

@@ -1,0 +1,129 @@
+= ADR-009 — Relation client : extension `partiduo-crm`
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Accepté — 28 septembre 2026. +
+*Date.* 28 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Complète.* ADR-003 (contrat d'extension, D7 événements), ADR-005
+(interface), ADR-006 (module Facturation).
+
+== Résumé
+
+Partiduo tient la comptabilité et la facturation, mais rien ne suit la vente
+*avant* le devis : qui démarcher, où en est chaque affaire, quoi faire ensuite.
+L'extension `partiduo-crm` ajoute ce suivi commercial : prospects et contacts,
+opportunités dans un pipeline par étapes, activités à échéance, passage de
+l'opportunité au devis de la Facturation, tableau de bord commercial.
+
+== Contexte
+
+* Les fiches du cœur (`cards`) ont une nature comptable : `customer`,
+  `supplier`, `contact`… Une fiche client porte un compte auxiliaire. Un
+  prospect n'en a pas besoin, et en créer un par prospect encombrerait le
+  plan comptable et les éditions.
+* Le module Facturation sait créer un devis, le transformer en facture et
+  enregistrer la décision du client (`decide_quote`), mais ne publie aucun
+  événement à cette décision.
+* Le contrat ADR-003 permet à une extension d'avoir ses modèles, ses
+  migrations, ses écrans (`ui/bulma`) et de s'abonner aux événements du cœur.
+
+== Décision
+
+=== D1 — Une extension, activable par dossier
+
+Dépôt `aloli-crystal/partiduo-crm`, extension `CRM` au sens d'ADR-003,
+successeur d'aucune extension amont. Elle *dépend de la Facturation*
+(`depends_on "INVOICING"`) : sans devis, le pipeline n'aboutit à rien.
+Elle se désactive sans perte : ses tables restent, ses écrans disparaissent.
+
+=== D2 — Organisations et contacts propres à la relation client
+
+* *Organisation* : entreprise, administration ou particulier suivi par le
+  CRM. Elle est soit un *prospect* (propre au CRM, sans fiche du cœur), soit
+  *rattachée à une fiche client* du cœur (`card_id`).
+* *Contact* : une personne (civilité, nom, prénom, fonction, courriel,
+  téléphones), rattachée à une organisation, ou isolée.
+* *Devenir client* : une action explicite crée la fiche client du cœur par
+  le contrat (`Partiduo::Api::Cards`), avec la nature du client (particulier,
+  entreprise, public), puis rattache l'organisation. Aucune fiche n'est créée
+  implicitement.
+* Une fiche client créée hors du CRM apparaît dans le CRM sans double
+  saisie : l'abonnement à `card.saved` crée ou met à jour l'organisation
+  rattachée.
+* *Consentement* (RGPD) : origine du contact (salon, site, recommandation…),
+  base légale de la prospection et opposition, datées. Un contact opposé
+  n'apparaît plus dans les listes d'actions commerciales. L'effacement d'un
+  contact est possible tant qu'il n'est lié à aucun devis.
+
+=== D3 — Opportunités dans un pipeline
+
+* *Opportunité* : intitulé, organisation, contact principal, montant estimé
+  HT, probabilité, date de clôture prévue, responsable (utilisateur du
+  dossier), étape, origine.
+* *Étapes* paramétrables par dossier, dans un ordre, chacune avec une
+  probabilité par défaut. Étapes initiales : Découverte (10 %), Qualification
+  (25 %), Proposition (50 %), Négociation (75 %), puis deux étapes de clôture
+  fixes : *Gagnée* (100 %) et *Perdue* (0 %, motif obligatoire).
+* Vue *pipeline* en colonnes par étape (déplacement au clavier et à la
+  souris), vue *liste* filtrable, montant pondéré par étape.
+* Tout changement d'étape est historisé (qui, quand, de quelle étape à
+  quelle étape).
+
+=== D4 — Activités à échéance
+
+* *Activité* : appel, rendez-vous, courriel, tâche ou note ; date, échéance,
+  durée, responsable, compte rendu, fait / à faire.
+* Rattachée à une organisation, un contact et / ou une opportunité.
+* Écran « Mes activités » : en retard, aujourd'hui, à venir.
+* Une opportunité ouverte sans activité à venir est signalée (« sans suite
+  prévue »).
+
+=== D5 — De l'opportunité au devis
+
+* Depuis une opportunité, *Créer un devis* : si l'organisation est un
+  prospect, elle devient d'abord client (D2) ; puis un devis brouillon est
+  créé par `Partiduo::Api::Invoicing.create_document`, lié à l'opportunité.
+  L'opportunité passe à l'étape « Proposition » si elle était avant.
+* Une opportunité peut porter plusieurs devis (versions successives).
+* *Nouvel événement du cœur `quote.decided`* (amendement d'ADR-003 D7),
+  publié par `decide_quote` avec le document et la décision (acceptée,
+  refusée) : un devis accepté fait passer l'opportunité à « Gagnée », un devis
+  refusé la laisse ouverte et crée une activité « relancer » pour le
+  responsable, parce qu'un devis refusé appelle souvent une nouvelle version.
+* L'abonnement à `invoice.issued` rattache à l'opportunité la facture tirée
+  d'un de ses devis.
+
+=== D6 — Tableau de bord commercial
+
+* Pipeline pondéré par étape et par responsable ; opportunités gagnées et
+  perdues sur la période, taux de transformation, motifs de perte ;
+  activités en retard.
+* Chiffre d'affaires *facturé* issu des opportunités, lu dans la Facturation
+  par le contrat, jamais recopié.
+* Tuile « Commercial » sur le tableau de bord du dossier, et entrée
+  « Relation client » au menu.
+
+=== D7 — Droits
+
+Trois permissions de l'extension : `crm.read` (consulter), `crm.write`
+(saisir organisations, contacts, opportunités, activités), `crm.admin`
+(étapes, motifs de perte, origines, effacement RGPD). Créer un devis exige
+en plus le droit correspondant de la Facturation.
+
+=== D8 — Import et export
+
+Import CSV des organisations et contacts (aperçu, correspondance des
+colonnes, doublons signalés par SIREN, courriel ou nom) ; export CSV des
+listes. Pas d'envoi de courriels groupés dans cette version.
+
+== Conséquences
+
+* `partiduo-app` publie `quote.decided` : amendement d'ADR-003 D7, adopté
+  avec cet ADR.
+* Le prospect reste hors de la comptabilité jusqu'à ce qu'il devienne
+  client : le plan comptable et les éditions ne voient que des clients.
+* Les campagnes et l'envoi groupé sont écartés de cette version : ils
+  demandent un suivi des désinscriptions et de la délivrabilité qui mérite
+  son propre ADR.

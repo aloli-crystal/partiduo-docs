@@ -1,0 +1,121 @@
+= ADR-010 — Modèles de factures multiformats : extension `partiduo-modeles`
+:toc: left
+:toc-title: Table des matières
+:icons: font
+
+*Statut.* Accepté — 28 septembre 2026. +
+*Date.* 28 septembre 2026. +
+*Auteur.* Philippe Nénert (Aloli). +
+*Complète.* ADR-003 (contrat d'extension), ADR-004 D9 (factures non
+électroniques, copie PDF), ADR-006 (module Facturation, mises en page).
+
+== Résumé
+
+Le module Facturation produit la facture légale : PDF/A-3 Factur-X, mise en
+page choisie parmi les *mises en page* du dossier (logo, couleurs, pied de
+page). Beaucoup d'entreprises ont déjà un modèle de facture en traitement de
+texte, et veulent le garder pour leurs factures papier ou leurs envois par
+courrier. L'extension `partiduo-modeles` permet de déposer un modèle
+AsciiDoc, Markdown, OpenDocument (ODT) ou Microsoft Word (DOCX) comportant
+des champs de fusion ; Partiduo le remplit avec un document de la
+Facturation et rend le résultat dans le même format, et en PDF quand le
+serveur a le convertisseur voulu.
+
+== Contexte
+
+* La facture fait foi par ses données, son numéro et son empreinte, tenus
+  par le cœur (ADR-006). Un document rendu depuis un modèle est une
+  *présentation* de cette facture, pas une nouvelle facture.
+* Les mentions obligatoires d'une facture française (numéro, date, identité
+  et SIREN du vendeur et de l'acheteur, lignes, taux et montants de TVA,
+  totaux, échéance, pénalités de retard et indemnité forfaitaire de
+  recouvrement entre professionnels) ne doivent pas disparaître d'un modèle.
+* ODT et DOCX sont des archives ZIP de XML : un traitement de texte coupe
+  volontiers un champ `{{ numero }}` en plusieurs fragments de mise en forme.
+
+== Décision
+
+=== D1 — Une extension, activable par dossier
+
+Dépôt `aloli-crystal/partiduo-modeles`, extension `MODELES` au sens
+d'ADR-003, `depends_on "INVOICING"`. Elle lit les documents par le contrat
+(`Partiduo::Api::Invoicing`) et stocke ses fichiers par le socle des pièces
+jointes.
+
+=== D2 — Un seul langage de fusion pour tous les formats
+
+* Les champs et les boucles s'écrivent dans la syntaxe des gabarits Marten :
+  `{{ facture.numero }}`, `{% for ligne in lignes %}…{% endfor %}`,
+  `{% if … %}`. Le moteur est bridé : pas d'accès aux modèles, seulement au
+  contexte de fusion.
+* Le *contexte de fusion* est un vocabulaire français stable et documenté,
+  indépendant des noms internes : `facture` (numéro, type, dates, échéance,
+  références, conditions de paiement), `vendeur`, `client`, `lignes`
+  (désignation, quantité, unité, prix unitaire HT, remise, taux de TVA,
+  montant HT), `tva` (ventilation par taux), `totaux` (HT, TVA, TTC, acompte
+  déduit, net à payer), `reglement` (IBAN, BIC, référence), `mentions`
+  (mentions légales calculées par le cœur, dont l'exonération de TVA et
+  l'autoliquidation).
+* Les valeurs sont *échappées selon le format* : XML pour ODT et DOCX,
+  caractères actifs d'AsciiDoc et de Markdown. Les montants et les dates sont
+  formatés dans la langue du document.
+* ODT et DOCX : le modèle est d'abord *normalisé* (fragments de mise en forme
+  d'un même champ réunis), puis fusionné. Une ligne de tableau qui contient
+  `{% for ligne in lignes %}` est répétée pour chaque ligne de la facture.
+
+=== D3 — Contrôle du modèle au dépôt
+
+* Au dépôt, le modèle est analysé : syntaxe, champs inconnus, et *présence
+  des mentions obligatoires* (liste de D2). Un modèle incomplet est refusé
+  avec la liste de ce qui manque ; le bloc `{{ mentions }}` couvre à lui seul
+  les mentions légales calculées.
+* Un aperçu est rendu avec une facture fictive avant l'activation du
+  modèle.
+* Les modèles sont versionnés : un nouveau dépôt crée une version, les
+  documents déjà rendus gardent la leur.
+
+=== D4 — Rendu, conservation, usage
+
+* Depuis un devis, une facture ou un avoir *émis*, « Rendre avec un
+  modèle » : fichier dans le format du modèle et, si disponible, en PDF.
+* Chaque rendu est *conservé* en pièce jointe du document, avec son
+  empreinte SHA-256 et la version du modèle : on sait toujours ce qui a été
+  imprimé ou envoyé.
+* Un brouillon peut être rendu en aperçu, marqué « Brouillon — sans valeur »,
+  et n'est pas conservé.
+* Le PDF légal Factur-X du cœur reste la référence pour la plateforme
+  agréée et la copie PDF (ADR-004 D9) ; le rendu d'un modèle sert au papier,
+  au courrier, et peut être joint à un courriel en plus du PDF légal.
+* Un modèle peut être désigné par défaut pour un type de document (facture,
+  devis, avoir) et une langue.
+
+=== D5 — Conversion en PDF par des outils externes, facultatifs
+
+* ODT, DOCX : LibreOffice sans interface (`soffice --headless
+  --convert-to pdf`) ; AsciiDoc : `asciidoctor-pdf` ; Markdown : `pandoc`.
+* Chaque convertisseur est déclaré dans la configuration de l'instance
+  (chemin, délai maximal) et lancé sans réseau, dans un répertoire
+  temporaire, avec un délai ; son absence désactive seulement le PDF du
+  format concerné, et l'écran le dit.
+* Aucun convertisseur n'est requis pour les specs ; le rendu PDF a ses specs
+  propres, en attente si l'outil manque.
+
+=== D6 — Modèles de départ
+
+L'extension fournit un modèle de départ par format (facture, devis, avoir),
+complets et conformes, en français, en anglais et en néerlandais, que
+l'utilisateur télécharge, adapte dans son logiciel et redépose.
+
+=== D7 — Droits
+
+`modeles.read` (rendre et télécharger), `modeles.admin` (déposer, activer,
+désigner par défaut, retirer un modèle).
+
+== Conséquences
+
+* Aucun changement du cœur : l'extension lit par le contrat et conserve par
+  le socle des pièces jointes.
+* Le rendu ne modifie jamais la facture : ni numéro, ni montants, ni
+  empreinte.
+* Les formats tableur (ODS, XLSX) et l'éditeur de modèles à l'écran sont
+  écartés de cette version.

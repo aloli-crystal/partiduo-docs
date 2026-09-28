@@ -179,6 +179,7 @@ auxquels une extension s'abonne dans son manifeste :
 
 * `entry.posted`, `entry.cancelled`
 * `invoice.issued` (vente enregistrée)
+* `quote.decided` (décision du client sur un devis ; ajouté par ADR-009 D5)
 * `payment.matched` (lettrage d'un paiement avec une facture)
 * `card.saved`
 * `period.closed`
