@@ -7,7 +7,9 @@
 *Date.* 27 septembre 2026. +
 *Révision.* 27 septembre 2026 — ajout du module `liberal` (2035, D6) et de
 l'extension `partiduo-urssaf` (tierce déclaration, D7) ; 29 septembre 2026 —
-D4 : `partiduo-teledec` dépend de la Comptabilité *ou* du module `liberal`. +
+D4 : `partiduo-teledec` dépend de la Comptabilité *ou* du module `liberal` ;
+D7 : l'extension `partiduo-urssaf` exige les droits du module `micro`
+(amendement D-URS-010 adopté). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-006 (modules activables), ADR-003 (extensions), ADR-005
 (interface).
@@ -205,6 +207,14 @@ gérer les mandats SEPA.
   anomalies ; accusés conservés.
 * *Connecteur abstrait* et URSSAF simulée pour les specs, comme `partiduo-teledec`
   (D4) ; le branchement réel suit la souscription.
+* *Droits* (amendement D-URS-010, adopté le 29 septembre 2026) : les
+  permissions de l'extension ne s'ajoutent pas en silence à celles du module
+  `micro`, elles s'y cumulent. Lire les périodes à déclarer et estimer les
+  cotisations exige aussi `micro.register.read` ; déclarer exige aussi
+  `micro.register.write`, vérifié avant tout appel à l'URSSAF (aucune
+  déclaration transmise qui ne pourrait être notée au registre). Seuls la
+  vue d'ensemble et le compteur des périodes en attente restent ouverts
+  sans droit `micro`, sans montrer de chiffre d'affaires.
 * *Responsabilité* : utiliser l'API fait de l'opérateur de Partiduo un *tiers
   déclarant* (Code de la sécurité sociale, art. L133-11, R133-43, R133-44).
   La souscription est une démarche de l'opérateur.
