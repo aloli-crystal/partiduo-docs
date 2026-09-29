@@ -219,9 +219,10 @@ son ADR :
 . *Relation client* : `partiduo-crm`, ADR-009. Démonstration :
   `partiduo-crm/scripts/demo.cr` (README du dépôt).
 . *Modèles de factures multiformats* : `partiduo-modeles`, ADR-010.
-  Démonstration : `partiduo-modeles/scripts/demo.cr`. Les conversions en PDF
-  réelles restent à essayer sur un poste où LibreOffice, `asciidoctor-pdf`
-  et `pandoc` (avec un moteur PDF) sont installés (B-MOD-005) ; l'isolation
+  Démonstration : `partiduo-modeles/scripts/demo.cr`. Le PDF d'un modèle
+  AsciiDoc ou Markdown est produit par `asciicrystal-pdf`, vérifié en local
+  et en CI ; celui d'un ODT ou d'un DOCX par LibreOffice reste à essayer sur
+  un poste où il fonctionne (B-MOD-005) ; l'isolation
   réseau des convertisseurs se règle au déploiement (B-MOD-003).
 
 Écartés de ces versions, à cadrer par un ADR si le besoin se confirme :

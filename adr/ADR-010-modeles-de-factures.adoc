@@ -92,7 +92,10 @@ jointes.
 === D5 — Conversion en PDF par des outils externes, facultatifs
 
 * ODT, DOCX : LibreOffice sans interface (`soffice --headless
-  --convert-to pdf`) ; AsciiDoc : `asciidoctor-pdf` ; Markdown : `pandoc`.
+  --convert-to pdf`) ; AsciiDoc : `asciicrystal-pdf` (aloli-crystal, sur le
+  shard `pdf`) ; Markdown : converti en AsciiDoc par `kramdown-asciidoc`
+  (aloli-crystal), puis `asciicrystal-pdf` (amendé le 29 septembre 2026 ;
+  `asciidoctor-pdf` et `pandoc` ne sont plus utilisés).
 * Chaque convertisseur est déclaré dans la configuration de l'instance
   (chemin, délai maximal) et lancé sans réseau, dans un répertoire
   temporaire, avec un délai ; son absence désactive seulement le PDF du
