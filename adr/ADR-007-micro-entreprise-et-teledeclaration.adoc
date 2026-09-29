@@ -6,7 +6,8 @@
 *Statut.* Accepté — 27 septembre 2026. +
 *Date.* 27 septembre 2026. +
 *Révision.* 27 septembre 2026 — ajout du module `liberal` (2035, D6) et de
-l'extension `partiduo-urssaf` (tierce déclaration, D7). +
+l'extension `partiduo-urssaf` (tierce déclaration, D7) ; 29 septembre 2026 —
+D4 : `partiduo-teledec` dépend de la Comptabilité *ou* du module `liberal`. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-006 (modules activables), ADR-003 (extensions), ADR-005
 (interface).
@@ -109,7 +110,19 @@ reste accessible au comptable (rôle `comptable`, ADR-002 D4).
 
 === D4 — Une extension `partiduo-teledec`
 
-Extension au sens de l'ADR-003, `depends_on "ACCOUNTING"`.
+Extension au sens de l'ADR-003, `depends_on_any "ACCOUNTING", "LIBERAL"`
+(amendé le 29 septembre 2026 ; auparavant `depends_on "ACCOUNTING"`).
+
+* *Avec la Comptabilité* : toutes les déclarations ci-dessous ; la 2035
+  joint, si le module `liberal` (D6) est actif, les cases de la 2035 qu'il
+  prépare.
+* *Avec le module `liberal` seul* (professionnel libéral qui ne tient que
+  son livre-journal) : la liasse 2035 seulement, construite à partir de la
+  2035 préparée par `liberal`, sans balance. Les déclarations qui exigent la
+  Comptabilité (balance et son export, liasses BIC, IS et SCI, TVA, DAS2,
+  relevés d'IS, greffe) sont absentes de l'écran et refusées par le contrat
+  de l'extension (« nécessite le module Comptabilité »), sans lecture du
+  contrat de la Comptabilité (DECISIONS D-TDC2-001 à D-TDC2-005).
 
 * *Formule : API Balance.* Partiduo transmet la balance de l'exercice et
   l'identité de l'entreprise ; TELEDEC remplit les formulaires ; l'utilisateur
