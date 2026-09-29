@@ -181,6 +181,11 @@ auxquels une extension s'abonne dans son manifeste :
 * `invoice.issued` (vente enregistrée)
 * `quote.decided` (décision du client sur un devis ; ajouté par ADR-009 D5)
 * `payment.matched` (lettrage d'un paiement avec une facture)
+* `payment.unmatched` (lettrage défait ou extourné : la facture redevient due ;
+  amendement adopté le 29 septembre 2026, DECISIONS D-2F-003)
+* `invoice.platform_deposited` (facture déposée sur la plateforme agréée : déclenche
+  la copie PDF d'ADR-004 D9 ; amendement adopté le 29 septembre 2026,
+  DECISIONS D-CPY-001)
 * `card.saved`
 * `period.closed`
 

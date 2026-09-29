@@ -116,6 +116,12 @@ versionnés avec lui.
 Les modules communiquent *uniquement* par le socle et par les événements
 (ADR-003 D7). C'est ce qui permet de les activer séparément.
 
+_Amendement adopté le 29 septembre 2026 (DECISIONS D-STK-001)._ Un module qui
+dépend d'un autre *au choix* (`depends_on_any`, comme le Stock envers la
+Facturation ou la Comptabilité) peut lire le contrat de celui-ci, et seulement
+depuis l'abonné d'un événement que ce module publie : l'événement garantit
+qu'il est actif.
+
 [cols="2,3,3",options="header"]
 |===
 |Événement |Publié par |Effet si l'autre module est actif

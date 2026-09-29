@@ -94,6 +94,12 @@ La CI de `partiduo-app` échoue si :
 * un fichier hors de `Partiduo::Api` est référencé par `partiduo-ui-bulma`
   (règle Ameba propre, ou spec qui analyse les `require` et les constantes).
 
+_Amendement adopté le 29 septembre 2026 (DECISIONS D-014)._ Pour se composer
+avec le cœur, l'interface peut citer une liste blanche fermée d'éléments hors
+de `Partiduo::Api` : `require "partiduo"`, `require "partiduo/cli"`,
+`Partiduo.apply_settings`, `Partiduo::INSTALLED_APPS`, `LOCALES`, `VERSION`,
+`API_VERSION`. Tout le reste reste interdit.
+
 Sans ce garde-fou, la frontière s'érode au premier raccourci.
 
 === D4 — Extensions : métier et interface séparés dans le même dépôt
@@ -134,9 +140,11 @@ Structure d'écran :
 * barre supérieure : nom du dossier, *exercice et période courants* (toujours
   visibles, modifiables en un clic), recherche globale, utilisateur ;
 * menu latéral par domaine — Tableau de bord, Facturation, Saisie,
-  Consultation, Référentiel, Éditions, TVA, Analytique, Paramètres — puis les
+  Consultation, Référentiel, Éditions, TVA, Analytique, Suivi, Paramètres — puis les
   extensions activées. *Seuls les modules actifs apparaissent* (ADR-006) ; le
-  tableau de bord assemble les tuiles fournies par chaque module actif ;
+  tableau de bord assemble les tuiles fournies par chaque module actif. La
+  rubrique *Suivi* (module Suivi, rangée après Facturation) est ajoutée par
+  amendement adopté le 29 septembre 2026 (DECISIONS D-FUP-002) ;
 * zone de contenu : titre, fil d'Ariane, actions à droite.
 
 Ergonomie comptable :
