@@ -199,17 +199,32 @@ DATABASE_URL='postgres:///partiduo_test_teledec_stage?host=/tmp' crystal spec sp
 
 === Travaux reportés
 
-* Reprises par `partiduo-migrate` de l'analytique, du stock, des prévisions
-  et du suivi (B-MIG-001, B-CRIT-003), avec la dette de sécurité
-  associée (B-SEC-001).
-* Export PDF depuis chaque liste (B-CRIT-001) ; écrans des fournisseurs
-  d'identité et de la connexion fédérée (B-CRIT-002).
-* Adresse de livraison et conditions de paiement à l'édition d'une facture
-  (B-FIN-001).
-* TVA : exigibilité au prorata des encaissements partiels, annexe 3310-A,
-  EDI-TVA (D-TVA-004, D-TVA-006).
-* Anomalies à signaler en amont : Crystal (B-ED-001), Marten (B-REF-001),
-  `pdf-validate` (B-INV-001).
+Réalisés le 29 septembre 2026 (DECISIONS D-R5-001 à D-R5-017 de
+`partiduo-app`, section « Travaux reportés ») :
+
+* Fiches fournisseurs « personne physique » (nom, prénoms, date de
+  naissance) et DAS2 qui les déclare en `AE_3036_1`, `AE_3036_2`, `AI`
+  (B-TDC-004, point DAS2 levé pour la distinction).
+* Conditions de paiement par document et adresse de livraison choisie à
+  l'édition d'une facture (B-FIN-001 levé).
+* TVA : exigibilité au prorata des encaissements partiels, annexe 3310-A
+  (ligne 14 taux par taux) ; EDI-TVA non écrit, blocage motivé B-R5-001.
+* Export PDF/A-2b depuis chaque liste par `Api::Core.table_pdf` (B-CRIT-001
+  levé).
+* Fournisseurs d'identité (SAML 2.0, OpenID Connect intégré au cœur) et
+  connexion fédérée dans l'interface (B-CRIT-002 levé en partie : reste le
+  dépôt de pièces jointes à la saisie).
+* Reprises par `partiduo-migrate` de l'analytique, des numéros de relevé,
+  du stock, des prévisions et du suivi, avec les avertissements de
+  sécurité ; droits par dépôt et actions réservées à un profil
+  (B-MIG-001, B-CRIT-003, B-SEC-001 levés).
+* Anomalies amont : reproductions et textes des tickets dans
+  `partiduo-app/doc/amont/` (Crystal, Marten, `pdf-validate`), tickets à
+  ouvrir par le mainteneur.
+
+Restent : EDI-TVA (B-R5-001), essai de la connexion fédérée contre un
+vrai fournisseur, codes TELEDEC de l'annexe 3310-A et forme de `AI`
+(B-TDC-004), ouverture des tickets amont.
 
 == Suites réalisées
 
