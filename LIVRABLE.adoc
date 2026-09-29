@@ -16,11 +16,12 @@ dans `partiduo-app/DECISIONS.adoc`, les obstacles dans
 * *Tous les lots du plan sont terminés* : P, 0 à 6, M, puis les lots ajoutés
   en cours de route (E, G, L, T, T2, C, K, H, U, A) et la critique de
   complétude finale.
-* *13 dépôts* dans `aloli-crystal`, dont 12 dépôts de code ; *les 12 CI
-  GitHub sont vertes* sur leur dernier commit (format, Ameba, garde-fou
+* *15 dépôts* dans `aloli-crystal`, dont 14 dépôts de code ; *les CI
+  GitHub sont vertes* (celles de `partiduo-crm` et `partiduo-modeles`, dépôts
+  créés le 29 septembre, restent à observer) sur leur dernier commit (format, Ameba, garde-fou
   « aucune mention du logiciel d'origine dans le code », compilation, specs
   sur PostgreSQL 18).
-* *Environ 2 400 exemples de specs*, tous verts.
+* *Environ 2 600 exemples de specs*, tous verts.
 * *Vérification dans un navigateur* sur une instance « Comptabilité +
   Facturation » : connexion, proposition de passkey, tableau de bord, fiche
   facture, saisie d'achat au clavier, vue téléphone, thèmes clair et sombre,
@@ -46,6 +47,8 @@ dans `partiduo-app/DECISIONS.adoc`, les obstacles dans
 |`partiduo-document` |Justificatifs : photos, fichiers, factures reçues à traiter |72
 |`partiduo-teledec` |Télédéclarations par TELEDEC : liasse (API Balance), TVA, DAS2, IS, greffe, 2035 |179
 |`partiduo-urssaf` |Micro-entrepreneurs : simulation des déclarations, suivi, télépaiement et mandats (API Tierce Déclaration simulée) |69
+|`partiduo-crm` |Relation client (ADR-009) : prospects et contacts (RGPD), opportunités en pipeline, activités à échéance, passage au devis, tableau de bord commercial, import et export CSV |72
+|`partiduo-modeles` |Modèles de factures (ADR-010) : AsciiDoc, Markdown, ODT, DOCX avec champs de fusion, contrôle des mentions obligatoires, rendus conservés, PDF par convertisseur facultatif, 36 modèles de départ |110
 |`partiduo-skel` |Extension de référence, exemple du contrat ADR-003 |25
 |`partiduo-docs` |ADR, cartographie de l'existant, prompt, maquette, ce livrable |—
 |===
@@ -80,6 +83,7 @@ outre dans huit combinaisons de modules (`scripts/specs-modules.sh`).
 |H |`partiduo-esalink`
 |U |`partiduo-urssaf`
 |A |Interface d'instance en ligne de commande, `partiduo-admin`, `partiduo-agent`, certificat par instance
+|R |`partiduo-crm` (ADR-009) et `partiduo-modeles` (ADR-010) ; événement `quote.decided` ; points d'accroche de l'interface pour les extensions (tuiles de tableau de bord, actions et fichiers sur la fiche d'un document) ; ODT et DOCX au socle des pièces jointes
 |N |Plus aucune mention du logiciel d'origine dans le code ni dans les commentaires (base d'origine appelée « legacy »), vérifié par chaque CI
 |===
 
@@ -207,14 +211,19 @@ DATABASE_URL='postgres:///partiduo_test_teledec_stage?host=/tmp' crystal spec sp
 * Anomalies à signaler en amont : Crystal (B-ED-001), Marten (B-REF-001),
   `pdf-validate` (B-INV-001).
 
-== Suites proposées
+== Suites réalisées
 
-Deux chantiers notés pendant le portage, à ouvrir après ce livrable :
+Les deux chantiers notés pendant le portage sont faits, chacun cadré par
+son ADR :
 
-. *Module CRM* : suivi des prospects et des clients, en extension branchée
-  sur le contrat ADR-003, à côté de la Facturation.
-. *Générateur de modèles de factures multiformats* : modèles de factures
-  papier en AsciiDoc, Markdown, OpenDocument (ODT), Microsoft Office (DOCX),
-  etc., à partir des données de la Facturation.
+. *Relation client* : `partiduo-crm`, ADR-009. Démonstration :
+  `partiduo-crm/scripts/demo.cr` (README du dépôt).
+. *Modèles de factures multiformats* : `partiduo-modeles`, ADR-010.
+  Démonstration : `partiduo-modeles/scripts/demo.cr`. Les conversions en PDF
+  réelles restent à essayer sur un poste où LibreOffice, `asciidoctor-pdf`
+  et `pandoc` (avec un moteur PDF) sont installés (B-MOD-005) ; l'isolation
+  réseau des convertisseurs se règle au déploiement (B-MOD-003).
 
-Les deux demandent un ADR avant d'écrire du code.
+Écartés de ces versions, à cadrer par un ADR si le besoin se confirme :
+campagnes et envoi groupé de courriels (CRM), formats tableur et éditeur de
+modèles à l'écran (modèles).
