@@ -3,7 +3,8 @@
 :toc-title: Table des matières
 :icons: font
 
-*Statut.* Accepté — 27 septembre 2026. +
+*Statut.* Accepté — 27 septembre 2026 ; amendé le 29 septembre 2026
+(validation à deux au choix). +
 *Date.* 27 septembre 2026. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-001 D2 (l'inventaire des instances, « hors application »),
@@ -85,9 +86,28 @@ possède aucun compte dans les instances. Il gère :
 * la *modification* des modules et extensions actifs (ADR-006 D2 : désactiver
   conserve les données en lecture seule) ;
 * le *recours d'accès* : si la société a perdu tout accès administrateur,
-  réémission de l'invitation d'administrateur, *avec double validation* (deux
-  personnes habilitées, dont un admin de cabinet ou le super-admin) et trace
-  dans le journal d'audit de l'admin *et* dans celui de l'instance.
+  réémission de l'invitation d'administrateur, décidée selon le *réglage
+  « validation à deux »* de la structure (voir ci-dessous) et tracée dans le
+  journal d'audit de l'admin *et* dans celui de l'instance.
+
+*Validation à deux au choix* (amendement du 29 septembre 2026). Le recours
+d'accès et la suppression définitive sont des *opérations sensibles*. Chaque
+structure — cabinet, gestionnaire indépendant, parc sans cabinet du
+super-admin — règle si elles exigent deux personnes :
+
+* *deux personnes* : une autre personne habilitée (admin de la structure ou
+  super-admin) valide la demande ; possible seulement avec au moins deux
+  personnes habilitées, désactivé d'office (trace au journal d'audit) si
+  l'équipe retombe à une ;
+* *une personne* (défaut, proposé seulement à un cabinet de plusieurs
+  personnes habilitées de passer à deux) : *protection de repli* — le
+  demandeur habilité confirme seul après une ré-authentification forte de
+  moins de cinq minutes et une confirmation explicite (sous-domaine retapé
+  pour une suppression définitive) ; les contrôles du serveur, le journal
+  d'audit et la trace dans l'instance sont inchangés ; le mode est transmis
+  à l'exécutant.
+
+Détail : DECISIONS D-VAL2-001 à D-VAL2-008 de partiduo-app.
 
 Aucun accès « de support » n'entre dans un dossier sans y avoir été invité par
 la société (ADR-002 D3).
@@ -119,7 +139,9 @@ migrations, réémission de l'invitation d'administrateur, mise en lecture seule
 Créer, suspendre (service arrêté, données intactes), réactiver, *archiver*
 (sauvegarde figée et vérifiée, instance arrêtée, archive conservée *dix ans*),
 restaurer une archive en instance active, *supprimer définitivement* seulement
-après la durée légale, avec double validation.
+après la durée légale (revérifiée par le serveur), à une ou deux personnes
+selon le réglage « validation à deux » de la structure (D3), avec la
+protection de repli à une personne.
 
 *Sauvegardes*::
 Sauvegardes planifiées par dossier (`pg_dump` et fichiers joints), rétention
@@ -153,7 +175,14 @@ disque, dernière sauvegarde réussie. Alertes dans l'interface et par courriel.
 * Une application, une base, un exécutant de plus à exploiter et à sécuriser.
 * L'interface en ligne de commande d'instance devient un contrat, versionné
   comme `Partiduo::Api`.
-* La double validation ralentit les recours d'accès, volontairement.
+* La validation à deux, quand une structure la choisit, ralentit les
+  recours d'accès et les suppressions définitives, volontairement. À une
+  personne (défaut des gestionnaires indépendants et des cabinets d'une
+  personne), la sécurité repose sur la ré-authentification forte, la
+  confirmation explicite, les contrôles du serveur et le journal d'audit :
+  un compte d'administration compromis *avec* son second facteur suffit
+  alors à décider seul ; la signature des validations par l'exécutant
+  (B-CRA-002) ne concerne que le mode à deux et reste reportée.
 
 == Questions ouvertes
 
