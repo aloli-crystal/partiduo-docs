@@ -186,6 +186,10 @@ auxquels une extension s'abonne dans son manifeste :
 * `invoice.platform_deposited` (facture déposée sur la plateforme agréée : déclenche
   la copie PDF d'ADR-004 D9 ; amendement adopté le 29 septembre 2026,
   DECISIONS D-CPY-001)
+* `micro.receipt.updated`, `micro.receipt.deleted`, `micro.purchase.updated`,
+  `micro.purchase.deleted` (ligne des registres micro modifiée ou supprimée
+  dans une période non déclarée : la Comptabilité extourne et repasse
+  l'écriture ; amendement adopté le 30 septembre 2026, DECISIONS D-MIC2-003)
 * `card.saved`
 * `period.closed`
 
@@ -193,6 +197,11 @@ Justification : sans eux, la facturation électronique (ADR-004) ne peut pas
 émettre le statut « Encaissée » au lettrage, et les extensions sont réduites à
 scruter les tables. La liste est volontairement courte ; un événement n'est
 ajouté que lorsqu'une extension portée en a besoin.
+
+_Amendement adopté le 30 septembre 2026 (DECISIONS D-MIC2-003)._ Un abonné
+peut *refuser* l'opération (`Partiduo::Events::Refused`, avec un motif
+traduit) quand il ne peut pas la suivre : la transaction est annulée et
+l'appelant reçoit un échec, plutôt qu'un écart durable entre deux modules.
 
 === D8 — Squelette de référence
 
