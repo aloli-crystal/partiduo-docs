@@ -7,6 +7,9 @@
 *Date.* 26 septembre 2026. +
 *Révision.* 26 septembre 2026 — technique de numérotation imposée (D5),
 pièces jointes au socle et dépendance alternative du Stock précisées (D1). +
+*Révision.* 30 septembre 2026 — facture récapitulative de plusieurs bons de
+livraison, rythme de facturation et encours maximum HT du client, fin de
+mois (D5 ; `partiduo-app/DECISIONS.adoc`, D-INV2-001 à D-INV2-012). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Modifie.* ADR-001 (organisation du code, plan de lots), ADR-003 (modules
 officiels et extensions), ADR-004 (qui produit la Factur-X), ADR-005 (menus et
@@ -172,7 +175,30 @@ Devis ──► Commande ──► Bon de livraison ──► Facture ──► 
 * Chaque document peut être créé directement ou *transformé* depuis le
   précédent ; les lignes sont recopiées, le lien est conservé et affiché
   (« issu du devis D-2026-0031 »).
-* Statuts : devis (brouillon, envoyé, accepté, refusé, expiré) ; facture
+* *Facture récapitulative* (art. 289-I-3 du CGI : livraisons multiples à un
+  même client au cours d'un même mois, facture au plus tard à la fin du
+  mois) : une facture reprend plusieurs bons de livraison émis et non
+  facturés d'un même client et d'une même devise ; chaque bon reste
+  identifiable (un groupe de lignes par bon, titré de son numéro et de sa
+  date de livraison ; bon et date de livraison de chaque ligne dans la
+  Factur-X, BT-127 et BG-26) ; la période de facturation (BG-14) va de la
+  première à la dernière livraison. Un bon n'est facturé qu'une fois et
+  passe à l'état « facturé » à l'émission de la facture ; le stock n'est pas
+  déduit une seconde fois.
+* *Rythme de facturation* du client, réglage de la Facturation (et non de
+  la fiche du socle) : à chaque livraison (défaut) ou récapitulative
+  mensuelle. En fin de mois, la Facturation prépare la facture récapitulative
+  de chaque client mensuel — brouillons proposés dans « À traiter », ou
+  émis et envoyés par le canal du client selon les paramètres du dossier —,
+  jamais deux pour un même client et un même mois ; le passage est une
+  commande de l'instance lancée chaque jour, qui rattrape un jour manqué.
+* *Encours maximum HT* du client (réglage de la Facturation) : encours = bons
+  de livraison émis non facturés + part HT restant due des factures émises ;
+  l'émission d'une commande, d'un bon de livraison ou d'une facture qui le
+  dépasserait est refusée, sauf dérogation motivée d'un utilisateur autorisé,
+  tracée ; un devis n'est pas bloqué.
+* Statuts : devis (brouillon, envoyé, accepté, refusé, expiré) ; bon de
+  livraison (brouillon, émis, facturé) ; facture
   (brouillon, émise, envoyée, partiellement payée, payée, en retard, annulée par
   avoir) ; plus les statuts de la plateforme agréée (ADR-004 D4).
 * Lignes : article ou texte libre, quantité, unité (codes UN/ECE), prix unitaire
