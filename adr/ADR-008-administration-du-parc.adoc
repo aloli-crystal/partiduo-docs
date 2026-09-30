@@ -4,7 +4,8 @@
 :icons: font
 
 *Statut.* Accepté — 27 septembre 2026 ; amendé le 29 septembre 2026
-(validation à deux au choix). +
+(validation à deux au choix) et le 30 septembre 2026 (mises à jour du parc
+par paquets FreeBSD). +
 *Date.* 27 septembre 2026. +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-001 D2 (l'inventaire des instances, « hors application »),
@@ -44,7 +45,8 @@ utilisateurs.
 
 Dépôt `aloli-crystal/partiduo-admin`, application Marten avec *sa propre base*
 (`partiduo_admin`) : cabinets, utilisateurs d'administration, dossiers
-(inventaire), serveurs, tâches, sauvegardes, versions, journal d'audit.
+(inventaire), serveurs, tâches, sauvegardes, paquet et version relevée de
+chaque dossier, journal d'audit.
 
 * Elle est servie sur son propre sous-domaine (`admin.<domaine>`).
 * Elle ne dépend de `partiduo-app` que pour son interface en ligne de
@@ -59,7 +61,7 @@ Dépôt `aloli-crystal/partiduo-admin`, application Marten avec *sa propre base*
 |Rôle |Portée
 
 |*Super-admin*
-|Tout le parc : cabinets, serveurs, versions, quotas, tous les dossiers. Niveau
+|Tout le parc : cabinets, serveurs, paquets, quotas, tous les dossiers. Niveau
 d'authentification 3 exigé (passkey, ADR-002 D2).
 
 |*Admin de cabinet*
@@ -150,9 +152,21 @@ remplacement, et *restauration test* périodique qui prouve qu'une sauvegarde se
 relit.
 
 *Mises à jour du parc*::
-Version de chaque dossier, montée de version par dossier ou par vagues,
+*Amendement du 30 septembre 2026.* Les serveurs sont sous FreeBSD et
+Partiduo y est installé par paquets (`pkg.aloli.net`) : `partiduo-app`
+(branche `production`) et `partiduo-app-devel` (branche `development`),
+qui cohabitent. Chaque dossier est servi par l'un des deux, son *paquet*,
+choisi à sa création. La mise à jour des programmes, sur tout le parc,
+relève de beryl (`pkg upgrade`) : le paquet est partagé par les instances
+d'un serveur, et le script de service de chaque instance applique ses
+migrations au démarrage (une instance dont la migration échoue ne démarre
+pas). L'administration affiche le paquet et la version relevée de chaque
+dossier ; elle ne monte plus les dossiers de version, par dossier ni par
+vagues. Sauvegarde préalable et retour arrière de la mise à jour relèvent de
+beryl et de l'infrastructure de sauvegarde à venir. (Texte d'origine :
+« version de chaque dossier, montée de version par dossier ou par vagues,
 migrations appliquées par l'exécutant, sauvegarde préalable automatique et
-*retour arrière* si la migration échoue.
+retour arrière si la migration échoue ».)
 
 *Supervision*::
 État de chaque dossier : service, base, certificat TLS et échéance, *quota
