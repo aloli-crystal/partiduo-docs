@@ -12,9 +12,10 @@ D7 : l'extension `partiduo-urssaf` exige les droits du module `micro`
 (amendement D-URS-010 adopté) ; 30 septembre 2026 — D6 : livre-journal et
 immobilisations modifiables tant que l'exercice est ouvert, figés par la
 clôture ou la transmission de la 2035 (DECISIONS D-LIB2-001 à D-LIB2-006) ;
-30 septembre 2026 — D3 et D6 : l'interface de la profession libérale
-(« Recettes et dépenses » ou « Comptabilité ») est un réglage du dossier,
-pour tous ses utilisateurs (DECISIONS D-LIB3-001, D-UI-076). +
+30 septembre 2026 — D3 et D6 : l'interface (« Recettes et dépenses » ou
+« Comptabilité », mode simplifié ou complet) est une préférence de chaque
+utilisateur, enregistrée avec son compte, et non plus un réglage du dossier
+(DECISIONS D-UI-077, D-AUTH-016, remplaçant D-LIB3-001 et D-UI-076). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Complète.* ADR-006 (modules activables), ADR-003 (extensions), ADR-005
 (interface).
@@ -116,15 +117,25 @@ restent celles d'ADR-006 D5), présentées avec moins de champs. Le mode complet
 reste accessible au comptable (rôle `comptable`, ADR-002 D4), qui passe
 lui-même d'un mode à l'autre.
 
-Pour la profession libérale (D6), l'interface est un *réglage du dossier*,
-dans les paramètres du module `liberal`, qui vaut pour tous ses
-utilisateurs : « Recettes et dépenses » (mode simplifié, par défaut) ou
-« Comptabilité » (mode complet), celle-ci proposée seulement si la
-Comptabilité est active ; la Comptabilité désactivée ensuite, l'interface
-revient d'elle-même aux recettes et dépenses. Aucune bascule personnelle,
-hors celle du comptable. Le choix ne change que la présentation : les
-droits restent ceux du contrat (révision du 30 septembre 2026, DECISIONS
-D-LIB3-001, D-UI-076).
+L'interface est une *préférence de chaque utilisateur* (révision du
+30 septembre 2026, DECISIONS D-UI-077, D-AUTH-016) : enregistrée côté
+serveur avec son compte, jamais dans un cookie, elle le suit d'un appareil
+à l'autre. Chacun la règle dans ses préférences (menu de l'utilisateur, à
+côté de la sécurité) ou par le raccourci du même menu, qui l'enregistre de
+même ; personne ne règle celle d'un autre. Tant que la personne n'a rien
+choisi, défaut de son rôle : mode simplifié pour un utilisateur de la
+société, mode complet pour le comptable.
+
+* Profession libérale (D6) : « Recettes et dépenses » (mode simplifié) ou
+  « Comptabilité » (mode complet), celle-ci proposée seulement si la
+  Comptabilité est active ; sinon l'interface appliquée est « Recettes et
+  dépenses », sans effacer la préférence, retrouvée si la Comptabilité
+  revient.
+* Micro-entreprise : mode simplifié pour les utilisateurs de la société ;
+  le comptable choisit le sien, par la même préférence enregistrée.
+
+Le choix ne change que la présentation : les droits restent ceux du
+contrat.
 
 === D4 — Une extension `partiduo-teledec`
 
@@ -201,9 +212,9 @@ Le module suit le même modèle que `micro` :
   repasser l'écriture, ou la refuser), sans appel direct entre modules
   (ADR-006 D3) ;
 * *mode simplifié* de l'interface (ADR-007 D3), avec un vocabulaire adapté
-  (« recettes », « dépenses », « immobilisations ») ; le dossier peut
-  choisir, dans ses paramètres, l'interface « Comptabilité » pour tous ses
-  utilisateurs quand la Comptabilité est active (D3) ;
+  (« recettes », « dépenses », « immobilisations ») ; chaque utilisateur
+  peut préférer l'interface « Comptabilité » quand la Comptabilité est
+  active (D3) ;
 * *préparation de la 2035* : 2035-A (compte de résultat fiscal) et 2035-B
   (immobilisations et amortissements) calculées depuis la ventilation par
   rubrique ; table de correspondance rubrique → ligne *datée par millésime* et
