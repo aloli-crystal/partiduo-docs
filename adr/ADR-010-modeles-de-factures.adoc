@@ -95,7 +95,11 @@ jointes.
   --convert-to pdf`) ; AsciiDoc : `asciicrystal-pdf` (aloli-crystal, sur le
   shard `pdf`) ; Markdown : converti en AsciiDoc par `kramdown-asciidoc`
   (aloli-crystal), puis `asciicrystal-pdf` (amendé le 29 septembre 2026 ;
-  `asciidoctor-pdf` et `pandoc` ne sont plus utilisés).
+  `asciidoctor-pdf` et `pandoc` ne sont plus utilisés). Amendé le
+  30 septembre 2026 : les deux passent par `partiduo-modeles-pdf`,
+  exécutable de l'extension construit sur la bibliothèque
+  `asciicrystal-pdf`, lancé en processus séparé (délai, arrêt forcé,
+  isolation du modèle) et livré avec le serveur par le paquet.
 * Chaque convertisseur est déclaré dans la configuration de l'instance
   (chemin, délai maximal) et lancé sans réseau, dans un répertoire
   temporaire, avec un délai ; son absence désactive seulement le PDF du
