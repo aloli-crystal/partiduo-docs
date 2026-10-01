@@ -10,6 +10,10 @@ pièces jointes au socle et dépendance alternative du Stock précisées (D1). +
 *Révision.* 30 septembre 2026 — facture récapitulative de plusieurs bons de
 livraison, rythme de facturation et encours maximum HT du client, fin de
 mois (D5 ; `partiduo-app/DECISIONS.adoc`, D-INV2-001 à D-INV2-012). +
+*Révision.* 1er octobre 2026 — retours de marchandises (bon de retour,
+déduction sur la facture récapitulative, avoir récapitulatif, avoir de
+retours) et paiements rejetés (D5 ; `partiduo-app/DECISIONS.adoc`,
+D-INV3-001 à D-INV3-013). +
 *Auteur.* Philippe Nénert (Aloli). +
 *Modifie.* ADR-001 (organisation du code, plan de lots), ADR-003 (modules
 officiels et extensions), ADR-004 (qui produit la Factur-X), ADR-005 (menus et
@@ -170,6 +174,7 @@ Sans module Comptabilité, la Facturation fournit :
 ----
 Devis ──► Commande ──► Bon de livraison ──► Facture ──► Avoir
               └─────► Facture d'acompte ──────┘ (déduite)
+            Bon de livraison ou facture ──► Bon de retour ──► Facture (déduit) ou Avoir
 ----
 
 * Chaque document peut être créé directement ou *transformé* depuis le
@@ -197,8 +202,19 @@ Devis ──► Commande ──► Bon de livraison ──► Facture ──► 
   l'émission d'une commande, d'un bon de livraison ou d'une facture qui le
   dépasserait est refusée, sauf dérogation motivée d'un utilisateur autorisé,
   tracée ; un devis n'est pas bloqué.
+* *Retours de marchandises* : le *bon de retour* (série propre, motif,
+  avec ou sans document d'origine — bon de livraison ou facture —, jamais
+  plus que l'origine n'a livré) fait entrer la marchandise en stock si le
+  module Stock est actif. Non encore facturé, il réduit les bons à facturer
+  et l'encours HT, et se déduit de la facture (groupe « Bon de retour … »,
+  quantités négatives), notamment de la facture récapitulative du mois ;
+  si les retours l'emportent sur les livraisons, la pièce est un *avoir
+  récapitulatif* — jamais de facture de montant négatif. Hors facturation
+  mensuelle, un ou plusieurs bons de retour d'un client se transforment en
+  avoir. Le stock n'est jamais mouvementé une seconde fois.
 * Statuts : devis (brouillon, envoyé, accepté, refusé, expiré) ; bon de
-  livraison (brouillon, émis, facturé) ; facture
+  livraison (brouillon, émis, facturé) ; bon de retour (brouillon, émis,
+  repris) ; facture
   (brouillon, émise, envoyée, partiellement payée, payée, en retard, annulée par
   avoir) ; plus les statuts de la plateforme agréée (ADR-004 D4).
 * Lignes : article ou texte libre, quantité, unité (codes UN/ECE), prix unitaire
@@ -253,6 +269,13 @@ Côté belge : communication structurée `+++…+++`.
   la plateforme agréée pour les clients professionnels français.
 * Règlements : total, partiel, acompte déduit ; lien de paiement en option
   ultérieure.
+* *Paiements rejetés* (chèque impayé, prélèvement rejeté, virement
+  retourné) : le règlement n'est jamais effacé, son rejet daté et motivé
+  le neutralise ; la facture redevient due, l'encours remonte ; une relance
+  est proposée aussitôt et le rejet signalé dans « À traiter ». Comptabilité
+  active : l'encaissement est contre-passé à la date du rejet (délettrage
+  par le mécanisme existant), les frais bancaires comptabilisés ; frais
+  refacturables par une facture de frais à part.
 * Relances : jusqu'à trois niveaux paramétrables (délai, modèle de courriel,
   pénalités calculées), proposées dans « À traiter » et jamais envoyées sans
   validation.
