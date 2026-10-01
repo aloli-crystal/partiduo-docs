@@ -199,12 +199,20 @@ Le module suit le même modèle que `micro` :
   active ;
 * *modifiables tant que l'exercice est ouvert* — l'exercice est l'année
   civile de la 2035 ; plusieurs sont ouverts à la fois (N-1 s'achève
-  pendant que N avance) —, *intangibles une fois l'exercice figé*, au
-  premier de deux événements : sa clôture au socle ou la transmission de sa
-  2035 par `partiduo-teledec` (événement `tax_return.transmitted`, ADR-003
-  D7) ; ensuite, correction par contre-passation datée dans un exercice
-  ouvert (révision du 30 septembre 2026, DECISIONS D-LIB2-001 à
-  D-LIB2-006) ;
+  pendant que N avance) — (révision du 30 septembre 2026, DECISIONS
+  D-LIB2-001 à D-LIB2-006) ;
+* *trois états de l'exercice* (décision de l'utilisateur du 1er octobre
+  2026, DECISIONS D-LIB5-001 à D-LIB5-005) : *ouvert* ; *clôturé* par le
+  professionnel lui-même, depuis le livre-journal ou la 2035 — les lignes
+  sont figées, et il peut *rouvrir* l'exercice tant que la 2035 n'est pas
+  transmise ; *verrouillé* dès la transmission de la 2035 par
+  `partiduo-teledec` (événement `tax_return.transmitted`, ADR-003 D7),
+  définitivement : correction par contre-passation datée dans un exercice
+  ouvert. Le rejet de ce dépôt (`tax_return.rejected`) lève le verrou et
+  rend l'exercice clôturé, pour correction et nouvel envoi. La 2035 se
+  transmet sur un exercice clôturé. La clôture au socle (périodes closes
+  par la Comptabilité) reste un verrou de plus, que le module ne lève
+  pas ;
 * *partie double automatique* quand la Comptabilité est active (événements
   `liberal.receipt.recorded`, `liberal.expense.recorded`,
   `liberal.asset.recorded` ; à la modification ou à la suppression,
@@ -220,8 +228,8 @@ Le module suit le même modèle que `micro` :
   rubrique ; table de correspondance rubrique → ligne *datée par millésime* et
   paramétrable, jamais écrite en dur ; contrôle de cohérence avant dépôt ;
   recalculée tant que l'exercice est ouvert, figée avec lui ;
-* *télétransmission* de la 2035 par `partiduo-teledec` (D4), qui fige
-  l'exercice.
+* *télétransmission* de la 2035 par `partiduo-teledec` (D4), d'un exercice
+  clôturé, qui le verrouille.
 
 L'option pour les *créances et dettes* n'est pas couverte par ce module : un
 libéral qui l'exerce utilise la Comptabilité complète.
