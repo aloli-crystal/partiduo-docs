@@ -186,6 +186,9 @@ auxquels une extension s'abonne dans son manifeste :
 * `invoice.platform_deposited` (facture déposée sur la plateforme agréée : déclenche
   la copie PDF d'ADR-004 D9 ; amendement adopté le 29 septembre 2026,
   DECISIONS D-CPY-001)
+* `return_note.issued` (bon de retour émis : entrée en stock) et `payment.rejected`
+  (règlement rejeté : contre-passation, frais, registres micro et libéraux) ;
+  amendement adopté le 1er octobre 2026, DECISIONS D-INV3-011
 * `micro.receipt.updated`, `micro.receipt.deleted`, `micro.purchase.updated`,
   `micro.purchase.deleted` (ligne des registres micro modifiée ou supprimée
   dans une période non déclarée : la Comptabilité extourne et repasse
