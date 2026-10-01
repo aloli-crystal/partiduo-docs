@@ -198,9 +198,9 @@ auxquels une extension s'abonne dans son manifeste :
   2026 par extension de D-MIC2-003, DECISIONS D-LIB2-002)
 * `tax_return.transmitted`, `tax_return.rejected` (déclaration fiscale
   annuelle transmise, ou son dépôt rejeté, publiés par l'extension qui la
-  transmet : le module `liberal` fige l'exercice de la 2035, ou le libère ;
-  adopté le 30 septembre 2026 par extension de D-MIC2-003, DECISIONS
-  D-LIB2-003)
+  transmet : le module `liberal` verrouille l'exercice de la 2035, ou le
+  rend clôturé, réversible ; adopté par l'utilisateur le 1er octobre 2026,
+  DECISIONS D-LIB2-003, D-LIB5-002)
 * `card.saved`
 * `period.closed`
 
